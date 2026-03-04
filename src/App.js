@@ -226,6 +226,23 @@ export default function App() {
   const [setupOwners, setSetupOwners] = useState(() => Array.from({length:8}, (_,i) => ({ name:"", color:OWNER_COLORS[i%8], teams:Array.from({length:8},(_,j)=>({seed:j+1,name:""})) })));
   const [setupStep, setSetupStep]     = useState(0);
 
+  // My Leagues (persisted in localStorage)
+  const [myLeagues, setMyLeagues] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("bb_my_leagues") || "[]"); }
+    catch { return []; }
+  });
+
+  function saveToMyLeagues(code, name) {
+    setMyLeagues(prev => {
+      const exists = prev.find(l => l.code === code);
+      const updated = exists
+        ? prev.map(l => l.code === code ? { ...l, name } : l)
+        : [...prev, { code, name, createdAt: Date.now() }];
+      localStorage.setItem("bb_my_leagues", JSON.stringify(updated));
+      return updated;
+    });
+  }
+
   // Round payouts (editable per league)
   const [rounds, setRounds] = useState(() => {
     const saved = sessionStorage.getItem("bb_rounds");
@@ -313,6 +330,7 @@ export default function App() {
     // If it's the CHI2025 template, seed owners
     const ok = await loadLeague(code);
     if (ok) {
+      saveToMyLeagues(code, newLeagueName.trim());
       setNewLeagueName("");
       setModal(null);
       notify(`League created! Invite code: ${code}`);
@@ -348,6 +366,7 @@ export default function App() {
       }
     }
     await loadLeague("CHI2025");
+    saveToMyLeagues("CHI2025", "CHI 2025 Upset Pool");
   }
 
   // ── Add owner ────────────────────────────────────────────────────────────
@@ -494,6 +513,38 @@ export default function App() {
           </div>
 
           {loading && <div style={{ marginTop:20, textAlign:"center", color:"#6677aa" }}>Loading…</div>}
+
+          {/* My Leagues */}
+          {myLeagues.length > 0 && (
+            <div style={{ marginTop:28 }}>
+              <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase",
+                letterSpacing:2, fontWeight:700, marginBottom:10 }}>My Leagues</div>
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {[...myLeagues].reverse().map(l => (
+                  <button key={l.code} onClick={()=>loadLeague(l.code)} style={{
+                    ...S.btn("#0f1625","#dce4f5"), padding:"12px 16px", fontSize:14,
+                    borderRadius:10, textAlign:"left", border:"1px solid #1e2840",
+                    display:"flex", alignItems:"center", justifyContent:"space-between"
+                  }}>
+                    <div>
+                      <div style={{ fontWeight:700 }}>{l.name}</div>
+                      <div style={{ fontSize:11, color:"#6677aa", marginTop:2 }}>
+                        Code: <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040" }}>{l.code}</span>
+                      </div>
+                    </div>
+                    <span style={{ color:"#f0c040", fontSize:18 }}>→</span>
+                  </button>
+                ))}
+              </div>
+              <button onClick={()=>{
+                localStorage.removeItem("bb_my_leagues");
+                setMyLeagues([]);
+              }} style={{ fontSize:11, color:"#445", background:"none", border:"none",
+                cursor:"pointer", marginTop:8, textDecoration:"underline" }}>
+                Clear history
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Modals */}
