@@ -841,8 +841,8 @@ export default function App() {
           <div>
             <h2 style={{ margin:"0 0 6px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Payout Reference</h2>
             <p style={{ color:"#6677aa", fontSize:13, marginBottom:20 }}>
-              Per-owner payout formula: <strong>Seed × Round Value</strong>.
-              Winning owner collects from {owners.length-1} others.
+              Total payout formula: <strong>Seed × Round Value × {owners.length-1} owners</strong>.
+              Smaller number shows cost per owner.
             </p>
             <div style={{ overflowX:"auto" }}>
               <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
@@ -852,7 +852,7 @@ export default function App() {
                     {rounds.map(r=>(
                       <th key={r.id} style={TH}>
                         {r.short}
-                        <div style={{ fontSize:10, color:"#f0c040", fontWeight:400, marginTop:2 }}>${r.dmg}/win</div>
+                        <div style={{ fontSize:10, color:"#f0c040", fontWeight:400, marginTop:2 }}>${(r.dmg*(owners.length-1||7)).toFixed(2)} per win</div>
                       </th>
                     ))}
                   </tr>
@@ -868,8 +868,8 @@ export default function App() {
                         return (
                           <td key={r.id} style={{ ...TD, textAlign:"center" }}>
                             <div style={{ fontWeight:700, color:`hsl(${Math.round(120-heat*120)},65%,55%)`,
-                              fontFamily:"'DM Mono',monospace" }}>${pp.toFixed(2)}</div>
-                            <div style={{ fontSize:10, color:"#445" }}>→ ${tot.toFixed(2)}</div>
+                              fontFamily:"'DM Mono',monospace" }}>${tot.toFixed(2)}</div>
+                            <div style={{ fontSize:10, color:"#445" }}>${pp.toFixed(2)}/owner</div>
                           </td>
                         );
                       })}
