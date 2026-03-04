@@ -1001,6 +1001,14 @@ export default function App() {
               {owners.length > 0 && (
                 <div style={S.card}>
                   <SecTitle>Owners ({owners.length}/8)</SecTitle>
+                  {owners.length < 8 && (
+                    <div style={{ display:"flex", gap:10, marginBottom:14 }}>
+                      <input value={newOwnerName} onChange={e=>setNewOwnerName(e.target.value)}
+                        placeholder="Add owner name…" style={{ ...S.input, flex:1 }}
+                        onKeyDown={e=>e.key==="Enter"&&(adminUnlocked?addOwner():setModal("pin"))} />
+                      <button onClick={()=>adminUnlocked?addOwner():setModal("pin")} style={S.btn()}>Add</button>
+                    </div>
+                  )}
                   <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
                     {owners.map(o=>(
                       <div key={o.id} style={{ display:"flex", alignItems:"center", gap:10,
