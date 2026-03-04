@@ -905,7 +905,24 @@ export default function App() {
           <button onClick={recordWin} style={{ ...S.btn(), width:"100%" }}>Record Win</button>
         </div>
       </Modal>
-
+{/* Edit Teams Modal */}
+      <Modal open={modal==="editTeams"} onClose={()=>setModal(null)} title={`Edit Teams — ${editingOwner?.name}`}>
+        <div style={{ display:"flex", flexDirection:"column", gap:10, maxHeight:"60vh", overflowY:"auto", marginBottom:16 }}>
+          {editTeams.map((team, i) => (
+            <div key={i} style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <span style={{ fontSize:11, color:"#6677aa", width:20, textAlign:"right", flexShrink:0 }}>#{i+1}</span>
+              <input type="number" min="1" max="16" value={team.seed}
+                onChange={e => setEditTeams(prev => prev.map((t,j) => j===i ? {...t, seed: parseInt(e.target.value)||1} : t))}
+                style={{ ...S.input, width:54, padding:"8px 8px", textAlign:"center", flexShrink:0 }} />
+              <input value={team.name}
+                onChange={e => setEditTeams(prev => prev.map((t,j) => j===i ? {...t, name: e.target.value} : t))}
+                placeholder={`Team ${i+1} name`}
+                style={{ ...S.input, flex:1, padding:"8px 12px" }} />
+            </div>
+          ))}
+        </div>
+        <button onClick={saveTeams} style={{ ...S.btn(), width:"100%" }}>💾 Save Teams</button>
+      </Modal>
       <style>{`select option{background:#131929;} *{box-sizing:border-box;}`}</style>
     </div>
   );
