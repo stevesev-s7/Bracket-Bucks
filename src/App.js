@@ -217,6 +217,10 @@ export default function App() {
   const [winRoundId, setWinRoundId]       = useState(0);
   const [winTeamIdx, setWinTeamIdx]       = useState("");
 
+  // Team editor
+  const [editingOwner, setEditingOwner]   = useState(null); // owner object being edited
+  const [editTeams, setEditTeams]         = useState([]);   // working copy of teams
+
   // ESPN
   const [espnGames, setEspnGames]   = useState([]);
   const [espnStatus, setEspnStatus] = useState("idle");
@@ -357,6 +361,26 @@ export default function App() {
     const { error } = await supabase.from("wins").delete().eq("id", winId);
     if (error) notify("Failed to remove win.", "error");
     else notify("Win removed.");
+  }
+
+  // ── Edit teams ───────────────────────────────────────────────────────────
+  function openTeamEditor(owner) {
+    setEditingOwner(owner);
+    setEditTeams(owner.teams.map(t => ({ ...t })));
+    setModal("editTeams");
+  }
+
+  async function saveTeams() {
+    if (!editingOwner) return;
+    const { error } = await supabase
+      .from("owners")
+      .update({ teams: editTeams })
+      .eq("id", editingOwner.id);
+    if (error) { notify("Failed to save teams.", "error"); return; }
+    setOwners(prev => prev.map(o => o.id === editingOwner.id ? { ...o, teams: editTeams } : o));
+    setModal(null);
+    setEditingOwner(null);
+    notify(`${editingOwner.name}'s teams updated!`);
   }
 
   // ── ESPN ─────────────────────────────────────────────────────────────────
@@ -845,6 +869,11 @@ export default function App() {
                         <span style={{ fontSize:12, color:"#445" }}>
                           Seeds: {o.teams.map(t=>t.seed).join(", ")}
                         </span>
+                        <button onClick={()=>openTeamEditor(o)} style={{
+                          background:"#1a2440", border:"1px solid #2a3560",
+                          borderRadius:6, color:"#f0c040", padding:"4px 12px",
+                          cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit"
+                        }}>✏️ Edit Teams</button>
                       </div>
                     ))}
                   </div>
@@ -905,24 +934,39 @@ export default function App() {
           <button onClick={recordWin} style={{ ...S.btn(), width:"100%" }}>Record Win</button>
         </div>
       </Modal>
-{/* Edit Teams Modal */}
+
+      {/* Edit Teams Modal */}
       <Modal open={modal==="editTeams"} onClose={()=>setModal(null)} title={`Edit Teams — ${editingOwner?.name}`}>
         <div style={{ display:"flex", flexDirection:"column", gap:10, maxHeight:"60vh", overflowY:"auto", marginBottom:16 }}>
           {editTeams.map((team, i) => (
             <div key={i} style={{ display:"flex", alignItems:"center", gap:8 }}>
               <span style={{ fontSize:11, color:"#6677aa", width:20, textAlign:"right", flexShrink:0 }}>#{i+1}</span>
-              <input type="number" min="1" max="16" value={team.seed}
-                onChange={e => setEditTeams(prev => prev.map((t,j) => j===i ? {...t, seed: parseInt(e.target.value)||1} : t))}
-                style={{ ...S.input, width:54, padding:"8px 8px", textAlign:"center", flexShrink:0 }} />
-              <input value={team.name}
-                onChange={e => setEditTeams(prev => prev.map((t,j) => j===i ? {...t, name: e.target.value} : t))}
-                placeholder={`Team ${i+1} name`}
-                style={{ ...S.input, flex:1, padding:"8px 12px" }} />
+              <div style={{ display:"flex", alignItems:"center", gap:6, flex:1 }}>
+                {/* Seed input */}
+                <input
+                  type="number"
+                  min="1" max="16"
+                  value={team.seed}
+                  onChange={e => setEditTeams(prev => prev.map((t,j) => j===i ? {...t, seed: parseInt(e.target.value)||1} : t))}
+                  style={{ ...S.input, width:54, padding:"8px 8px", textAlign:"center", flexShrink:0 }}
+                />
+                {/* Team name input */}
+                <input
+                  value={team.name}
+                  onChange={e => setEditTeams(prev => prev.map((t,j) => j===i ? {...t, name: e.target.value} : t))}
+                  placeholder={`Team ${i+1} name`}
+                  style={{ ...S.input, flex:1, padding:"8px 12px" }}
+                />
+              </div>
             </div>
           ))}
         </div>
+        <div style={{ fontSize:11, color:"#6677aa", marginBottom:12 }}>
+          Left box = seed number (1–16) · Right box = team name
+        </div>
         <button onClick={saveTeams} style={{ ...S.btn(), width:"100%" }}>💾 Save Teams</button>
       </Modal>
+
       <style>{`select option{background:#131929;} *{box-sizing:border-box;}`}</style>
     </div>
   );
