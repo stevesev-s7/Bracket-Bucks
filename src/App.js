@@ -218,8 +218,19 @@ export default function App() {
   const [winTeamIdx, setWinTeamIdx]       = useState("");
 
   // Team editor
-  const [editingOwner, setEditingOwner]   = useState(null); // owner object being edited
-  const [editTeams, setEditTeams]         = useState([]);   // working copy of teams
+  const [editingOwner, setEditingOwner]   = useState(null);
+  const [editTeams, setEditTeams]         = useState([]);
+
+  // Setup wizard
+  const BLANK_ROSTER = () => Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
+  const [setupOwners, setSetupOwners] = useState(() => Array.from({length:8}, (_,i) => ({ name:"", color:OWNER_COLORS[i%8], teams:Array.from({length:8},(_,j)=>({seed:j+1,name:""})) })));
+  const [setupStep, setSetupStep]     = useState(0);
+
+  // Admin PIN
+  const ADMIN_PIN = "1234"; // Change this to your desired PIN
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [pinInput, setPinInput]           = useState("");
+  const [pinError, setPinError]           = useState("");
 
   // ESPN
   const [espnGames, setEspnGames]   = useState([]);
@@ -229,6 +240,13 @@ export default function App() {
     setToast({ msg, type });
     setTimeout(()=>setToast(null), 3200);
   }
+
+  // ── Auto-load saved league on startup ──────────────────────────────────
+  useEffect(() => {
+    const saved = sessionStorage.getItem("bb_league_code");
+    if (saved) loadLeague(saved);
+  // eslint-disable-next-line
+  }, []);
 
   // ── Load league from Supabase ────────────────────────────────────────────
   const loadLeague = useCallback(async (code) => {
@@ -251,6 +269,7 @@ export default function App() {
       setOwners(ownersData || []);
       setWins(winsData || []);
       setLeagueCode(code);
+      sessionStorage.setItem("bb_league_code", code);
       setLoading(false);
       return true;
     } catch {
@@ -827,6 +846,8 @@ export default function App() {
           <div>
             <h2 style={{ margin:"0 0 20px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Administration</h2>
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+              {/* League Info */}
               <div style={S.card}>
                 <SecTitle>League Info</SecTitle>
                 <div style={{ display:"flex", gap:24, flexWrap:"wrap" }}>
@@ -851,25 +872,94 @@ export default function App() {
                 </div>
               </div>
 
-              <div style={S.card}>
-                <SecTitle>Add Owner ({owners.length}/8)</SecTitle>
-                <div style={{ display:"flex", gap:10 }}>
-                  <input value={newOwnerName} onChange={e=>setNewOwnerName(e.target.value)}
-                    placeholder="Owner name…" style={{ ...S.input, flex:1 }}
-                    onKeyDown={e=>e.key==="Enter"&&addOwner()} />
-                  <button onClick={addOwner} style={S.btn()}>Add</button>
+              {/* Setup Wizard — add all 8 owners at once */}
+              {owners.length === 0 && (
+                <div style={S.card}>
+                  <SecTitle>🏀 League Setup — Add All 8 Owners</SecTitle>
+                  <p style={{ fontSize:13, color:"#6677aa", marginTop:0, marginBottom:16 }}>
+                    Fill in each owner's name and their 8 teams below, then click Save All Owners.
+                  </p>
+                  {setupOwners.map((owner, oi) => (
+                    <div key={oi} style={{ marginBottom:8, border:"1px solid #1e2840", borderRadius:10, overflow:"hidden" }}>
+                      {/* Owner header — click to expand */}
+                      <div onClick={()=>setSetupStep(setupStep===oi?-1:oi)} style={{
+                        display:"flex", alignItems:"center", gap:10, padding:"10px 16px",
+                        background: setupStep===oi ? "#1a2440" : "#0f1625", cursor:"pointer"
+                      }}>
+                        <div style={{ width:10,height:10,borderRadius:"50%",background:OWNER_COLORS[oi%8],flexShrink:0 }} />
+                        <span style={{ fontWeight:600, flex:1, color: owner.name?"#dce4f5":"#445" }}>
+                          {owner.name || `Owner ${oi+1} — click to expand`}
+                        </span>
+                        <span style={{ color:"#445", fontSize:12 }}>
+                          {owner.teams.filter(t=>t.name).length}/8 teams
+                        </span>
+                        <span style={{ color:"#f0c040" }}>{setupStep===oi?"▲":"▼"}</span>
+                      </div>
+                      {setupStep===oi && (
+                        <div style={{ padding:"14px 16px", background:"#0a0f1a", display:"flex", flexDirection:"column", gap:10 }}>
+                          <div>
+                            <label style={S.label}>Owner Name</label>
+                            <input value={owner.name}
+                              onChange={e=>setSetupOwners(prev=>prev.map((o,i)=>i===oi?{...o,name:e.target.value}:o))}
+                              placeholder="e.g. Stephen Sevenich"
+                              style={S.input} />
+                          </div>
+                          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+                            {owner.teams.map((team, ti) => (
+                              <div key={ti} style={{ display:"flex", gap:6, alignItems:"center" }}>
+                                <input type="number" min="1" max="16" value={team.seed}
+                                  onChange={e=>setSetupOwners(prev=>prev.map((o,i)=>i===oi?{...o,teams:o.teams.map((t,j)=>j===ti?{...t,seed:parseInt(e.target.value)||1}:t)}:o))}
+                                  style={{ ...S.input, width:50, padding:"7px 6px", textAlign:"center", flexShrink:0 }} />
+                                <input value={team.name}
+                                  onChange={e=>setSetupOwners(prev=>prev.map((o,i)=>i===oi?{...o,teams:o.teams.map((t,j)=>j===ti?{...t,name:e.target.value}:t)}:o))}
+                                  placeholder={`Team ${ti+1}`}
+                                  style={{ ...S.input, padding:"7px 10px" }} />
+                              </div>
+                            ))}
+                          </div>
+                          <button onClick={()=>setSetupStep(oi+1<8?oi+1:-1)}
+                            style={{ ...S.btn("#1a2e1a","#2ecc71"), border:"1px solid #27ae60", alignSelf:"flex-end" }}>
+                            Next Owner ▶
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <button onClick={async()=>{
+                    const filled = setupOwners.filter(o=>o.name.trim());
+                    if (!filled.length) { notify("Enter at least one owner name.","error"); return; }
+                    setLoading(true);
+                    for (let i=0; i<filled.length; i++) {
+                      const o = filled[i];
+                      await supabase.from("owners").insert({
+                        league_code: leagueCode, name: o.name.trim(),
+                        color: OWNER_COLORS[i%8], num: i+1, teams: o.teams
+                      });
+                    }
+                    const { data } = await supabase.from("owners").select("*").eq("league_code", leagueCode).order("num");
+                    setOwners(data||[]);
+                    setLoading(false);
+                    notify(`${filled.length} owners saved! 🎉`);
+                  }} style={{ ...S.btn(), width:"100%", marginTop:8, padding:"13px", fontSize:15 }}>
+                    💾 Save All Owners to League
+                  </button>
                 </div>
-                {owners.length>0&&(
-                  <div style={{ marginTop:14, display:"flex", flexDirection:"column", gap:6 }}>
+              )}
+
+              {/* Per-owner edit (shown once owners exist) */}
+              {owners.length > 0 && (
+                <div style={S.card}>
+                  <SecTitle>Owners ({owners.length}/8)</SecTitle>
+                  <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
                     {owners.map(o=>(
                       <div key={o.id} style={{ display:"flex", alignItems:"center", gap:10,
-                        background:"#0f1625", borderRadius:8, padding:"8px 12px" }}>
+                        background:"#0f1625", borderRadius:8, padding:"8px 12px", flexWrap:"wrap" }}>
                         <div style={{ width:10,height:10,borderRadius:"50%",background:o.color }} />
                         <span style={{ fontWeight:600, flex:1 }}>{o.name}</span>
                         <span style={{ fontSize:12, color:"#445" }}>
                           Seeds: {o.teams.map(t=>t.seed).join(", ")}
                         </span>
-                        <button onClick={()=>openTeamEditor(o)} style={{
+                        <button onClick={()=>adminUnlocked?openTeamEditor(o):setModal("pin")} style={{
                           background:"#1a2440", border:"1px solid #2a3560",
                           borderRadius:6, color:"#f0c040", padding:"4px 12px",
                           cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit"
@@ -877,8 +967,9 @@ export default function App() {
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
             </div>
           </div>
         )}
@@ -933,6 +1024,17 @@ export default function App() {
           })()}
           <button onClick={recordWin} style={{ ...S.btn(), width:"100%" }}>Record Win</button>
         </div>
+      </Modal>
+
+      {/* PIN Modal */}
+      <Modal open={modal==="pin"} onClose={()=>{setModal(null);setPinInput("");setPinError("");}} title="🔒 Admin Access">
+        <p style={{ color:"#6677aa", fontSize:13, marginBottom:16 }}>Enter your admin PIN to make changes.</p>
+        <input type="password" value={pinInput} onChange={e=>setPinInput(e.target.value)}
+          onKeyDown={e=>{ if(e.key==="Enter"){ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");notify("Admin unlocked ✓");}else{setPinError("Incorrect PIN.");}}}}
+          placeholder="Enter PIN" style={{ ...S.input, letterSpacing:6, fontSize:20, textAlign:"center", marginBottom:8 }} autoFocus />
+        {pinError && <div style={{ color:"#e74c3c", fontSize:12, marginBottom:8 }}>{pinError}</div>}
+        <button onClick={()=>{ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");notify("Admin unlocked ✓");}else{setPinError("Incorrect PIN.");}}}
+          style={{ ...S.btn(), width:"100%" }}>Unlock</button>
       </Modal>
 
       {/* Edit Teams Modal */}
