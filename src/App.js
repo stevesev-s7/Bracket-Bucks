@@ -321,7 +321,7 @@ export default function App() {
     await loadLeague("CHI2025");
   }
 
-  // ── Add owner   async function addOwner() {     if (!newOwnerName.trim() || !leagueCode) return;     if (owners.length >= 8) { notify("Max 8 owners per league.", "error"); return; }     const color = OWNER_COLORS[owners.length % OWNER_COLORS.length];     const defaultTeams = Array.from({length:8}, (_,i)=>({ seed:i+1, name:`Team ${i+1}` }));     const { error } = await supabase.from("owners").insert({       league_code: leagueCode, name: newOwnerName.trim(),       color, num: owners.length + 1, teams: defaultTeams,     });     if (error) { notify("Failed to add owner.", "error"); return; }     setNewOwnerName("");     notify(`${newOwnerName.trim()} added!`);     await loadLeague(leagueCode);   }    // ── Setup wizard save   async function saveAllOwners() {     const filled = setupOwners.filter(o=>o.name.trim());     if (!filled.length) { notify("Enter at least one owner name.","error"); return; }     setLoading(true);     for (let i=0; i<filled.length; i++) {       await supabase.from("owners").insert({         league_code: leagueCode, name: filled[i].name.trim(),         color: OWNER_COLORS[i%8], num: i+1, teams: filled[i].teams       });     }     const { data } = await supabase.from("owners").select("*").eq("league_code",leagueCode).order("num");     setOwners(data||[]);     setLoading(false);     notify(`${filled.length} owners saved! 🎉`);   }   async function addOwner() {     if (!newOwnerName.trim() || !leagueCode) return;     if (owners.length >= 8) { notify("Max 8 owners per league.", "error"); return; }     const color = OWNER_COLORS[owners.length % OWNER_COLORS.length];     const defaultTeams = Array.from({length:8}, (_,i)=>({ seed:i+1, name:`Team ${i+1}` }));     const { error } = await supabase.from("owners").insert({       league_code: leagueCode, name: newOwnerName.trim(),       color, num: owners.length + 1, teams: defaultTeams,     });     if (error) { notify("Failed to add owner.", "error"); return; }     setNewOwnerName("");     notify(`${newOwnerName.trim()} added!`);     await loadLeague(leagueCode);   }    // ── Setup wizard save   async function saveAllOwners() {     const filled = setupOwners.filter(o=>o.name.trim());     if (!filled.length) { notify("Enter at least one owner name.","error"); return; }     setLoading(true);     for (let i=0; i<filled.length; i++) {       await supabase.from("owners").insert({         league_code: leagueCode, name: filled[i].name.trim(),         color: OWNER_COLORS[i%8], num: i+1, teams: filled[i].teams       });     }     const { data } = await supabase.from("owners").select("*").eq("league_code",leagueCode).order("num");     setOwners(data||[]);     setLoading(false);     notify(`${filled.length} owners saved! 🎉`);   } ────────────────────────────────────────────────────────────
+  // ── Add owner ────────────────────────────────────────────────────────────
   async function addOwner() {
     if (!newOwnerName.trim() || !leagueCode) return;
     if (owners.length >= 8) { notify("Max 8 owners per league.", "error"); return; }
@@ -333,7 +333,7 @@ export default function App() {
     });
     if (error) { notify("Failed to add owner.", "error"); return; }
     setNewOwnerName("");
-    notify(`${newOwnerName.trim()} added!`);     await loadLeague(leagueCode);
+    notify(`${newOwnerName.trim()} added!`);
   }
 
   // ── Record win ───────────────────────────────────────────────────────────
@@ -852,7 +852,7 @@ export default function App() {
               </div>
 
               <div style={S.card}>
-                <SecTitle>League Setup ({owners.length}/8)</SecTitle>
+                <SecTitle>Add Owner ({owners.length}/8)</SecTitle>
                 <div style={{ display:"flex", gap:10 }}>
                   <input value={newOwnerName} onChange={e=>setNewOwnerName(e.target.value)}
                     placeholder="Owner name…" style={{ ...S.input, flex:1 }}
