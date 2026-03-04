@@ -7,7 +7,7 @@ const FontLink = () => (
 );
 
 // ── Constants
-const ROUNDS = [
+const DEFAULT_ROUNDS = [
   { id: 0, label: "Round 1",      short: "R1",  dmg: 0.50 },
   { id: 1, label: "Round of 32",  short: "R32", dmg: 1.00 },
   { id: 2, label: "Sweet 16",     short: "S16", dmg: 1.50 },
@@ -61,7 +61,7 @@ function genCode() {
 }
 
 // ── Scoring engine (identical to spreadsheet logic)
-function calcStats(owners, wins) {
+function calcStats(owners, wins, rounds) {
   const N = owners.length;
   const map = {};
   owners.forEach(o => {
@@ -78,7 +78,7 @@ function calcStats(owners, wins) {
     if (!owner) return;
     const team = owner.teams[w.team_index];
     if (!team) return;
-    const round = ROUNDS[w.round_id];
+    const round = rounds[w.round_id];
     const perOwner = team.seed * round.dmg;
     map[w.owner_id].roundWins[w.round_id]++;
     map[w.owner_id].roundEarned[w.round_id] += perOwner * (N - 1);
@@ -226,6 +226,12 @@ export default function App() {
   const [setupOwners, setSetupOwners] = useState(() => Array.from({length:8}, (_,i) => ({ name:"", color:OWNER_COLORS[i%8], teams:Array.from({length:8},(_,j)=>({seed:j+1,name:""})) })));
   const [setupStep, setSetupStep]     = useState(0);
 
+  // Round payouts (editable per league)
+  const [rounds, setRounds] = useState(() => {
+    const saved = sessionStorage.getItem("bb_rounds");
+    return saved ? JSON.parse(saved) : DEFAULT_ROUNDS;
+  });
+
   // Admin PIN
   const ADMIN_PIN = "1234"; // Change this to your desired PIN
   const [adminUnlocked, setAdminUnlocked] = useState(false);
@@ -270,6 +276,10 @@ export default function App() {
       setWins(winsData || []);
       setLeagueCode(code);
       sessionStorage.setItem("bb_league_code", code);
+      // Load per-league round settings if stored
+      const savedRounds = sessionStorage.getItem(`bb_rounds_${code}`);
+      if (savedRounds) setRounds(JSON.parse(savedRounds));
+      else setRounds(DEFAULT_ROUNDS);
       setLoading(false);
       return true;
     } catch {
@@ -423,7 +433,7 @@ export default function App() {
     } catch { setEspnStatus("error"); }
   }
 
-  const stats = calcStats(owners, wins);
+  const stats = calcStats(owners, wins, rounds);
   const totalWins = wins.length;
 
   const TABS = [
@@ -589,7 +599,7 @@ export default function App() {
                         <span style={{ fontWeight:700, fontSize:15 }}>{s.name}</span>
                       </div>
                       <div style={{ display:"flex", gap:5, flexWrap:"wrap", flex:1 }}>
-                        {ROUNDS.map((r,ri)=>(
+                        {rounds.map((r,ri)=>(
                           <span key={ri} style={{
                             background: s.roundWins[ri]>0?"#1a3a28":"#131929",
                             border:`1px solid ${s.roundWins[ri]>0?"#27ae60":"#1e2840"}`,
@@ -621,7 +631,7 @@ export default function App() {
                       <thead>
                         <tr style={{ background:"#1a2040" }}>
                           <th style={TH}>Owner</th>
-                          {ROUNDS.map(r=><th key={r.id} style={TH}>{r.short}</th>)}
+                          {rounds.map(r=><th key={r.id} style={TH}>{r.short}</th>)}
                           <th style={TH}>Final Net</th>
                         </tr>
                       </thead>
@@ -670,7 +680,7 @@ export default function App() {
                   const owner = owners.find(o=>o.id===w.owner_id);
                   const team = owner?.teams[w.team_index];
                   if (!owner||!team) return null;
-                  const round = ROUNDS[w.round_id];
+                  const round = rounds[w.round_id];
                   const perOwner = team.seed * round.dmg;
                   const total = perOwner * (owners.length-1);
                   return (
@@ -760,7 +770,7 @@ export default function App() {
                 <thead>
                   <tr style={{ background:"#141d38" }}>
                     <th style={TH}>Seed</th>
-                    {ROUNDS.map(r=>(
+                    {rounds.map(r=>(
                       <th key={r.id} style={TH}>
                         {r.short}
                         <div style={{ fontSize:10, color:"#f0c040", fontWeight:400, marginTop:2 }}>${r.dmg}/win</div>
@@ -772,7 +782,7 @@ export default function App() {
                   {Array.from({length:16},(_,i)=>i+1).map(seed=>(
                     <tr key={seed} style={{ borderBottom:"1px solid #131929" }}>
                       <td style={{ ...TD, fontWeight:700 }}><SeedBadge seed={seed} /></td>
-                      {ROUNDS.map(r=>{
+                      {rounds.map(r=>{
                         const pp = seed*r.dmg;
                         const tot = pp*(owners.length-1||7);
                         const heat = Math.min(pp/48,1);
@@ -946,6 +956,47 @@ export default function App() {
                 </div>
               )}
 
+              {/* Payout Settings */}
+              <div style={S.card}>
+                <SecTitle>💰 Payout Settings</SecTitle>
+                <p style={{ fontSize:13, color:"#6677aa", margin:"0 0 14px" }}>
+                  Set the dollar amount per seed point for each round. Formula: Seed × Amount × (Owners − 1)
+                </p>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:10 }}>
+                  {rounds.map((r, i) => (
+                    <div key={r.id} style={{ background:"#0f1625", borderRadius:10, padding:"12px 14px",
+                      border:"1px solid #1e2840" }}>
+                      <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase",
+                        letterSpacing:1, marginBottom:6 }}>{r.label}</div>
+                      <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                        <span style={{ color:"#f0c040", fontWeight:700 }}>$</span>
+                        <input type="number" min="0" step="0.25" value={r.dmg}
+                          onChange={e => {
+                            if (!adminUnlocked) { setModal("pin"); return; }
+                            const val = parseFloat(e.target.value) || 0;
+                            const updated = rounds.map((x,j) => j===i ? {...x, dmg:val} : x);
+                            setRounds(updated);
+                            sessionStorage.setItem(`bb_rounds_${leagueCode}`, JSON.stringify(updated));
+                          }}
+                          style={{ ...S.input, width:"100%", padding:"7px 10px", fontFamily:"'DM Mono',monospace",
+                            fontWeight:700, fontSize:16 }} />
+                        <span style={{ color:"#445", fontSize:12, whiteSpace:"nowrap" }}>/ seed pt</span>
+                      </div>
+                      <div style={{ fontSize:11, color:"#2ecc71", marginTop:6 }}>
+                        Seed 5 win = ${(5 * r.dmg * Math.max(owners.length-1,1)).toFixed(2)} total
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={()=>{
+                  setRounds(DEFAULT_ROUNDS);
+                  sessionStorage.removeItem(`bb_rounds_${leagueCode}`);
+                  notify("Payouts reset to defaults.");
+                }} style={{ ...S.btn("#1a2440","#6677aa"), border:"1px solid #2a3560", marginTop:12, fontSize:12 }}>
+                  Reset to Defaults
+                </button>
+              </div>
+
               {/* Per-owner edit (shown once owners exist) */}
               {owners.length > 0 && (
                 <div style={S.card}>
@@ -988,7 +1039,7 @@ export default function App() {
           <div>
             <label style={S.label}>Round</label>
             <select value={winRoundId} onChange={e=>setWinRoundId(parseInt(e.target.value))} style={S.input}>
-              {ROUNDS.map(r=><option key={r.id} value={r.id}>{r.label} (${r.dmg} × seed)</option>)}
+              {rounds.map(r=><option key={r.id} value={r.id}>{r.label} (${r.dmg} × seed)</option>)}
             </select>
           </div>
           {winOwnerId&&(
@@ -1005,7 +1056,7 @@ export default function App() {
           {winOwnerId&&winTeamIdx!==""&&(()=>{
             const owner=owners.find(o=>o.id===parseInt(winOwnerId));
             const team=owner?.teams[parseInt(winTeamIdx)];
-            const round=ROUNDS[winRoundId];
+            const round=rounds[winRoundId];
             const pp=team?team.seed*round.dmg:0;
             const tot=pp*(owners.length-1);
             return (
