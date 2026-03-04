@@ -503,17 +503,7 @@ export default function App() {
           </div>
 
           <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-            <button onClick={loadCHI2025} style={{
-              ...S.btn("#f0c040","#111"), padding:"14px 20px", fontSize:15,
-              borderRadius:12, textAlign:"left",
-            }}>
-              🗂 Load CHI 2025 Upset Pool
-              <div style={{ fontSize:11, fontWeight:400, color:"#555", marginTop:3 }}>
-                Code: CHI2025 · 8 owners · Pre-loaded teams
-              </div>
-            </button>
-
-            <button onClick={()=>setModal("join")} style={{
+<button onClick={()=>setModal("join")} style={{
               ...S.btn("#1e2840","#dce4f5"), padding:"14px 20px", fontSize:15, borderRadius:12,
             }}>
               🔑 Join a League
