@@ -856,12 +856,18 @@ export default function App() {
         {/* ESPN */}
         {!loading && tab==="espn" && (
           <div>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
               <h2 style={{ margin:0, fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Live Scores</h2>
               <button onClick={fetchESPN} style={S.btn()} disabled={espnStatus==="loading"}>
                 {espnStatus==="loading"?"⟳ Loading…":"🔄 Fetch from ESPN"}
               </button>
             </div>
+            {owners.length>0 && espnStatus==="success" && (
+              <div style={{ background:"#0a1428", border:"1px solid #1e2840", borderRadius:10,
+                padding:"10px 14px", marginBottom:16, fontSize:12, color:"#6677aa" }}>
+                💡 <strong style={{ color:"#f0c040" }}>1-click recording:</strong> When a game is final, click <strong style={{ color:"#2ecc71" }}>✓ Record Win</strong> next to the winning team to instantly log it. You'll be prompted to select the round.
+              </div>
+            )}
             {espnStatus==="idle"&&<Empty text='Click "Fetch from ESPN" to load live tournament scores.' />}
             {espnStatus==="error"&&(
               <div style={{ ...S.card, borderColor:"#e74c3c", color:"#e74c3c" }}>
@@ -884,18 +890,65 @@ export default function App() {
                   </span>
                 </div>
                 <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
-                  {game.competitors.map((c,i)=>(
-                    <div key={i} style={{ display:"flex", alignItems:"center", gap:8,
-                      background:c.winner?"#0a2a14":"#0f1625",
-                      border:`1px solid ${c.winner?"#27ae60":"#1a2440"}`,
-                      borderRadius:8, padding:"8px 14px", flex:1, minWidth:140 }}>
-                      {c.seed&&<SeedBadge seed={c.seed} />}
-                      <span style={{ fontWeight:c.winner?700:400, flex:1 }}>{c.name}</span>
-                      <span style={{ fontWeight:800, fontSize:20, fontFamily:"'DM Mono',monospace",
-                        color:c.winner?"#2ecc71":"#dce4f5" }}>{c.score}</span>
-                      {c.winner&&<span style={{ color:"#2ecc71" }}>✓</span>}
-                    </div>
-                  ))}
+                  {game.competitors.map((c,i)=>{
+                    // Find matching owner+team for this competitor
+                    const teamNameNorm = (c.name||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+                    const match = (() => {
+                      for (const owner of owners) {
+                        const idx = owner.teams.findIndex(t =>
+                          (t.name||"").toLowerCase().replace(/[^a-z0-9]/g,"").includes(teamNameNorm.slice(0,6)) ||
+                          teamNameNorm.includes((t.name||"").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,6))
+                        );
+                        if (idx >= 0) return { owner, teamIdx: idx, team: owner.teams[idx] };
+                      }
+                      return null;
+                    })();
+                    const alreadyWon = match && wins.some(w => w.owner_id===match.owner.id && w.team_index===match.teamIdx);
+                    return (
+                      <div key={i} style={{ display:"flex", alignItems:"center", gap:8,
+                        background:c.winner?"#0a2a14":"#0f1625",
+                        border:`1px solid ${c.winner?"#27ae60":"#1a2440"}`,
+                        borderRadius:8, padding:"8px 14px", flex:1, minWidth:140, flexWrap:"wrap" }}>
+                        {c.seed&&<SeedBadge seed={c.seed} />}
+                        <span style={{ fontWeight:c.winner?700:400, flex:1 }}>{c.name}</span>
+                        {match && (
+                          <span style={{ fontSize:11, color:"#6677aa", background:"#1a2440",
+                            borderRadius:4, padding:"2px 6px" }}>
+                            {match.owner.name}
+                          </span>
+                        )}
+                        <span style={{ fontWeight:800, fontSize:20, fontFamily:"'DM Mono',monospace",
+                          color:c.winner?"#2ecc71":"#dce4f5" }}>{c.score}</span>
+                        {c.winner && match && !alreadyWon && (
+                          <button onClick={()=>{
+                            if (!adminUnlocked) { setModal("pin"); return; }
+                            setWinOwnerId(String(match.owner.id));
+                            setWinTeamIdx(String(match.teamIdx));
+                            setModal("addWin");
+                          }} style={{ background:"#0a3a1a", border:"1px solid #27ae60",
+                            borderRadius:6, color:"#2ecc71", padding:"4px 10px",
+                            cursor:"pointer", fontSize:12, fontWeight:700, fontFamily:"inherit",
+                            whiteSpace:"nowrap" }}>
+                            ✓ Record Win
+                          </button>
+                        )}
+                        {c.winner && alreadyWon && (
+                          <span style={{ fontSize:11, color:"#2ecc71", fontWeight:700 }}>✓ Logged</span>
+                        )}
+                        {c.winner && !match && (
+                          <button onClick={()=>{
+                            if (!adminUnlocked) { setModal("pin"); return; }
+                            setModal("addWin");
+                          }} style={{ background:"#1a2440", border:"1px solid #2a3560",
+                            borderRadius:6, color:"#f0c040", padding:"4px 10px",
+                            cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit",
+                            whiteSpace:"nowrap" }}>
+                            + Log Win
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}
