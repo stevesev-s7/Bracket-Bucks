@@ -265,6 +265,10 @@ export default function App() {
   const [espnGames, setEspnGames]   = useState([]);
   const [espnStatus, setEspnStatus] = useState("idle");
 
+  // Bracket
+  const [bracketData, setBracketData]     = useState(null);
+  const [bracketStatus, setBracketStatus] = useState("idle");
+
   function notify(msg, type="success") {
     setToast({ msg, type });
     setTimeout(()=>setToast(null), 3200);
@@ -452,6 +456,48 @@ export default function App() {
     notify(`${editingOwner.name}'s teams updated!`);
   }
 
+  // ── Bracket ──────────────────────────────────────────────────────────────
+  async function fetchBracket() {
+    setBracketStatus("loading");
+    try {
+      const res = await fetch("https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200");
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const games = (data.events || []).map(e => {
+        const comp = e.competitions?.[0];
+        const teams = (comp?.competitors || []).map(c => ({
+          name: c.team?.shortDisplayName || c.team?.displayName || "TBD",
+          fullName: c.team?.displayName || "",
+          seed: c.curatedRank?.current || null,
+          score: c.score || "0",
+          winner: c.winner || false,
+          logo: c.team?.logo || null,
+        }));
+        return {
+          id: e.id,
+          name: e.name,
+          status: e.status?.type?.description || "—",
+          isLive: e.status?.type?.state === "in",
+          isFinal: e.status?.type?.completed || false,
+          period: e.status?.displayClock || "",
+          teams,
+          round: comp?.series?.title || e.season?.slug || "",
+          date: e.date,
+          venue: comp?.venue?.fullName || "",
+        };
+      });
+      // Group by round name
+      const byRound = {};
+      games.forEach(g => {
+        const r = g.round || "Other";
+        if (!byRound[r]) byRound[r] = [];
+        byRound[r].push(g);
+      });
+      setBracketData(byRound);
+      setBracketStatus("success");
+    } catch { setBracketStatus("error"); }
+  }
+
   // ── ESPN ─────────────────────────────────────────────────────────────────
   async function fetchESPN() {
     setEspnStatus("loading");
@@ -482,6 +528,7 @@ export default function App() {
     {id:"roster",      icon:"👥", label:"Rosters"},
     {id:"payouts",     icon:"💰", label:"Payout Table"},
     {id:"espn",        icon:"📡", label:"Live Scores"},
+    {id:"bracket",     icon:"🗂",  label:"Bracket"},
     {id:"admin",       icon:"⚙️",  label:"Admin"},
   ];
 
@@ -980,6 +1027,102 @@ export default function App() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* BRACKET */}
+        {!loading && tab==="bracket" && (
+          <div>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+              <h2 style={{ margin:0, fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Live Bracket</h2>
+              <button onClick={fetchBracket} style={S.btn()} disabled={bracketStatus==="loading"}>
+                {bracketStatus==="loading" ? "⟳ Loading…" : "🔄 Fetch Bracket"}
+              </button>
+            </div>
+
+            {bracketStatus==="idle" && (
+              <div style={{ textAlign:"center", padding:"60px 20px", color:"#6677aa" }}>
+                <div style={{ fontSize:48, marginBottom:16 }}>🗂</div>
+                <div style={{ fontSize:16, marginBottom:8 }}>Click "Fetch Bracket" to load the live tournament bracket</div>
+                <div style={{ fontSize:13 }}>Powered by ESPN · Updates in real-time</div>
+              </div>
+            )}
+
+            {bracketStatus==="error" && (
+              <div style={{ ...S.card, borderColor:"#e74c3c", color:"#e74c3c" }}>
+                <strong>⚠️ Could not reach ESPN API</strong>
+                <p style={{ fontSize:13, marginTop:8, color:"#aaa" }}>Try again during the tournament. ESPN data may not be available in the off-season.</p>
+              </div>
+            )}
+
+            {bracketStatus==="success" && bracketData && (
+              <div>
+                {Object.entries(bracketData).map(([roundName, games]) => (
+                  <div key={roundName} style={{ marginBottom:28 }}>
+                    <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:18, letterSpacing:2,
+                      color:"#f0c040", marginBottom:12, paddingBottom:6,
+                      borderBottom:"1px solid #1e2840" }}>
+                      {roundName} <span style={{ fontSize:12, color:"#445", fontFamily:"'DM Sans',sans-serif", letterSpacing:0 }}>({games.length} games)</span>
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(300px, 1fr))", gap:10 }}>
+                      {games.map(game => {
+                        const [t1, t2] = game.teams;
+                        // Check if either team belongs to an owner
+                        const findOwner = (teamName) => {
+                          const norm = (s) => (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+                          const tn = norm(teamName);
+                          for (const owner of owners) {
+                            for (const t of owner.teams) {
+                              const on = norm(t.name);
+                              if (on.length > 3 && (tn.includes(on) || on.includes(tn))) return owner;
+                            }
+                          }
+                          return null;
+                        };
+                        const o1 = t1 ? findOwner(t1.name) : null;
+                        const o2 = t2 ? findOwner(t2.name) : null;
+                        return (
+                          <div key={game.id} style={{ ...S.card, padding:"12px 14px",
+                            borderLeft:`3px solid ${game.isLive?"#e74c3c":game.isFinal?"#27ae60":"#1e2840"}` }}>
+                            {/* Game status */}
+                            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:10 }}>
+                              <span style={{ fontSize:11, color:"#445" }}>{game.venue}</span>
+                              <span style={{ fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:99,
+                                background: game.isLive?"#3a0a0a":game.isFinal?"#0a2a14":"#1a2440",
+                                color: game.isLive?"#e74c3c":game.isFinal?"#2ecc71":"#6677aa" }}>
+                                {game.isLive ? `🔴 ${game.period}` : game.isFinal ? "✓ Final" : game.status}
+                              </span>
+                            </div>
+                            {/* Teams */}
+                            {[t1, t2].map((t, i) => t ? (
+                              <div key={i} style={{ display:"flex", alignItems:"center", gap:8,
+                                padding:"7px 10px", borderRadius:8, marginBottom: i===0?6:0,
+                                background: t.winner?"#0a2a14":"#0a0f1a",
+                                border:`1px solid ${t.winner?"#27ae60":"#1a2440"}`,
+                                opacity: game.isFinal && !t.winner ? 0.5 : 1 }}>
+                                {t.seed && <SeedBadge seed={t.seed} />}
+                                <span style={{ flex:1, fontWeight: t.winner?700:400, fontSize:13 }}>{t.name}</span>
+                                {(() => { const o = i===0?o1:o2; return o ? (
+                                  <span style={{ fontSize:10, background:"#1a2440", color:o.color,
+                                    borderRadius:4, padding:"1px 6px", fontWeight:700 }}>{o.name}</span>
+                                ) : null; })()}
+                                {game.isLive || game.isFinal ? (
+                                  <span style={{ fontFamily:"'DM Mono',monospace", fontWeight:800,
+                                    fontSize:16, color: t.winner?"#2ecc71":"#dce4f5", minWidth:28, textAlign:"right" }}>
+                                    {t.score}
+                                  </span>
+                                ) : null}
+                                {t.winner && <span style={{ color:"#2ecc71", fontSize:14 }}>✓</span>}
+                              </div>
+                            ) : null)}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
