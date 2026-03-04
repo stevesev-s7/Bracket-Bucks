@@ -264,10 +264,25 @@ export default function App() {
     setTimeout(()=>setToast(null), 3200);
   }
 
-  // ── Auto-load saved league on startup ──────────────────────────────────
+  // ── Auto-load saved league + fetch all leagues from Supabase on startup ──
   useEffect(() => {
+    // Auto-load last visited league
     const saved = sessionStorage.getItem("bb_league_code");
     if (saved) loadLeague(saved);
+
+    // Fetch ALL leagues from Supabase and merge into myLeagues
+    supabase.from("leagues").select("code,name").then(({ data }) => {
+      if (!data) return;
+      setMyLeagues(prev => {
+        const existing = new Map(prev.map(l => [l.code, l]));
+        data.forEach(l => {
+          if (!existing.has(l.code)) existing.set(l.code, { code: l.code, name: l.name, createdAt: Date.now() });
+        });
+        const updated = Array.from(existing.values());
+        localStorage.setItem("bb_my_leagues", JSON.stringify(updated));
+        return updated;
+      });
+    });
   // eslint-disable-next-line
   }, []);
 
@@ -512,7 +527,7 @@ export default function App() {
             </button>
           </div>
 
-          {loading && <div style={{ marginTop:20, textAlign:"center", color:"#6677aa" }}>Loading…</div>}           {myLeagues.length > 0 && (             <div style={{ marginTop:28 }}>               <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:2, fontWeight:700, marginBottom:10 }}>My Leagues</div>               <div style={{ display:"flex", flexDirection:"column", gap:8 }}>                 {[...myLeagues].reverse().map(l => (                   <button key={l.code} onClick={()=>loadLeague(l.code)} style={{ ...S.btn("#0f1625","#dce4f5"), padding:"12px 16px", fontSize:14, borderRadius:10, textAlign:"left", border:"1px solid #1e2840", display:"flex", alignItems:"center", justifyContent:"space-between" }}>                     <div><div style={{ fontWeight:700 }}>{l.name}</div><div style={{ fontSize:11, color:"#6677aa", marginTop:2 }}>Code: <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040" }}>{l.code}</span></div></div>                     <span style={{ color:"#f0c040", fontSize:18 }}>→</span>                   </button>                 ))}               </div>             </div>           )}
+          {loading && <div style={{ marginTop:20, textAlign:"center", color:"#6677aa" }}>Loading…</div>}
 
           {/* My Leagues */}
           {myLeagues.length > 0 && (
