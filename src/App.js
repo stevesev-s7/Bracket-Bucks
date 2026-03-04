@@ -226,6 +226,12 @@ export default function App() {
   const [setupOwners, setSetupOwners] = useState(() => Array.from({length:8}, (_,i) => ({ name:"", color:OWNER_COLORS[i%8], teams:Array.from({length:8},(_,j)=>({seed:j+1,name:""})) })));
   const [setupStep, setSetupStep]     = useState(0);
 
+  // Admin mode
+  const ADMIN_PASSWORD = "chi2025admin"; // Change this to your desired password
+  const [isAdmin, setIsAdmin]           = useState(() => sessionStorage.getItem("bb_is_admin") === "true");
+  const [adminPassInput, setAdminPassInput] = useState("");
+  const [adminPassError, setAdminPassError] = useState("");
+
   // My Leagues (persisted in localStorage)
   const [myLeagues, setMyLeagues] = useState(() => {
     try { return JSON.parse(localStorage.getItem("bb_my_leagues") || "[]"); }
@@ -529,11 +535,25 @@ export default function App() {
 
           {loading && <div style={{ marginTop:20, textAlign:"center", color:"#6677aa" }}>Loading…</div>}
 
-          {/* My Leagues */}
-          {myLeagues.length > 0 && (
+          {/* Admin login / My Leagues */}
+          {!isAdmin ? (
+            <div style={{ marginTop:28, textAlign:"center" }}>
+              <button onClick={()=>setModal("adminLogin")} style={{
+                background:"none", border:"none", color:"#2a3560",
+                fontSize:12, cursor:"pointer", textDecoration:"underline"
+              }}>Admin Login</button>
+            </div>
+          ) : (
             <div style={{ marginTop:28 }}>
-              <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase",
-                letterSpacing:2, fontWeight:700, marginBottom:10 }}>My Leagues</div>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:2, fontWeight:700 }}>
+                  🔓 My Leagues
+                </div>
+                <button onClick={()=>{ sessionStorage.removeItem("bb_is_admin"); setIsAdmin(false); }}
+                  style={{ background:"none", border:"none", color:"#445", fontSize:11, cursor:"pointer", textDecoration:"underline" }}>
+                  Log out
+                </button>
+              </div>
               <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                 {[...myLeagues].reverse().map(l => (
                   <button key={l.code} onClick={()=>loadLeague(l.code)} style={{
@@ -551,18 +571,21 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              <button onClick={()=>{
-                localStorage.removeItem("bb_my_leagues");
-                setMyLeagues([]);
-              }} style={{ fontSize:11, color:"#445", background:"none", border:"none",
-                cursor:"pointer", marginTop:8, textDecoration:"underline" }}>
-                Clear history
-              </button>
             </div>
           )}
         </div>
 
         {/* Modals */}
+        <Modal open={modal==="adminLogin"} onClose={()=>{setModal(null);setAdminPassInput("");setAdminPassError("");}} title="🔐 Admin Login">
+          <p style={{ color:"#6677aa", fontSize:13, marginBottom:16 }}>Enter your admin password to access all leagues.</p>
+          <input type="password" value={adminPassInput} onChange={e=>setAdminPassInput(e.target.value)}
+            onKeyDown={e=>{ if(e.key==="Enter"){ if(adminPassInput===ADMIN_PASSWORD){setIsAdmin(true);sessionStorage.setItem("bb_is_admin","true");setModal(null);setAdminPassInput("");setAdminPassError("");}else{setAdminPassError("Incorrect password.");}}}}
+            placeholder="Password" style={{ ...S.input, letterSpacing:4, fontSize:18, textAlign:"center", marginBottom:8 }} autoFocus />
+          {adminPassError && <div style={{ color:"#e74c3c", fontSize:12, marginBottom:8 }}>{adminPassError}</div>}
+          <button onClick={()=>{ if(adminPassInput===ADMIN_PASSWORD){setIsAdmin(true);sessionStorage.setItem("bb_is_admin","true");setModal(null);setAdminPassInput("");setAdminPassError("");}else{setAdminPassError("Incorrect password.");}}}
+            style={{ ...S.btn(), width:"100%", marginTop:4 }}>Login</button>
+        </Modal>
+
         <Modal open={modal==="join"} onClose={()=>setModal(null)} title="Join a League">
           <label style={S.label}>Invite Code</label>
           <input value={joinCode} onChange={e=>{setJoinCode(e.target.value);setJoinErr("");}}
