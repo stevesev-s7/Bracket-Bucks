@@ -707,6 +707,7 @@ export default function App() {
     {id:"payouts",     icon:"💰", label:"Payout Table"},
     {id:"espn",        icon:"📡", label:"Live Scores"},
     {id:"bracket2025", icon:"🏆", label:"Live Bracket"},
+    {id:"profile",     icon:"👤", label:"My Profile"},
     {id:"admin",       icon:"⚙️",  label:"Admin"},
   ];
 
@@ -748,7 +749,7 @@ export default function App() {
               <div style={{ marginBottom:14 }}>
                 <label style={S.label}>Your Name</label>
                 <input value={authName} onChange={e=>setAuthName(e.target.value)}
-                  placeholder="e.g. Josh Galati" style={S.input}
+                  placeholder="e.g. Joe Smith" style={S.input}
                   onKeyDown={e=>e.key==="Enter"&&handleSignUp()} />
               </div>
             )}
@@ -966,6 +967,7 @@ export default function App() {
           <div style={{ background:"#1a2440", borderRadius:8, padding:"7px 14px", fontSize:12 }}>
             Code: <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040", fontWeight:700 }}>{leagueCode}</span>
           </div>
+          <button onClick={()=>setTab("profile")} style={{ ...S.btn("#1a2440","#dce4f5"), border:"1px solid #2a3560", fontSize:12 }}>👤 Profile</button>
           <button onClick={()=>{setLeagueCode(null);setLeague(null);setOwners([]);setWins([]);}}
             style={S.btn("#1e2840","#dce4f5")}>⬅ Switch League</button>
           {league && <button onClick={()=>setModal("addWin")} style={S.btn()}>＋ Record Win</button>}
@@ -1425,6 +1427,180 @@ export default function App() {
             })()}
           </div>
         )}
+
+        {/* PROFILE */}
+        {!loading && tab==="profile" && (()=>{
+          const userName = authUser?.user_metadata?.name || authUser?.email || "Player";
+          const userLeagues = authUser?.user_metadata?.leagues || [];
+
+          // Find this user's owner entry in current league by matching name
+          const myOwner = owners.find(o =>
+            o.name.toLowerCase().replace(/\s/g,"") === userName.toLowerCase().replace(/\s/g,"")
+          );
+          const myStats = myOwner ? stats.find(s => s.id === myOwner.id) : null;
+
+          // All-time: aggregate across saved leagues (current league data only for now)
+          const allTimeWins = myOwner ? wins.filter(w => w.owner_id === myOwner.id).length : 0;
+          const standing = myStats ? stats.findIndex(s => s.id === myOwner.id) + 1 : null;
+
+          return (
+            <div>
+              {/* Profile Header */}
+              <div style={{ ...S.card, background:"linear-gradient(135deg,#111827,#1a2440)",
+                display:"flex", alignItems:"center", gap:20, flexWrap:"wrap", marginBottom:20 }}>
+                <div style={{ width:64, height:64, borderRadius:"50%",
+                  background: myOwner?.color || "#f0c040",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:28, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                  {userName.charAt(0).toUpperCase()}
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:2, color:"#f0c040" }}>
+                    {userName}
+                  </div>
+                  <div style={{ fontSize:12, color:"#6677aa", marginTop:2 }}>{authUser?.email}</div>
+                  <div style={{ fontSize:12, color:"#445", marginTop:4 }}>
+                    Member of {userLeagues.length} league{userLeagues.length!==1?"s":""}
+                  </div>
+                </div>
+                <button onClick={handleSignOut} style={{ ...S.btn("#1a1a2e","#e74c3c"), border:"1px solid #e74c3c", fontSize:12 }}>
+                  Sign Out
+                </button>
+              </div>
+
+              {/* Current League Stats */}
+              {myStats ? (
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))", gap:12, marginBottom:20 }}>
+                  {[
+                    ["Standing", `#${standing} of ${owners.length}`, standing===1?"#f0c040":"#dce4f5"],
+                    ["Net P&L", `${myStats.net>=0?"+":""}$${myStats.net.toFixed(2)}`, myStats.net>=0?"#2ecc71":"#e74c3c"],
+                    ["Total Earned", `$${myStats.totalEarned.toFixed(2)}`, "#2ecc71"],
+                    ["Total Paid", `$${myStats.totalCost.toFixed(2)}`, "#e74c3c"],
+                    ["Wins This Year", allTimeWins, "#f0c040"],
+                    ["Avg Seed", myOwner ? (myOwner.teams.reduce((a,t)=>a+t.seed,0)/myOwner.teams.length).toFixed(1) : "—", "#6677aa"],
+                  ].map(([label, val, color]) => (
+                    <div key={label} style={{ background:"#0f1625", border:"1px solid #1e2840",
+                      borderRadius:12, padding:"16px 18px" }}>
+                      <div style={{ fontSize:10, color:"#445", textTransform:"uppercase", letterSpacing:1.5, marginBottom:6 }}>{label}</div>
+                      <div style={{ fontSize:24, fontWeight:800, fontFamily:"'DM Mono',monospace", color }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ ...S.card, borderColor:"#2a3350", color:"#6677aa", fontSize:13, marginBottom:20 }}>
+                  <strong style={{ color:"#f0c040" }}>👋 You're not listed as an owner in this league.</strong>
+                  <p style={{ margin:"8px 0 0" }}>Your profile name <strong>"{userName}"</strong> doesn't match any owner in {league?.name}. Ask your admin to add you, or make sure your profile name matches exactly.</p>
+                </div>
+              )}
+
+              {/* My Teams This Year */}
+              {myOwner && (
+                <div style={{ ...S.card, marginBottom:20 }}>
+                  <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:18, letterSpacing:2, color:"#f0c040", marginBottom:14 }}>
+                    🏀 My Teams — {league?.name}
+                  </div>
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:8 }}>
+                    {myOwner.teams.map((t, i) => {
+                      const teamWins = wins.filter(w => w.owner_id===myOwner.id && w.team_index===i);
+                      const earned = teamWins.reduce((sum, w) => {
+                        const r = rounds[w.round_id];
+                        return sum + (t.seed * r.dmg * (owners.length - 1));
+                      }, 0);
+                      return (
+                        <div key={i} style={{ background:"#0a0f1a", border:`1px solid ${teamWins.length?"#27ae60":"#1a2440"}`,
+                          borderRadius:10, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
+                          <SeedBadge seed={t.seed} />
+                          <div style={{ flex:1 }}>
+                            <div style={{ fontWeight:600, fontSize:13 }}>{t.name || "TBD"}</div>
+                            {teamWins.length > 0 && (
+                              <div style={{ fontSize:11, color:"#2ecc71", marginTop:2 }}>
+                                {teamWins.length} win{teamWins.length!==1?"s":""} · +${earned.toFixed(2)}
+                              </div>
+                            )}
+                          </div>
+                          {teamWins.length > 0 && <span style={{ color:"#2ecc71" }}>✓</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Round-by-Round Breakdown */}
+              {myStats && (
+                <div style={{ ...S.card, marginBottom:20 }}>
+                  <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:18, letterSpacing:2, color:"#f0c040", marginBottom:14 }}>
+                    📊 Round-by-Round Breakdown
+                  </div>
+                  <div style={{ overflowX:"auto" }}>
+                    <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+                      <thead>
+                        <tr style={{ background:"#0f1625" }}>
+                          {["Round","Wins","Earned","Paid Out","Net"].map(h=>(
+                            <th key={h} style={TH}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rounds.map((r,i) => {
+                          const net = myStats.roundEarned[i] - myStats.roundCost[i];
+                          return (
+                            <tr key={r.id} style={{ borderBottom:"1px solid #131929" }}>
+                              <td style={TD}>{r.short}</td>
+                              <td style={TD}>{myStats.roundWins[i]}</td>
+                              <td style={{ ...TD, color:"#2ecc71", fontFamily:"'DM Mono',monospace" }}>+${myStats.roundEarned[i].toFixed(2)}</td>
+                              <td style={{ ...TD, color:"#e74c3c", fontFamily:"'DM Mono',monospace" }}>-${myStats.roundCost[i].toFixed(2)}</td>
+                              <td style={{ ...TD, fontWeight:700, fontFamily:"'DM Mono',monospace",
+                                color: net>=0?"#2ecc71":"#e74c3c" }}>{net>=0?"+":""}{net.toFixed(2)}</td>
+                            </tr>
+                          );
+                        })}
+                        <tr style={{ background:"#0f1625", fontWeight:700 }}>
+                          <td style={TD}>TOTAL</td>
+                          <td style={TD}>{allTimeWins}</td>
+                          <td style={{ ...TD, color:"#2ecc71", fontFamily:"'DM Mono',monospace" }}>+${myStats.totalEarned.toFixed(2)}</td>
+                          <td style={{ ...TD, color:"#e74c3c", fontFamily:"'DM Mono',monospace" }}>-${myStats.totalCost.toFixed(2)}</td>
+                          <td style={{ ...TD, fontWeight:800, fontFamily:"'DM Mono',monospace",
+                            color: myStats.net>=0?"#2ecc71":"#e74c3c", fontSize:15 }}>
+                            {myStats.net>=0?"+":""}{myStats.net.toFixed(2)}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* My Leagues History */}
+              <div style={S.card}>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:18, letterSpacing:2, color:"#f0c040", marginBottom:14 }}>
+                  🏆 My Leagues
+                </div>
+                {userLeagues.length === 0 ? (
+                  <div style={{ color:"#445", fontSize:13 }}>No leagues joined yet.</div>
+                ) : (
+                  <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                    {[...userLeagues].reverse().map(l => (
+                      <button key={l.code} onClick={()=>{ loadLeague(l.code); setTab("leaderboard"); }}
+                        style={{ ...S.btn("#0f1625","#dce4f5"), padding:"12px 16px", fontSize:14,
+                          borderRadius:10, textAlign:"left", border:`1px solid ${l.code===leagueCode?"#f0c040":"#1e2840"}`,
+                          display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                        <div>
+                          <div style={{ fontWeight:700 }}>{l.name}</div>
+                          <div style={{ fontSize:11, color:"#6677aa", marginTop:2 }}>
+                            Code: <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040" }}>{l.code}</span>
+                            {l.code===leagueCode && <span style={{ color:"#2ecc71", marginLeft:8 }}>● Active</span>}
+                          </div>
+                        </div>
+                        <span style={{ color:"#f0c040" }}>→</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ADMIN */}
         {!loading && tab==="admin" && (
