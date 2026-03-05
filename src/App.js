@@ -706,7 +706,7 @@ export default function App() {
     {id:"roster",      icon:"👥", label:"Rosters"},
     {id:"payouts",     icon:"💰", label:"Payout Table"},
     {id:"espn",        icon:"📡", label:"Live Scores"},
-    {id:"bracket2025", icon:"🏆", label:"Live Bracket"},
+    {id:"bracket2025", icon:"🏆", label:"2025 Bracket"},
     {id:"profile",     icon:"👤", label:"My Profile"},
     {id:"admin",       icon:"⚙️",  label:"Admin"},
   ];
