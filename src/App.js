@@ -355,6 +355,16 @@ export default function App() {
   const [adminPassInput, setAdminPassInput] = useState("");
   const [adminPassError, setAdminPassError] = useState("");
 
+  // Auth state
+  const [authUser, setAuthUser]         = useState(null);
+  const [authLoading, setAuthLoading]   = useState(true);
+  const [authView, setAuthView]         = useState("signin"); // "signin" | "signup"
+  const [authEmail, setAuthEmail]       = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName]         = useState("");
+  const [authError, setAuthError]       = useState("");
+  const [authWorking, setAuthWorking]   = useState(false);
+
   // My Leagues (persisted in localStorage)
   const [myLeagues, setMyLeagues] = useState(() => {
     try { return JSON.parse(localStorage.getItem("bb_my_leagues") || "[]"); }
@@ -397,27 +407,69 @@ export default function App() {
     setTimeout(()=>setToast(null), 3200);
   }
 
-  // ── Auto-load saved league + fetch all leagues from Supabase on startup ──
+  // ── Auth init ────────────────────────────────────────────────────────────
   useEffect(() => {
-    // Auto-load last visited league
-    const saved = sessionStorage.getItem("bb_league_code");
-    if (saved) loadLeague(saved);
-
-    // Fetch ALL leagues from Supabase and merge into myLeagues
-    supabase.from("leagues").select("code,name").then(({ data }) => {
-      if (!data) return;
-      setMyLeagues(prev => {
-        const existing = new Map(prev.map(l => [l.code, l]));
-        data.forEach(l => {
-          if (!existing.has(l.code)) existing.set(l.code, { code: l.code, name: l.name, createdAt: Date.now() });
-        });
-        const updated = Array.from(existing.values());
-        localStorage.setItem("bb_my_leagues", JSON.stringify(updated));
-        return updated;
-      });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setAuthUser(session?.user ?? null);
+      setAuthLoading(false);
+      if (session?.user) autoLoadUserLeague(session.user);
     });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user ?? null);
+      if (session?.user) autoLoadUserLeague(session.user);
+    });
+    return () => subscription.unsubscribe();
   // eslint-disable-next-line
   }, []);
+
+  async function autoLoadUserLeague(user) {
+    // Load user's leagues from their metadata
+    const userLeagues = user.user_metadata?.leagues || [];
+    setMyLeagues(userLeagues);
+    // Auto-load last visited league for this user
+    const saved = localStorage.getItem(`bb_league_${user.id}`);
+    if (saved) loadLeague(saved);
+  }
+
+  async function handleSignUp() {
+    if (!authEmail || !authPassword || !authName) { setAuthError("Please fill in all fields."); return; }
+    if (authPassword.length < 6) { setAuthError("Password must be at least 6 characters."); return; }
+    setAuthWorking(true); setAuthError("");
+    const { error } = await supabase.auth.signUp({
+      email: authEmail, password: authPassword,
+      options: { data: { name: authName, leagues: [] } }
+    });
+    if (error) { setAuthError(error.message); setAuthWorking(false); }
+    else { setAuthError(""); setAuthWorking(false); setAuthView("signin");
+      setAuthError("Account created! Please sign in."); }
+  }
+
+  async function handleSignIn() {
+    if (!authEmail || !authPassword) { setAuthError("Please enter email and password."); return; }
+    setAuthWorking(true); setAuthError("");
+    const { error } = await supabase.auth.signInWithPassword({ email: authEmail, password: authPassword });
+    if (error) { setAuthError(error.message); setAuthWorking(false); }
+    else { setAuthWorking(false); }
+  }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    setLeagueCode(null); setLeague(null); setOwners([]); setWins([]);
+    setMyLeagues([]);
+  }
+
+  async function saveLeagueToUser(code, name) {
+    if (!authUser) return;
+    const existing = authUser.user_metadata?.leagues || [];
+    const alreadyIn = existing.find(l => l.code === code);
+    const updated = alreadyIn
+      ? existing.map(l => l.code === code ? { ...l, name } : l)
+      : [...existing, { code, name, createdAt: Date.now() }];
+    await supabase.auth.updateUser({ data: { leagues: updated } });
+    setMyLeagues(updated);
+    // Remember last league for this user
+    localStorage.setItem(`bb_league_${authUser.id}`, code);
+  }
 
   // ── Load league from Supabase ────────────────────────────────────────────
   const loadLeague = useCallback(async (code) => {
@@ -441,6 +493,7 @@ export default function App() {
       setWins(winsData || []);
       setLeagueCode(code);
       sessionStorage.setItem("bb_league_code", code);
+    if (authUser) localStorage.setItem(`bb_league_${authUser.id}`, code);
       // Load per-league round settings if stored
       const savedRounds = sessionStorage.getItem(`bb_rounds_${code}`);
       if (savedRounds) setRounds(JSON.parse(savedRounds));
@@ -479,6 +532,7 @@ export default function App() {
     const ok = await loadLeague(code);
     if (ok) {
       saveToMyLeagues(code, newLeagueName.trim());
+      saveLeagueToUser(code, newLeagueName.trim());
       setNewLeagueName("");
       setModal(null);
       notify(`League created! Invite code: ${code}`);
@@ -490,6 +544,7 @@ export default function App() {
     if (!code) return;
     const ok = await loadLeague(code);
     if (ok) {
+      saveLeagueToUser(code, league?.name || code);
       setJoinCode(""); setJoinErr("");
       setModal(null);
       notify(`Joined league: ${league?.name || code}`);
@@ -655,6 +710,112 @@ export default function App() {
     {id:"admin",       icon:"⚙️",  label:"Admin"},
   ];
 
+  // ── Auth screen ─────────────────────────────────────────────────────────
+  if (authLoading) {
+    return (
+      <div style={{ minHeight:"100vh", background:"#0c1120", display:"flex", alignItems:"center", justifyContent:"center" }}>
+        <FontLink />
+        <div style={{ color:"#6677aa", fontSize:16 }}>Loading…</div>
+      </div>
+    );
+  }
+
+  if (!authUser) {
+    const isSignUp = authView === "signup";
+    return (
+      <div style={{ minHeight:"100vh", background:"#0c1120", fontFamily:"'DM Sans',sans-serif",
+        color:"#dce4f5", display:"flex", alignItems:"center", justifyContent:"center" }}>
+        <FontLink />
+        <div style={{ maxWidth:420, width:"100%", padding:24 }}>
+          {/* Logo */}
+          <div style={{ textAlign:"center", marginBottom:36 }}>
+            <div style={{ fontSize:52, marginBottom:12 }}>🏀</div>
+            <h1 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:44, letterSpacing:4,
+              color:"#f0c040", margin:0, textShadow:"0 0 30px rgba(240,192,64,0.4)" }}>
+              BRACKET BUCKS
+            </h1>
+            <p style={{ color:"#6677aa", marginTop:8, fontSize:14 }}>March Madness Upset Pool Tracker</p>
+          </div>
+
+          {/* Auth card */}
+          <div style={{ background:"#131929", border:"1px solid #1e2840", borderRadius:18, padding:28 }}>
+            <h2 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, letterSpacing:2,
+              color:"#f0c040", margin:"0 0 20px" }}>
+              {isSignUp ? "Create Account" : "Sign In"}
+            </h2>
+
+            {isSignUp && (
+              <div style={{ marginBottom:14 }}>
+                <label style={S.label}>Your Name</label>
+                <input value={authName} onChange={e=>setAuthName(e.target.value)}
+                  placeholder="e.g. Josh Galati" style={S.input}
+                  onKeyDown={e=>e.key==="Enter"&&handleSignUp()} />
+              </div>
+            )}
+
+            <div style={{ marginBottom:14 }}>
+              <label style={S.label}>Email</label>
+              <input type="email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)}
+                placeholder="you@email.com" style={S.input}
+                onKeyDown={e=>e.key==="Enter"&&(isSignUp?handleSignUp():handleSignIn())} />
+            </div>
+
+            <div style={{ marginBottom:20 }}>
+              <label style={S.label}>Password</label>
+              <input type="password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)}
+                placeholder={isSignUp?"At least 6 characters":"••••••••"} style={S.input}
+                onKeyDown={e=>e.key==="Enter"&&(isSignUp?handleSignUp():handleSignIn())} />
+            </div>
+
+            {authError && (
+              <div style={{ fontSize:13, marginBottom:14, padding:"10px 14px", borderRadius:8,
+                background: authError.includes("created") ? "#0a2a14" : "#2a1418",
+                color: authError.includes("created") ? "#2ecc71" : "#e74c3c",
+                border: `1px solid ${authError.includes("created") ? "#27ae60" : "#e74c3c"}` }}>
+                {authError}
+              </div>
+            )}
+
+            <button onClick={isSignUp ? handleSignUp : handleSignIn}
+              disabled={authWorking}
+              style={{ ...S.btn(), width:"100%", padding:"13px", fontSize:15, borderRadius:10,
+                opacity: authWorking ? 0.7 : 1 }}>
+              {authWorking ? "Please wait…" : isSignUp ? "Create Account" : "Sign In"}
+            </button>
+
+            <div style={{ textAlign:"center", marginTop:18, fontSize:13, color:"#6677aa" }}>
+              {isSignUp ? "Already have an account? " : "Don't have an account? "}
+              <button onClick={()=>{ setAuthView(isSignUp?"signin":"signup"); setAuthError(""); }}
+                style={{ background:"none", border:"none", color:"#f0c040", cursor:"pointer",
+                  fontSize:13, fontWeight:600, fontFamily:"inherit" }}>
+                {isSignUp ? "Sign In" : "Create one"}
+              </button>
+            </div>
+          </div>
+
+          <div style={{ textAlign:"center", marginTop:16 }}>
+            <button onClick={()=>setModal("adminLogin")} style={{
+              background:"none", border:"none", color:"#2a3560",
+              fontSize:11, cursor:"pointer", textDecoration:"underline", fontFamily:"inherit"
+            }}>Admin Login</button>
+          </div>
+        </div>
+
+        {/* Admin login modal on auth screen */}
+        <Modal open={modal==="adminLogin"} onClose={()=>{setModal(null);setAdminPassInput("");setAdminPassError("");}} title="🔐 Admin Login">
+          <p style={{ color:"#6677aa", fontSize:13, marginBottom:16 }}>Enter your admin password to access all leagues.</p>
+          <input type="password" value={adminPassInput} onChange={e=>setAdminPassInput(e.target.value)}
+            onKeyDown={e=>{ if(e.key==="Enter"){ if(adminPassInput===ADMIN_PASSWORD){setIsAdmin(true);sessionStorage.setItem("bb_is_admin","true");setModal(null);setAdminPassInput("");setAdminPassError("");}else{setAdminPassError("Incorrect password.");}}}}
+            placeholder="Password" style={{ ...S.input, letterSpacing:4, fontSize:18, textAlign:"center", marginBottom:8 }} autoFocus />
+          {adminPassError && <div style={{ color:"#e74c3c", fontSize:12, marginBottom:8 }}>{adminPassError}</div>}
+          <button onClick={()=>{ if(adminPassInput===ADMIN_PASSWORD){setIsAdmin(true);sessionStorage.setItem("bb_is_admin","true");setModal(null);setAdminPassInput("");setAdminPassError("");}else{setAdminPassError("Incorrect password.");}}}
+            style={{ ...S.btn(), width:"100%", marginTop:4 }}>Login</button>
+        </Modal>
+        <Toast {...(toast||{msg:null})} />
+      </div>
+    );
+  }
+
   // ── Landing screen (no league loaded) ───────────────────────────────────
   if (!leagueCode) {
     return (
@@ -663,6 +824,15 @@ export default function App() {
         <FontLink />
         <Toast {...(toast||{msg:null})} />
         <div style={{ maxWidth:460, width:"100%", padding:24 }}>
+          {authUser && (
+            <div style={{ textAlign:"right", marginBottom:8, fontSize:12, color:"#6677aa" }}>
+              👤 {authUser.user_metadata?.name || authUser.email}
+              <button onClick={handleSignOut} style={{ background:"none", border:"none", color:"#445",
+                fontSize:11, cursor:"pointer", textDecoration:"underline", marginLeft:8, fontFamily:"inherit" }}>
+                Sign out
+              </button>
+            </div>
+          )}
           <div style={{ textAlign:"center", marginBottom:40 }}>
             <div style={{ fontSize:52, marginBottom:12 }}>🏀</div>
             <h1 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:44, letterSpacing:4,
