@@ -133,7 +133,7 @@ const BRACKET_2025 = {
     },
   ],
   finalFour: [
-    {top:{seed:1,name:"Auburn",region:"South"},bot:{seed:1,name:"Florida",region:"West"},winner:"Auburn"},
+    {top:{seed:1,name:"Auburn",region:"South"},bot:{seed:1,name:"Florida",region:"West"},winner:"Florida"},
     {top:{seed:1,name:"Houston",region:"Midwest"},bot:{seed:1,name:"Duke",region:"East"},winner:"Houston"},
   ],
   championship: {top:{seed:1,name:"Florida"},bot:{seed:1,name:"Houston"},winner:"Florida"},
@@ -1432,9 +1432,42 @@ export default function App() {
 
               return (
                 <div>
+                  {/* Championship — top of page */}
+                  <div style={{ marginBottom:28, background:"linear-gradient(135deg,#1a2010,#141d30)",
+                    border:"2px solid #f0c040", borderRadius:14, padding:"18px 20px" }}>
+                    <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:2,
+                      color:"#f0c040", marginBottom:12 }}>
+                      🏆 National Championship — April 7, 2025
+                    </div>
+                    <div style={{ maxWidth:340 }}>
+                      <GameCard game={BRACKET_2025.championship} label="Florida 65 · Houston 63" />
+                    </div>
+                  </div>
+
+                  {/* Final Four */}
+                  <div style={{ marginBottom:28, background:"#111827", border:"1px solid #2a3350",
+                    borderRadius:14, padding:"18px 20px" }}>
+                    <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2,
+                      color:"#f0c040", marginBottom:12 }}>
+                      🏀 Final Four — San Antonio, TX
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:8 }}>
+                      {BRACKET_2025.finalFour.map((g,i) => (
+                        <GameCard key={i} game={g} label={i===0?"South vs West":"Midwest vs East"} />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div style={{ fontSize:11, color:"#445", textTransform:"uppercase", letterSpacing:2,
+                    fontWeight:700, marginBottom:20, paddingTop:4 }}>
+                    ── Regional Results ──
+                  </div>
+
                   {/* Regions */}
                   {BRACKET_2025.regions.map(region => (
-                    <div key={region.name} style={{ marginBottom:28 }}>
+                    <div key={region.name} style={{ marginBottom:28, background:"#0f1420",
+                      border:"1px solid #1a2440", borderRadius:14, padding:"16px 18px" }}>
                       <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2,
                         color:"#f0c040", marginBottom:12, paddingBottom:6, borderBottom:"1px solid #1e2840" }}>
                         {region.name} Region — #{region.seed1}
@@ -1452,30 +1485,6 @@ export default function App() {
                       ))}
                     </div>
                   ))}
-
-                  {/* Final Four */}
-                  <div style={{ marginBottom:28 }}>
-                    <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2,
-                      color:"#f0c040", marginBottom:12, paddingBottom:6, borderBottom:"1px solid #1e2840" }}>
-                      Final Four — San Antonio, TX
-                    </div>
-                    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:8 }}>
-                      {BRACKET_2025.finalFour.map((g,i) => (
-                        <GameCard key={i} game={g} label={i===0?"South vs West":"Midwest vs East"} />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Championship */}
-                  <div style={{ marginBottom:28 }}>
-                    <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2,
-                      color:"#f0c040", marginBottom:12, paddingBottom:6, borderBottom:"1px solid #1e2840" }}>
-                      🏆 National Championship
-                    </div>
-                    <div style={{ maxWidth:300 }}>
-                      <GameCard game={BRACKET_2025.championship} label="Florida 65 · Houston 63" />
-                    </div>
-                  </div>
                 </div>
               );
             })()}
