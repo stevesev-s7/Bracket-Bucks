@@ -826,11 +826,27 @@ export default function App() {
         <Toast {...(toast||{msg:null})} />
         <div style={{ maxWidth:460, width:"100%", padding:24 }}>
           {authUser && (
-            <div style={{ textAlign:"right", marginBottom:8, fontSize:12, color:"#6677aa" }}>
-              👤 {authUser.user_metadata?.name || authUser.email}
-              <button onClick={handleSignOut} style={{ background:"none", border:"none", color:"#445",
-                fontSize:11, cursor:"pointer", textDecoration:"underline", marginLeft:8, fontFamily:"inherit" }}>
-                Sign out
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+              <button onClick={()=>setModal("profile")} style={{
+                display:"flex", alignItems:"center", gap:10, background:"#131929",
+                border:"1px solid #1e2840", borderRadius:12, padding:"10px 16px",
+                cursor:"pointer", fontFamily:"inherit", flex:1, marginRight:8
+              }}>
+                <div style={{ width:36, height:36, borderRadius:"50%", background:"#f0c040",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:16, fontWeight:800, color:"#111", flexShrink:0 }}>
+                  {(authUser.user_metadata?.name || authUser.email).charAt(0).toUpperCase()}
+                </div>
+                <div style={{ textAlign:"left" }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:"#dce4f5" }}>
+                    {authUser.user_metadata?.name || authUser.email}
+                  </div>
+                  <div style={{ fontSize:11, color:"#6677aa" }}>View Profile</div>
+                </div>
+              </button>
+              <button onClick={handleSignOut} style={{ ...S.btn("#1a1a2e","#6677aa"),
+                border:"1px solid #2a3350", fontSize:12, padding:"10px 14px" }}>
+                Sign Out
               </button>
             </div>
           )}
@@ -915,6 +931,44 @@ export default function App() {
           {adminPassError && <div style={{ color:"#e74c3c", fontSize:12, marginBottom:8 }}>{adminPassError}</div>}
           <button onClick={()=>{ if(adminPassInput===ADMIN_PASSWORD){setIsAdmin(true);sessionStorage.setItem("bb_is_admin","true");setModal(null);setAdminPassInput("");setAdminPassError("");}else{setAdminPassError("Incorrect password.");}}}
             style={{ ...S.btn(), width:"100%", marginTop:4 }}>Login</button>
+        </Modal>
+
+        <Modal open={modal==="profile"} onClose={()=>setModal(null)} title="👤 My Profile">
+          <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:20,
+            background:"#0f1625", borderRadius:12, padding:"14px 18px" }}>
+            <div style={{ width:48, height:48, borderRadius:"50%", background:"#f0c040",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:22, fontWeight:800, color:"#111" }}>
+              {(authUser?.user_metadata?.name || authUser?.email || "?").charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div style={{ fontWeight:700, fontSize:16 }}>{authUser?.user_metadata?.name || authUser?.email}</div>
+              <div style={{ fontSize:12, color:"#6677aa", marginTop:2 }}>{authUser?.email}</div>
+            </div>
+          </div>
+          <div style={{ marginBottom:16 }}>
+            <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:1.5, marginBottom:10 }}>My Leagues</div>
+            {(authUser?.user_metadata?.leagues || []).length === 0 ? (
+              <div style={{ color:"#445", fontSize:13 }}>No leagues joined yet. Join or create a league to get started!</div>
+            ) : (
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {[...(authUser?.user_metadata?.leagues || [])].reverse().map(l => (
+                  <button key={l.code} onClick={()=>{ loadLeague(l.code); setModal(null); }}
+                    style={{ ...S.btn("#0f1625","#dce4f5"), padding:"12px 16px", fontSize:14,
+                      borderRadius:10, textAlign:"left", border:"1px solid #1e2840",
+                      display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                    <div>
+                      <div style={{ fontWeight:700 }}>{l.name}</div>
+                      <div style={{ fontSize:11, color:"#6677aa", marginTop:2, fontFamily:"'DM Mono',monospace" }}>{l.code}</div>
+                    </div>
+                    <span style={{ color:"#f0c040" }}>→</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button onClick={handleSignOut} style={{ ...S.btn("#1a1a2e","#e74c3c"),
+            border:"1px solid #e74c3c", width:"100%", marginTop:8 }}>Sign Out</button>
         </Modal>
 
         <Modal open={modal==="join"} onClose={()=>setModal(null)} title="Join a League">
