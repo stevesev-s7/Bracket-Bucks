@@ -16,6 +16,129 @@ const DEFAULT_ROUNDS = [
   { id: 5, label: "Championship", short: "NCG", dmg: 3.00 },
 ];
 
+// ── 2025 NCAA Tournament Bracket Data ───────────────────────────────────
+const BRACKET_2025 = {
+  regions: [
+    {
+      name: "South", seed1: "Auburn",
+      games: {
+        r64: [
+          {top:{seed:1,name:"Auburn"},bot:{seed:16,name:"Alabama State"},winner:"Auburn"},
+          {top:{seed:8,name:"Louisville"},bot:{seed:9,name:"Creighton"},winner:"Creighton"},
+          {top:{seed:5,name:"Michigan"},bot:{seed:12,name:"UC San Diego"},winner:"Michigan"},
+          {top:{seed:4,name:"Texas A&M"},bot:{seed:13,name:"Yale"},winner:"Michigan"},
+          {top:{seed:6,name:"Ole Miss"},bot:{seed:11,name:"N Carolina"},winner:"Ole Miss"},
+          {top:{seed:3,name:"Iowa State"},bot:{seed:14,name:"Lipscomb"},winner:"Iowa State"},
+          {top:{seed:7,name:"Marquette"},bot:{seed:10,name:"New Mexico"},winner:"New Mexico"},
+          {top:{seed:2,name:"Michigan St"},bot:{seed:15,name:"Bryant"},winner:"Michigan St"},
+        ],
+        r32: [
+          {top:{seed:1,name:"Auburn"},bot:{seed:9,name:"Creighton"},winner:"Auburn"},
+          {top:{seed:5,name:"Michigan"},bot:{seed:4,name:"Texas A&M"},winner:"Michigan"},
+          {top:{seed:6,name:"Ole Miss"},bot:{seed:3,name:"Iowa State"},winner:"Iowa State"},
+          {top:{seed:10,name:"New Mexico"},bot:{seed:2,name:"Michigan St"},winner:"Michigan St"},
+        ],
+        s16: [
+          {top:{seed:1,name:"Auburn"},bot:{seed:5,name:"Michigan"},winner:"Auburn"},
+          {top:{seed:3,name:"Iowa State"},bot:{seed:2,name:"Michigan St"},winner:"Michigan St"},
+        ],
+        e8: [
+          {top:{seed:1,name:"Auburn"},bot:{seed:2,name:"Michigan St"},winner:"Auburn"},
+        ],
+      }
+    },
+    {
+      name: "East", seed1: "Duke",
+      games: {
+        r64: [
+          {top:{seed:1,name:"Duke"},bot:{seed:16,name:"Amer University"},winner:"Duke"},
+          {top:{seed:8,name:"Mississippi St"},bot:{seed:9,name:"Baylor"},winner:"Baylor"},
+          {top:{seed:5,name:"Oregon"},bot:{seed:12,name:"Liberty"},winner:"Oregon"},
+          {top:{seed:4,name:"Arizona"},bot:{seed:13,name:"Akron"},winner:"Arizona"},
+          {top:{seed:6,name:"BYU"},bot:{seed:11,name:"VCU"},winner:"BYU"},
+          {top:{seed:3,name:"Wisconsin"},bot:{seed:14,name:"Montana"},winner:"Wisconsin"},
+          {top:{seed:7,name:"Saint Mary's"},bot:{seed:10,name:"Vanderbilt"},winner:"Saint Mary's"},
+          {top:{seed:2,name:"Alabama"},bot:{seed:15,name:"Robert Morris"},winner:"Alabama"},
+        ],
+        r32: [
+          {top:{seed:1,name:"Duke"},bot:{seed:9,name:"Baylor"},winner:"Duke"},
+          {top:{seed:5,name:"Oregon"},bot:{seed:4,name:"Arizona"},winner:"Arizona"},
+          {top:{seed:6,name:"BYU"},bot:{seed:3,name:"Wisconsin"},winner:"Wisconsin"},
+          {top:{seed:7,name:"Saint Mary's"},bot:{seed:2,name:"Alabama"},winner:"Alabama"},
+        ],
+        s16: [
+          {top:{seed:1,name:"Duke"},bot:{seed:4,name:"Arizona"},winner:"Duke"},
+          {top:{seed:3,name:"Wisconsin"},bot:{seed:2,name:"Alabama"},winner:"Alabama"},
+        ],
+        e8: [
+          {top:{seed:1,name:"Duke"},bot:{seed:2,name:"Alabama"},winner:"Duke"},
+        ],
+      }
+    },
+    {
+      name: "Midwest", seed1: "Houston",
+      games: {
+        r64: [
+          {top:{seed:1,name:"Houston"},bot:{seed:16,name:"SIU Edwardsville"},winner:"Houston"},
+          {top:{seed:8,name:"Gonzaga"},bot:{seed:9,name:"Georgia"},winner:"Gonzaga"},
+          {top:{seed:5,name:"Clemson"},bot:{seed:12,name:"McNeese"},winner:"McNeese"},
+          {top:{seed:4,name:"Purdue"},bot:{seed:13,name:"High Point"},winner:"Purdue"},
+          {top:{seed:6,name:"Illinois"},bot:{seed:11,name:"Drake"},winner:"Drake"},
+          {top:{seed:3,name:"Kentucky"},bot:{seed:14,name:"Troy"},winner:"Kentucky"},
+          {top:{seed:7,name:"UCLA"},bot:{seed:10,name:"Utah St"},winner:"Utah St"},
+          {top:{seed:2,name:"Tennessee"},bot:{seed:15,name:"Wofford"},winner:"Tennessee"},
+        ],
+        r32: [
+          {top:{seed:1,name:"Houston"},bot:{seed:8,name:"Gonzaga"},winner:"Houston"},
+          {top:{seed:12,name:"McNeese"},bot:{seed:4,name:"Purdue"},winner:"Purdue"},
+          {top:{seed:11,name:"Drake"},bot:{seed:3,name:"Kentucky"},winner:"Kentucky"},
+          {top:{seed:10,name:"Utah St"},bot:{seed:2,name:"Tennessee"},winner:"Tennessee"},
+        ],
+        s16: [
+          {top:{seed:1,name:"Houston"},bot:{seed:4,name:"Purdue"},winner:"Houston"},
+          {top:{seed:3,name:"Kentucky"},bot:{seed:2,name:"Tennessee"},winner:"Tennessee"},
+        ],
+        e8: [
+          {top:{seed:1,name:"Houston"},bot:{seed:2,name:"Tennessee"},winner:"Houston"},
+        ],
+      }
+    },
+    {
+      name: "West", seed1: "Florida",
+      games: {
+        r64: [
+          {top:{seed:1,name:"Florida"},bot:{seed:16,name:"Norfolk St"},winner:"Florida"},
+          {top:{seed:8,name:"UConn"},bot:{seed:9,name:"Oklahoma"},winner:"UConn"},
+          {top:{seed:5,name:"Memphis"},bot:{seed:12,name:"Colorado St"},winner:"Colorado St"},
+          {top:{seed:4,name:"Maryland"},bot:{seed:13,name:"Grand Canyon"},winner:"Maryland"},
+          {top:{seed:6,name:"Missouri"},bot:{seed:11,name:"Drake"},winner:"Drake"},
+          {top:{seed:3,name:"Texas Tech"},bot:{seed:14,name:"UNCW"},winner:"Texas Tech"},
+          {top:{seed:7,name:"Kansas"},bot:{seed:10,name:"Arkansas"},winner:"Arkansas"},
+          {top:{seed:2,name:"St John's"},bot:{seed:15,name:"Omaha"},winner:"St John's"},
+        ],
+        r32: [
+          {top:{seed:1,name:"Florida"},bot:{seed:8,name:"UConn"},winner:"Florida"},
+          {top:{seed:12,name:"Colorado St"},bot:{seed:4,name:"Maryland"},winner:"Maryland"},
+          {top:{seed:11,name:"Drake"},bot:{seed:3,name:"Texas Tech"},winner:"Texas Tech"},
+          {top:{seed:10,name:"Arkansas"},bot:{seed:2,name:"St John's"},winner:"Arkansas"},
+        ],
+        s16: [
+          {top:{seed:1,name:"Florida"},bot:{seed:4,name:"Maryland"},winner:"Florida"},
+          {top:{seed:3,name:"Texas Tech"},bot:{seed:10,name:"Arkansas"},winner:"Texas Tech"},
+        ],
+        e8: [
+          {top:{seed:1,name:"Florida"},bot:{seed:3,name:"Texas Tech"},winner:"Florida"},
+        ],
+      }
+    },
+  ],
+  finalFour: [
+    {top:{seed:1,name:"Auburn",region:"South"},bot:{seed:1,name:"Florida",region:"West"},winner:"Auburn"},
+    {top:{seed:1,name:"Houston",region:"Midwest"},bot:{seed:1,name:"Duke",region:"East"},winner:"Houston"},
+  ],
+  championship: {top:{seed:1,name:"Florida"},bot:{seed:1,name:"Houston"},winner:"Florida"},
+};
+
 const OWNER_COLORS = [
   "#e05c3a","#3a9be0","#2ecc71","#f0c040",
   "#9b59b6","#1abc9c","#e67e22","#e91e63"
@@ -529,6 +652,7 @@ export default function App() {
     {id:"payouts",     icon:"💰", label:"Payout Table"},
     {id:"espn",        icon:"📡", label:"Live Scores"},
     {id:"bracket",     icon:"🗂",  label:"Bracket"},
+    {id:"bracket2025", icon:"🏆", label:"2025 Bracket"},
     {id:"admin",       icon:"⚙️",  label:"Admin"},
   ];
 
@@ -1123,6 +1247,109 @@ export default function App() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* 2025 BRACKET */}
+        {!loading && tab==="bracket2025" && (
+          <div>
+            <h2 style={{ margin:"0 0 4px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>2025 NCAA Tournament Bracket</h2>
+            <p style={{ color:"#6677aa", fontSize:13, marginBottom:20 }}>🏆 Champion: <strong style={{ color:"#f0c040" }}>Florida</strong> · Final: Florida 65, Houston 63</p>
+
+            {/* Helper to find owner of a team */}
+            {(() => {
+              const findOwner = (teamName) => {
+                const norm = s => (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+                const tn = norm(teamName);
+                for (const owner of owners) {
+                  for (const t of owner.teams) {
+                    const on = norm(t.name);
+                    if (on.length > 3 && (tn.includes(on) || on.includes(tn))) return owner;
+                  }
+                }
+                return null;
+              };
+
+              const GameCard = ({ game, label }) => {
+                const o1 = findOwner(game.top.name);
+                const o2 = findOwner(game.bot.name);
+                return (
+                  <div style={{ background:"#0f1625", border:"1px solid #1e2840", borderRadius:10,
+                    padding:"10px 12px", marginBottom:6, minWidth:220 }}>
+                    {label && <div style={{ fontSize:10, color:"#f0c040", fontWeight:700,
+                      textTransform:"uppercase", letterSpacing:1, marginBottom:6 }}>{label}</div>}
+                    {[game.top, game.bot].map((t,i) => (
+                      <div key={i} style={{ display:"flex", alignItems:"center", gap:6,
+                        padding:"5px 8px", borderRadius:7, marginBottom:i===0?4:0,
+                        background: t.name===game.winner?"#0a2a14":"transparent",
+                        border:`1px solid ${t.name===game.winner?"#27ae60":"transparent"}`,
+                        opacity: game.winner && t.name!==game.winner ? 0.45 : 1 }}>
+                        <SeedBadge seed={t.seed} />
+                        <span style={{ flex:1, fontWeight: t.name===game.winner?700:400, fontSize:13 }}>{t.name}</span>
+                        {(i===0?o1:o2) && (
+                          <span style={{ fontSize:10, background:"#1a2440",
+                            color:(i===0?o1:o2).color, borderRadius:4, padding:"1px 6px", fontWeight:700 }}>
+                            {(i===0?o1:o2).name}
+                          </span>
+                        )}
+                        {t.name===game.winner && <span style={{ color:"#2ecc71", fontSize:12 }}>✓</span>}
+                      </div>
+                    ))}
+                  </div>
+                );
+              };
+
+              const ROUND_LABELS = { r64:"Round of 64", r32:"Round of 32", s16:"Sweet 16", e8:"Elite Eight" };
+
+              return (
+                <div>
+                  {/* Regions */}
+                  {BRACKET_2025.regions.map(region => (
+                    <div key={region.name} style={{ marginBottom:28 }}>
+                      <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2,
+                        color:"#f0c040", marginBottom:12, paddingBottom:6, borderBottom:"1px solid #1e2840" }}>
+                        {region.name} Region — #{region.seed1}
+                      </div>
+                      {Object.entries(region.games).map(([roundKey, games]) => (
+                        <div key={roundKey} style={{ marginBottom:16 }}>
+                          <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase",
+                            letterSpacing:1.5, fontWeight:700, marginBottom:8 }}>
+                            {ROUND_LABELS[roundKey]}
+                          </div>
+                          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:8 }}>
+                            {games.map((g,i) => <GameCard key={i} game={g} />)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+
+                  {/* Final Four */}
+                  <div style={{ marginBottom:28 }}>
+                    <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2,
+                      color:"#f0c040", marginBottom:12, paddingBottom:6, borderBottom:"1px solid #1e2840" }}>
+                      Final Four — San Antonio, TX
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:8 }}>
+                      {BRACKET_2025.finalFour.map((g,i) => (
+                        <GameCard key={i} game={g} label={i===0?"South vs West":"Midwest vs East"} />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Championship */}
+                  <div style={{ marginBottom:28 }}>
+                    <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2,
+                      color:"#f0c040", marginBottom:12, paddingBottom:6, borderBottom:"1px solid #1e2840" }}>
+                      🏆 National Championship
+                    </div>
+                    <div style={{ maxWidth:300 }}>
+                      <GameCard game={BRACKET_2025.championship} label="Florida 65 · Houston 63" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
