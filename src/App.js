@@ -23,27 +23,27 @@ const BRACKET_2025 = {
       name: "South", seed1: "Auburn",
       games: {
         r64: [
-          {top:{seed:1,name:"Auburn"},bot:{seed:16,name:"Alabama State"},winner:"Auburn"},
-          {top:{seed:8,name:"Louisville"},bot:{seed:9,name:"Creighton"},winner:"Creighton"},
-          {top:{seed:5,name:"Michigan"},bot:{seed:12,name:"UC San Diego"},winner:"Michigan"},
-          {top:{seed:4,name:"Texas A&M"},bot:{seed:13,name:"Yale"},winner:"Michigan"},
-          {top:{seed:6,name:"Ole Miss"},bot:{seed:11,name:"N Carolina"},winner:"Ole Miss"},
-          {top:{seed:3,name:"Iowa State"},bot:{seed:14,name:"Lipscomb"},winner:"Iowa State"},
-          {top:{seed:7,name:"Marquette"},bot:{seed:10,name:"New Mexico"},winner:"New Mexico"},
-          {top:{seed:2,name:"Michigan St"},bot:{seed:15,name:"Bryant"},winner:"Michigan St"},
+          {top:{seed:1,name:"Auburn",score:83},bot:{seed:16,name:"Alabama State",score:63},winner:"Auburn"},
+          {top:{seed:8,name:"Louisville",score:75},bot:{seed:9,name:"Creighton",score:89},winner:"Creighton"},
+          {top:{seed:5,name:"Michigan",score:68},bot:{seed:12,name:"UC San Diego",score:65},winner:"Michigan"},
+          {top:{seed:4,name:"Texas A&M",score:80},bot:{seed:13,name:"Yale",score:71},winner:"Texas A&M"},
+          {top:{seed:6,name:"Ole Miss",score:71},bot:{seed:11,name:"N Carolina",score:64},winner:"Ole Miss"},
+          {top:{seed:3,name:"Iowa State",score:82},bot:{seed:14,name:"Lipscomb",score:55},winner:"Iowa State"},
+          {top:{seed:7,name:"Marquette",score:66},bot:{seed:10,name:"New Mexico",score:75},winner:"New Mexico"},
+          {top:{seed:2,name:"Michigan St",score:87},bot:{seed:15,name:"Bryant",score:62},winner:"Michigan St"},
         ],
         r32: [
-          {top:{seed:1,name:"Auburn"},bot:{seed:9,name:"Creighton"},winner:"Auburn"},
-          {top:{seed:5,name:"Michigan"},bot:{seed:4,name:"Texas A&M"},winner:"Michigan"},
-          {top:{seed:6,name:"Ole Miss"},bot:{seed:3,name:"Iowa State"},winner:"Iowa State"},
-          {top:{seed:10,name:"New Mexico"},bot:{seed:2,name:"Michigan St"},winner:"Michigan St"},
+          {top:{seed:1,name:"Auburn",score:82},bot:{seed:9,name:"Creighton",score:70},winner:"Auburn"},
+          {top:{seed:5,name:"Michigan",score:91},bot:{seed:4,name:"Texas A&M",score:79},winner:"Michigan"},
+          {top:{seed:6,name:"Ole Miss",score:91},bot:{seed:3,name:"Iowa State",score:78},winner:"Ole Miss"},
+          {top:{seed:10,name:"New Mexico",score:63},bot:{seed:2,name:"Michigan St",score:71},winner:"Michigan St"},
         ],
         s16: [
-          {top:{seed:1,name:"Auburn"},bot:{seed:5,name:"Michigan"},winner:"Auburn"},
-          {top:{seed:3,name:"Iowa State"},bot:{seed:2,name:"Michigan St"},winner:"Michigan St"},
+          {top:{seed:1,name:"Auburn",score:78},bot:{seed:5,name:"Michigan",score:65},winner:"Auburn"},
+          {top:{seed:6,name:"Ole Miss",score:70},bot:{seed:2,name:"Michigan St",score:73},winner:"Michigan St"},
         ],
         e8: [
-          {top:{seed:1,name:"Auburn"},bot:{seed:2,name:"Michigan St"},winner:"Auburn"},
+          {top:{seed:1,name:"Auburn",score:70},bot:{seed:2,name:"Michigan St",score:64},winner:"Auburn"},
         ],
       }
     },
@@ -51,27 +51,27 @@ const BRACKET_2025 = {
       name: "East", seed1: "Duke",
       games: {
         r64: [
-          {top:{seed:1,name:"Duke"},bot:{seed:16,name:"Amer University"},winner:"Duke"},
-          {top:{seed:8,name:"Mississippi St"},bot:{seed:9,name:"Baylor"},winner:"Baylor"},
-          {top:{seed:5,name:"Oregon"},bot:{seed:12,name:"Liberty"},winner:"Oregon"},
-          {top:{seed:4,name:"Arizona"},bot:{seed:13,name:"Akron"},winner:"Arizona"},
-          {top:{seed:6,name:"BYU"},bot:{seed:11,name:"VCU"},winner:"BYU"},
-          {top:{seed:3,name:"Wisconsin"},bot:{seed:14,name:"Montana"},winner:"Wisconsin"},
-          {top:{seed:7,name:"Saint Mary's"},bot:{seed:10,name:"Vanderbilt"},winner:"Saint Mary's"},
-          {top:{seed:2,name:"Alabama"},bot:{seed:15,name:"Robert Morris"},winner:"Alabama"},
+          {top:{seed:1,name:"Duke",score:93},bot:{seed:16,name:"Mount St Mary's",score:49},winner:"Duke"},
+          {top:{seed:8,name:"Mississippi St",score:72},bot:{seed:9,name:"Baylor",score:75},winner:"Baylor"},
+          {top:{seed:5,name:"Oregon",score:81},bot:{seed:12,name:"Liberty",score:52},winner:"Oregon"},
+          {top:{seed:4,name:"Arizona",score:93},bot:{seed:13,name:"Akron",score:65},winner:"Arizona"},
+          {top:{seed:6,name:"BYU",score:80},bot:{seed:11,name:"VCU",score:71},winner:"BYU"},
+          {top:{seed:3,name:"Wisconsin",score:85},bot:{seed:14,name:"Montana",score:66},winner:"Wisconsin"},
+          {top:{seed:7,name:"Saint Mary's",score:59},bot:{seed:10,name:"Vanderbilt",score:56},winner:"Saint Mary's"},
+          {top:{seed:2,name:"Alabama",score:90},bot:{seed:15,name:"Robert Morris",score:81},winner:"Alabama"},
         ],
         r32: [
-          {top:{seed:1,name:"Duke"},bot:{seed:9,name:"Baylor"},winner:"Duke"},
-          {top:{seed:5,name:"Oregon"},bot:{seed:4,name:"Arizona"},winner:"Arizona"},
-          {top:{seed:6,name:"BYU"},bot:{seed:3,name:"Wisconsin"},winner:"Wisconsin"},
-          {top:{seed:7,name:"Saint Mary's"},bot:{seed:2,name:"Alabama"},winner:"Alabama"},
+          {top:{seed:1,name:"Duke",score:89},bot:{seed:9,name:"Baylor",score:66},winner:"Duke"},
+          {top:{seed:5,name:"Oregon",score:83},bot:{seed:4,name:"Arizona",score:87},winner:"Arizona"},
+          {top:{seed:6,name:"BYU",score:91},bot:{seed:3,name:"Wisconsin",score:89},winner:"BYU"},
+          {top:{seed:7,name:"Saint Mary's",score:66},bot:{seed:2,name:"Alabama",score:80},winner:"Alabama"},
         ],
         s16: [
-          {top:{seed:1,name:"Duke"},bot:{seed:4,name:"Arizona"},winner:"Duke"},
-          {top:{seed:3,name:"Wisconsin"},bot:{seed:2,name:"Alabama"},winner:"Alabama"},
+          {top:{seed:1,name:"Duke",score:100},bot:{seed:4,name:"Arizona",score:93},winner:"Duke"},
+          {top:{seed:6,name:"BYU",score:88},bot:{seed:2,name:"Alabama",score:113},winner:"Alabama"},
         ],
         e8: [
-          {top:{seed:1,name:"Duke"},bot:{seed:2,name:"Alabama"},winner:"Duke"},
+          {top:{seed:1,name:"Duke",score:85},bot:{seed:2,name:"Alabama",score:65},winner:"Duke"},
         ],
       }
     },
@@ -79,27 +79,27 @@ const BRACKET_2025 = {
       name: "Midwest", seed1: "Houston",
       games: {
         r64: [
-          {top:{seed:1,name:"Houston"},bot:{seed:16,name:"SIU Edwardsville"},winner:"Houston"},
-          {top:{seed:8,name:"Gonzaga"},bot:{seed:9,name:"Georgia"},winner:"Gonzaga"},
-          {top:{seed:5,name:"Clemson"},bot:{seed:12,name:"McNeese"},winner:"McNeese"},
-          {top:{seed:4,name:"Purdue"},bot:{seed:13,name:"High Point"},winner:"Purdue"},
-          {top:{seed:6,name:"Illinois"},bot:{seed:11,name:"Drake"},winner:"Drake"},
-          {top:{seed:3,name:"Kentucky"},bot:{seed:14,name:"Troy"},winner:"Kentucky"},
-          {top:{seed:7,name:"UCLA"},bot:{seed:10,name:"Utah St"},winner:"Utah St"},
-          {top:{seed:2,name:"Tennessee"},bot:{seed:15,name:"Wofford"},winner:"Tennessee"},
+          {top:{seed:1,name:"Houston",score:78},bot:{seed:16,name:"SIU Edwardsville",score:40},winner:"Houston"},
+          {top:{seed:8,name:"Gonzaga",score:89},bot:{seed:9,name:"Georgia",score:68},winner:"Gonzaga"},
+          {top:{seed:5,name:"Clemson",score:67},bot:{seed:12,name:"McNeese",score:69},winner:"McNeese"},
+          {top:{seed:4,name:"Purdue",score:75},bot:{seed:13,name:"High Point",score:63},winner:"Purdue"},
+          {top:{seed:6,name:"Illinois",score:86},bot:{seed:11,name:"Xavier",score:73},winner:"Illinois"},
+          {top:{seed:3,name:"Kentucky",score:76},bot:{seed:14,name:"Troy",score:57},winner:"Kentucky"},
+          {top:{seed:7,name:"UCLA",score:72},bot:{seed:10,name:"Utah St",score:47},winner:"UCLA"},
+          {top:{seed:2,name:"Tennessee",score:77},bot:{seed:15,name:"Wofford",score:62},winner:"Tennessee"},
         ],
         r32: [
-          {top:{seed:1,name:"Houston"},bot:{seed:8,name:"Gonzaga"},winner:"Houston"},
-          {top:{seed:12,name:"McNeese"},bot:{seed:4,name:"Purdue"},winner:"Purdue"},
-          {top:{seed:11,name:"Drake"},bot:{seed:3,name:"Kentucky"},winner:"Kentucky"},
-          {top:{seed:10,name:"Utah St"},bot:{seed:2,name:"Tennessee"},winner:"Tennessee"},
+          {top:{seed:1,name:"Houston",score:81},bot:{seed:8,name:"Gonzaga",score:76},winner:"Houston"},
+          {top:{seed:12,name:"McNeese",score:62},bot:{seed:4,name:"Purdue",score:76},winner:"Purdue"},
+          {top:{seed:6,name:"Illinois",score:75},bot:{seed:3,name:"Kentucky",score:84},winner:"Kentucky"},
+          {top:{seed:7,name:"UCLA",score:58},bot:{seed:2,name:"Tennessee",score:67},winner:"Tennessee"},
         ],
         s16: [
-          {top:{seed:1,name:"Houston"},bot:{seed:4,name:"Purdue"},winner:"Houston"},
-          {top:{seed:3,name:"Kentucky"},bot:{seed:2,name:"Tennessee"},winner:"Tennessee"},
+          {top:{seed:1,name:"Houston",score:62},bot:{seed:4,name:"Purdue",score:60},winner:"Houston"},
+          {top:{seed:3,name:"Kentucky",score:65},bot:{seed:2,name:"Tennessee",score:78},winner:"Tennessee"},
         ],
         e8: [
-          {top:{seed:1,name:"Houston"},bot:{seed:2,name:"Tennessee"},winner:"Houston"},
+          {top:{seed:1,name:"Houston",score:69},bot:{seed:2,name:"Tennessee",score:50},winner:"Houston"},
         ],
       }
     },
@@ -107,36 +107,36 @@ const BRACKET_2025 = {
       name: "West", seed1: "Florida",
       games: {
         r64: [
-          {top:{seed:1,name:"Florida"},bot:{seed:16,name:"Norfolk St"},winner:"Florida"},
-          {top:{seed:8,name:"UConn"},bot:{seed:9,name:"Oklahoma"},winner:"UConn"},
-          {top:{seed:5,name:"Memphis"},bot:{seed:12,name:"Colorado St"},winner:"Colorado St"},
-          {top:{seed:4,name:"Maryland"},bot:{seed:13,name:"Grand Canyon"},winner:"Maryland"},
-          {top:{seed:6,name:"Missouri"},bot:{seed:11,name:"Drake"},winner:"Drake"},
-          {top:{seed:3,name:"Texas Tech"},bot:{seed:14,name:"UNCW"},winner:"Texas Tech"},
-          {top:{seed:7,name:"Kansas"},bot:{seed:10,name:"Arkansas"},winner:"Arkansas"},
-          {top:{seed:2,name:"St John's"},bot:{seed:15,name:"Omaha"},winner:"St John's"},
+          {top:{seed:1,name:"Florida",score:95},bot:{seed:16,name:"Norfolk St",score:69},winner:"Florida"},
+          {top:{seed:8,name:"UConn",score:67},bot:{seed:9,name:"Oklahoma",score:59},winner:"UConn"},
+          {top:{seed:5,name:"Memphis",score:70},bot:{seed:12,name:"Colorado St",score:78},winner:"Colorado St"},
+          {top:{seed:4,name:"Maryland",score:81},bot:{seed:13,name:"Grand Canyon",score:49},winner:"Maryland"},
+          {top:{seed:6,name:"Missouri",score:57},bot:{seed:11,name:"Drake",score:67},winner:"Drake"},
+          {top:{seed:3,name:"Texas Tech",score:82},bot:{seed:14,name:"UNCW",score:72},winner:"Texas Tech"},
+          {top:{seed:7,name:"Kansas",score:72},bot:{seed:10,name:"Arkansas",score:79},winner:"Arkansas"},
+          {top:{seed:2,name:"St John's",score:83},bot:{seed:15,name:"Omaha",score:53},winner:"St John's"},
         ],
         r32: [
-          {top:{seed:1,name:"Florida"},bot:{seed:8,name:"UConn"},winner:"Florida"},
-          {top:{seed:12,name:"Colorado St"},bot:{seed:4,name:"Maryland"},winner:"Maryland"},
-          {top:{seed:11,name:"Drake"},bot:{seed:3,name:"Texas Tech"},winner:"Texas Tech"},
-          {top:{seed:10,name:"Arkansas"},bot:{seed:2,name:"St John's"},winner:"Arkansas"},
+          {top:{seed:1,name:"Florida",score:77},bot:{seed:8,name:"UConn",score:75},winner:"Florida"},
+          {top:{seed:12,name:"Colorado St",score:71},bot:{seed:4,name:"Maryland",score:72},winner:"Maryland"},
+          {top:{seed:11,name:"Drake",score:64},bot:{seed:3,name:"Texas Tech",score:77},winner:"Texas Tech"},
+          {top:{seed:10,name:"Arkansas",score:75},bot:{seed:2,name:"St John's",score:66},winner:"Arkansas"},
         ],
         s16: [
-          {top:{seed:1,name:"Florida"},bot:{seed:4,name:"Maryland"},winner:"Florida"},
-          {top:{seed:3,name:"Texas Tech"},bot:{seed:10,name:"Arkansas"},winner:"Texas Tech"},
+          {top:{seed:1,name:"Florida",score:77},bot:{seed:4,name:"Maryland",score:62},winner:"Florida"},
+          {top:{seed:3,name:"Texas Tech",score:85},bot:{seed:10,name:"Arkansas",score:83},winner:"Texas Tech"},
         ],
         e8: [
-          {top:{seed:1,name:"Florida"},bot:{seed:3,name:"Texas Tech"},winner:"Florida"},
+          {top:{seed:1,name:"Florida",score:84},bot:{seed:3,name:"Texas Tech",score:79},winner:"Florida"},
         ],
       }
     },
   ],
   finalFour: [
-    {top:{seed:1,name:"Auburn",region:"South"},bot:{seed:1,name:"Florida",region:"West"},winner:"Florida"},
-    {top:{seed:1,name:"Houston",region:"Midwest"},bot:{seed:1,name:"Duke",region:"East"},winner:"Houston"},
+    {top:{seed:1,name:"Auburn",region:"South",score:67},bot:{seed:1,name:"Florida",region:"West",score:79},winner:"Florida"},
+    {top:{seed:1,name:"Houston",region:"Midwest",score:65},bot:{seed:1,name:"Duke",region:"East",score:64},winner:"Houston"},
   ],
-  championship: {top:{seed:1,name:"Florida"},bot:{seed:1,name:"Houston"},winner:"Florida"},
+  championship: {top:{seed:1,name:"Florida",score:65},bot:{seed:1,name:"Houston",score:63},winner:"Florida"},
 };
 
 const OWNER_COLORS = [
@@ -1419,6 +1419,12 @@ export default function App() {
                           <span style={{ fontSize:10, background:"#1a2440",
                             color:(i===0?o1:o2).color, borderRadius:4, padding:"1px 6px", fontWeight:700 }}>
                             {(i===0?o1:o2).name}
+                          </span>
+                        )}
+                        {t.score != null && (
+                          <span style={{ fontFamily:"'DM Mono',monospace", fontWeight:800, fontSize:14,
+                            color: t.name===game.winner?"#2ecc71":"#6677aa", minWidth:24, textAlign:"right" }}>
+                            {t.score}
                           </span>
                         )}
                         {t.name===game.winner && <span style={{ color:"#2ecc71", fontSize:12 }}>✓</span>}
