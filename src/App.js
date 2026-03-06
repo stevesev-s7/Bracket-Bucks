@@ -816,13 +816,61 @@ export default function App() {
             </div>
           </div>
 
-          <div style={{ textAlign:"center", marginTop:16 }}>
+          <div style={{ textAlign:"center", marginTop:16, display:"flex", justifyContent:"center", gap:20, alignItems:"center" }}>
+            <button onClick={()=>setModal("howToPlay")} style={{
+              background:"none", border:"none", color:"#6677aa",
+              fontSize:12, cursor:"pointer", textDecoration:"underline", fontFamily:"inherit"
+            }}>❓ How to Play</button>
             <button onClick={()=>setModal("adminLogin")} style={{
               background:"none", border:"none", color:"#2a3560",
               fontSize:11, cursor:"pointer", textDecoration:"underline", fontFamily:"inherit"
             }}>Admin Login</button>
           </div>
         </div>
+
+        {/* How to Play modal */}
+        <Modal open={modal==="howToPlay"} onClose={()=>setModal(null)} title="❓ How to Play">
+          <div style={{ fontSize:13, color:"#aab", lineHeight:1.7 }}>
+            <p style={{ margin:"0 0 14px", color:"#dce4f5", fontSize:15, fontWeight:600 }}>
+              Welcome to Bracket Bucks — the March Madness Upset Pool!
+            </p>
+            <p style={{ margin:"0 0 12px" }}>
+              Each player is assigned <strong style={{color:"#f0c040"}}>8 teams</strong> before the tournament starts. Every team has a seed number (1–16). The goal is to collect money when your teams win.
+            </p>
+
+            <div style={{ background:"#0f1625", border:"1px solid #1e2840", borderRadius:10, padding:"14px 16px", marginBottom:14 }}>
+              <div style={{ fontWeight:700, color:"#f0c040", marginBottom:8, fontSize:12, textTransform:"uppercase", letterSpacing:1 }}>💰 How Payouts Work</div>
+              <p style={{ margin:"0 0 8px" }}>When your team wins a game, every other player pays you:</p>
+              <div style={{ fontFamily:"'DM Mono',monospace", background:"#131929", borderRadius:8, padding:"10px 14px", fontSize:13, color:"#2ecc71" }}>
+                Seed # × Round Value = $ per player
+              </div>
+              <p style={{ margin:"10px 0 0", color:"#8899cc", fontSize:12 }}>
+                Higher seeds (upsets!) earn more money. A #12 seed winning is worth way more than a #1 seed.
+              </p>
+            </div>
+
+            <div style={{ background:"#0f1625", border:"1px solid #1e2840", borderRadius:10, padding:"14px 16px", marginBottom:14 }}>
+              <div style={{ fontWeight:700, color:"#f0c040", marginBottom:10, fontSize:12, textTransform:"uppercase", letterSpacing:1 }}>📋 Round Values</div>
+              {DEFAULT_ROUNDS.map(r => (
+                <div key={r.id} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderBottom:"1px solid #1a2440", fontSize:13 }}>
+                  <span style={{ color:"#dce4f5" }}>{r.label}</span>
+                  <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040" }}>${r.dmg} × seed</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background:"#0f1625", border:"1px solid #1e2840", borderRadius:10, padding:"14px 16px", marginBottom:14 }}>
+              <div style={{ fontWeight:700, color:"#f0c040", marginBottom:8, fontSize:12, textTransform:"uppercase", letterSpacing:1 }}>🏀 Example</div>
+              <p style={{ margin:"0 0 6px" }}>Your team: <strong style={{color:"#fff"}}>#10 seed Arkansas</strong> wins in the Round of 32</p>
+              <p style={{ margin:"0 0 6px" }}>Payout: <strong style={{color:"#2ecc71"}}>10 × $1.00 = $10.00 per player</strong></p>
+              <p style={{ margin:0, color:"#8899cc", fontSize:12 }}>With 8 players, you collect $70 total (7 other players × $10)</p>
+            </div>
+
+            <p style={{ margin:0, color:"#6677aa", fontSize:12, textAlign:"center" }}>
+              The leaderboard tracks who's up and who's down in real time. May the best bracket win! 🏆
+            </p>
+          </div>
+        </Modal>
 
         {/* Admin login modal on auth screen */}
         <Modal open={modal==="adminLogin"} onClose={()=>{setModal(null);setAdminPassInput("");setAdminPassError("");}} title="🔐 Admin Login">
