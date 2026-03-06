@@ -1476,7 +1476,7 @@ export default function App() {
                       border:"1px solid #1a2440", borderRadius:14, padding:"16px 18px" }}>
                       <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2,
                         color:"#f0c040", marginBottom:12, paddingBottom:6, borderBottom:"1px solid #1e2840" }}>
-                        {region.name} Region — #{region.seed1}
+                        {region.name} Region
                       </div>
                       {Object.entries(region.games).map(([roundKey, games]) => (
                         <div key={roundKey} style={{ marginBottom:16 }}>
