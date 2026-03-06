@@ -545,9 +545,33 @@ export default function App() {
     const ok = await loadLeague(code);
     if (ok) {
       saveLeagueToUser(code, league?.name || code);
+
+      // Auto-add the user as an owner if they're not already in the league
+      if (authUser) {
+        const userName = authUser.user_metadata?.name || authUser.email;
+        const { data: existingOwners } = await supabase
+          .from("owners").select("name").eq("league_code", code);
+        const alreadyOwner = existingOwners?.some(o =>
+          o.name.toLowerCase().trim() === userName.toLowerCase().trim()
+        );
+        if (!alreadyOwner) {
+          const color = OWNER_COLORS[(existingOwners?.length || 0) % OWNER_COLORS.length];
+          const num = (existingOwners?.length || 0) + 1;
+          const blankTeams = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
+          await supabase.from("owners").insert({
+            league_code: code, name: userName,
+            color, num, teams: blankTeams
+          });
+          notify(`Joined league & added as owner: ${userName}`);
+        } else {
+          notify(`Joined league: ${league?.name || code}`);
+        }
+      } else {
+        notify(`Joined league: ${league?.name || code}`);
+      }
+
       setJoinCode(""); setJoinErr("");
       setModal(null);
-      notify(`Joined league: ${league?.name || code}`);
     } else {
       setJoinErr("No league found with that code.");
     }
