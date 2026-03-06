@@ -520,6 +520,24 @@ export default function App() {
   }, [leagueCode]);
 
   // ── League ops ───────────────────────────────────────────────────────────
+  async function autoAddUserAsOwner(code) {
+    if (!authUser) return;
+    const userName = authUser.user_metadata?.name || authUser.email;
+    const { data: existingOwners } = await supabase
+      .from("owners").select("name").eq("league_code", code);
+    const alreadyOwner = existingOwners?.some(o =>
+      o.name.toLowerCase().trim() === userName.toLowerCase().trim()
+    );
+    if (!alreadyOwner) {
+      const color = OWNER_COLORS[(existingOwners?.length || 0) % OWNER_COLORS.length];
+      const num = (existingOwners?.length || 0) + 1;
+      const blankTeams = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
+      await supabase.from("owners").insert({
+        league_code: code, name: userName, color, num, teams: blankTeams
+      });
+    }
+  }
+
   async function createLeague() {
     if (!newLeagueName.trim()) return;
     const code = genCode();
@@ -528,9 +546,9 @@ export default function App() {
     const { error } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim() });
     if (error) { notify("Failed to create league.", "error"); setLoading(false); return; }
 
-    // If it's the CHI2025 template, seed owners
     const ok = await loadLeague(code);
     if (ok) {
+      await autoAddUserAsOwner(code);
       saveToMyLeagues(code, newLeagueName.trim());
       saveLeagueToUser(code, newLeagueName.trim());
       setNewLeagueName("");
@@ -547,28 +565,8 @@ export default function App() {
       saveLeagueToUser(code, league?.name || code);
 
       // Auto-add the user as an owner if they're not already in the league
-      if (authUser) {
-        const userName = authUser.user_metadata?.name || authUser.email;
-        const { data: existingOwners } = await supabase
-          .from("owners").select("name").eq("league_code", code);
-        const alreadyOwner = existingOwners?.some(o =>
-          o.name.toLowerCase().trim() === userName.toLowerCase().trim()
-        );
-        if (!alreadyOwner) {
-          const color = OWNER_COLORS[(existingOwners?.length || 0) % OWNER_COLORS.length];
-          const num = (existingOwners?.length || 0) + 1;
-          const blankTeams = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
-          await supabase.from("owners").insert({
-            league_code: code, name: userName,
-            color, num, teams: blankTeams
-          });
-          notify(`Joined league & added as owner: ${userName}`);
-        } else {
-          notify(`Joined league: ${league?.name || code}`);
-        }
-      } else {
-        notify(`Joined league: ${league?.name || code}`);
-      }
+      await autoAddUserAsOwner(code);
+      notify(`Joined league: ${league?.name || code}`);
 
       setJoinCode(""); setJoinErr("");
       setModal(null);
