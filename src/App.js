@@ -439,6 +439,7 @@ export default function App() {
 
   // Form values
   const [newLeagueName, setNewLeagueName] = useState("");
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [joinCode, setJoinCode]           = useState("");
   const [joinErr, setJoinErr]             = useState("");
   const [newOwnerName, setNewOwnerName]   = useState("");
@@ -1103,7 +1104,7 @@ export default function App() {
               </div>
             </button>
 
-            <button onClick={()=>setModal("create")} style={{
+            <button onClick={()=>{ setModal("create"); setPaymentConfirmed(false); }} style={{
               ...S.btn("#131929","#dce4f5"), padding:"14px 20px", fontSize:15, borderRadius:12,
               border:"1px solid #2a3350",
             }}>
@@ -1214,17 +1215,94 @@ export default function App() {
           <button onClick={joinLeague} style={{ ...S.btn(), marginTop:14, width:"100%" }}>Join</button>
         </Modal>
 
-        <Modal open={modal==="create"} onClose={()=>setModal(null)} title="Create New League">
-          <label style={S.label}>League Name</label>
-          <input value={newLeagueName} onChange={e=>setNewLeagueName(e.target.value)}
-            placeholder="e.g. Office Bracket 2026" style={S.input}
-            onKeyDown={e=>e.key==="Enter"&&createLeague()} />
-          <p style={{ fontSize:12, color:"#445", marginTop:8 }}>
-            A 6-character invite code is generated automatically. Share it with your league.
-          </p>
-          <button onClick={createLeague} style={{ ...S.btn(), marginTop:12, width:"100%" }}>
-            Create League
-          </button>
+        <Modal open={modal==="create"} onClose={()=>{ setModal(null); setPaymentConfirmed(false); setNewLeagueName(""); }} title="Create New League">
+          {isAdmin ? (
+            /* Admins skip payment */
+            <div>
+              <div style={{ background:"#0a2a14", border:"1px solid #27ae60", borderRadius:8,
+                padding:"10px 14px", marginBottom:14, fontSize:13, color:"#2ecc71" }}>
+                🔓 Admin — no payment required
+              </div>
+              <label style={S.label}>League Name</label>
+              <input value={newLeagueName} onChange={e=>setNewLeagueName(e.target.value)}
+                placeholder="e.g. Office Bracket 2026" style={S.input}
+                onKeyDown={e=>e.key==="Enter"&&createLeague()} />
+              <p style={{ fontSize:12, color:"#445", marginTop:8 }}>
+                A 6-character invite code is generated automatically.
+              </p>
+              <button onClick={createLeague} style={{ ...S.btn(), marginTop:12, width:"100%" }}>
+                Create League
+              </button>
+            </div>
+          ) : !paymentConfirmed ? (
+            /* Step 1: Pay via Venmo */
+            <div>
+              <div style={{ textAlign:"center", marginBottom:20 }}>
+                <div style={{ fontSize:40, marginBottom:8 }}>💸</div>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:2, color:"#f0c040", marginBottom:6 }}>
+                  $10 Entry Fee Required
+                </div>
+                <p style={{ color:"#8899cc", fontSize:13, margin:0 }}>
+                  Creating a league costs <strong style={{color:"#fff"}}>$10</strong> to cover the pool prize fund.
+                  Send payment via Venmo, then click confirm below.
+                </p>
+              </div>
+
+              {/* Venmo CTA */}
+              <a href="https://venmo.com/stephen-sevenich?txn=pay&amount=10&note=Bracket%20Bucks%20League%20Fee"
+                target="_blank" rel="noreferrer"
+                style={{ display:"block", textDecoration:"none" }}>
+                <div style={{ background:"linear-gradient(135deg,#008CFF,#0074D9)", borderRadius:12,
+                  padding:"16px 20px", marginBottom:16, cursor:"pointer",
+                  display:"flex", alignItems:"center", gap:14, transition:"opacity 0.15s" }}
+                  onMouseEnter={e=>e.currentTarget.style.opacity="0.85"}
+                  onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+                  <div style={{ fontSize:32, flexShrink:0 }}>V</div>
+                  <div>
+                    <div style={{ fontWeight:800, fontSize:16, color:"#fff" }}>Pay @stephen-sevenich</div>
+                    <div style={{ fontSize:13, color:"rgba(255,255,255,0.75)", marginTop:2 }}>
+                      $10 · "Bracket Bucks League Fee" · Tap to open Venmo
+                    </div>
+                  </div>
+                  <div style={{ marginLeft:"auto", fontSize:20 }}>→</div>
+                </div>
+              </a>
+
+              <p style={{ fontSize:12, color:"#445", textAlign:"center", marginBottom:14 }}>
+                Once your payment is sent, click the button below to continue.
+              </p>
+
+              <button onClick={() => setPaymentConfirmed(true)}
+                style={{ ...S.btn(), width:"100%", padding:"13px", fontSize:15, borderRadius:10 }}>
+                ✅ I've Sent the $10 — Continue
+              </button>
+            </div>
+          ) : (
+            /* Step 2: Name the league */
+            <div>
+              <div style={{ background:"#0a2a14", border:"1px solid #27ae60", borderRadius:8,
+                padding:"10px 14px", marginBottom:16, fontSize:13, color:"#2ecc71",
+                display:"flex", alignItems:"center", gap:8 }}>
+                <span style={{ fontSize:18 }}>✅</span>
+                <span>Payment confirmed — you're good to go!</span>
+              </div>
+              <label style={S.label}>League Name</label>
+              <input value={newLeagueName} onChange={e=>setNewLeagueName(e.target.value)}
+                placeholder="e.g. Office Bracket 2026" style={S.input}
+                onKeyDown={e=>e.key==="Enter"&&createLeague()} autoFocus />
+              <p style={{ fontSize:12, color:"#445", marginTop:8 }}>
+                A 6-character invite code is generated automatically. Share it with your league.
+              </p>
+              <button onClick={createLeague} style={{ ...S.btn(), marginTop:12, width:"100%" }}>
+                Create League
+              </button>
+              <button onClick={() => setPaymentConfirmed(false)}
+                style={{ ...S.btn("#0f1625","#6677aa"), border:"1px solid #2a3350",
+                  width:"100%", marginTop:8, fontSize:12 }}>
+                ← Back
+              </button>
+            </div>
+          )}
         </Modal>
         <style>{`select option { background: #131929; } * { box-sizing: border-box; }`}</style>
       </div>
