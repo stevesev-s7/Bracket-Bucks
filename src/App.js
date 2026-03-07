@@ -256,27 +256,7 @@ function genCode() {
   return Math.random().toString(36).substring(2,8).toUpperCase();
 }
 
-// Generate a unique one-time payment unlock code tied to a secret
-function generatePayCode(secret) {
-  const ts = Date.now().toString(36).toUpperCase();
-  const raw = secret + ts;
-  let hash = 0;
-  for (let i = 0; i < raw.length; i++) hash = ((hash << 5) - hash + raw.charCodeAt(i)) | 0;
-  const suffix = Math.abs(hash).toString(36).toUpperCase().padStart(4,"0").slice(0,4);
-  return "BB-" + ts.slice(-3) + suffix;
-}
-// Verify a payment code against the secret (or accept the raw secret as master override)
-function verifyPayCode(code, secret) {
-  if (!code || !secret) return false;
-  if (code.trim().toUpperCase() === secret.trim().toUpperCase()) return true;
-  const parts = code.trim().toUpperCase().replace(/^BB-/,"");
-  const ts    = parts.slice(0,3);
-  const raw   = secret + ts;
-  let hash = 0;
-  for (let i = 0; i < raw.length; i++) hash = ((hash << 5) - hash + raw.charCodeAt(i)) | 0;
-  const expected = Math.abs(hash).toString(36).toUpperCase().padStart(4,"0").slice(0,4);
-  return parts.slice(3) === expected;
-}
+
 
 // ── Scoring engine (identical to spreadsheet logic)
 function calcStats(owners, wins, rounds) {
@@ -415,6 +395,39 @@ function Spinner() {
 // ── Draft Countdown Banner (live ticking) ──────────────────────────────
 function DraftCountdownBanner({ secondsLeft }) {
   const [secs, setSecs] = React.useState(secondsLeft);
+  // Handle Stripe redirect back after payment
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get("payment");
+    const sessionId = params.get("session_id");
+    if (paymentStatus === "success" && sessionId) {
+      // Verify with Edge Function then unlock
+      setStripeLoading(true);
+      fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/create-checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}` },
+        body: JSON.stringify({ action: "verify", sessionId }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.verified) {
+            setPaymentConfirmed(true);
+            setModal("create");
+            // Clean up URL
+            window.history.replaceState({}, "", window.location.pathname);
+          } else {
+            notify("Payment could not be verified. Please try again.", "error");
+          }
+          setStripeLoading(false);
+        })
+        .catch(() => { notify("Verification failed. Please try again.", "error"); setStripeLoading(false); });
+    } else if (paymentStatus === "cancelled") {
+      notify("Payment cancelled.");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
   React.useEffect(() => {
     setSecs(secondsLeft);
     if (secondsLeft <= 0) return;
@@ -462,12 +475,7 @@ export default function App() {
   // Form values
   const [newLeagueName, setNewLeagueName] = useState("");
   const [paymentConfirmed, setPaymentConfirmed]   = useState(false);
-  const [generatedPayCode, setGeneratedPayCode]   = useState("");   // code shown after clicking Venmo
-  const [payCodeInput, setPayCodeInput]           = useState("");   // user types this back in
-  const [payCodeError, setPayCodeError]           = useState("");
-  const [venmoClicked, setVenmoClicked]           = useState(false);
-  const [adminPaySecret, setAdminPaySecret]       = useState("");   // master secret from leagues table
-  const [newAdminPaySecret, setNewAdminPaySecret] = useState("");   // staging value in admin input
+  const [stripeLoading, setStripeLoading]         = useState(false);
   const [joinCode, setJoinCode]           = useState("");
   const [joinErr, setJoinErr]             = useState("");
   const [newOwnerName, setNewOwnerName]   = useState("");
@@ -636,7 +644,6 @@ export default function App() {
       setOwners(ownersData || []);
       setWins(winsData || []);
       setLeagueCode(code);
-      if (lg.pay_secret) setAdminPaySecret(lg.pay_secret);
       sessionStorage.setItem("bb_league_code", code);
     if (authUser) localStorage.setItem(`bb_league_${authUser.id}`, code);
       // Load per-league round settings if stored
@@ -1244,12 +1251,19 @@ export default function App() {
           <button onClick={joinLeague} style={{ ...S.btn(), marginTop:14, width:"100%" }}>Join</button>
         </Modal>
 
-        <Modal open={modal==="create"} onClose={()=>{
-            setModal(null); setPaymentConfirmed(false); setNewLeagueName("");
-            setGeneratedPayCode(""); setPayCodeInput(""); setPayCodeError(""); setVenmoClicked(false);
-          }} title="Create New League">
-          {isAdmin ? (
-            /* ── Admins: skip payment ── */
+        <Modal open={modal==="create"} onClose={()=>{ setModal(null); setPaymentConfirmed(false); setNewLeagueName(""); }} title="Create New League">
+          {stripeLoading ? (
+            /* Verifying payment with Stripe */
+            <div style={{ textAlign:"center", padding:"30px 0" }}>
+              <div style={{ fontSize:36, marginBottom:12 }}>⏳</div>
+              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2, color:"#f0c040" }}>
+                Verifying Payment…
+              </div>
+              <p style={{ color:"#6677aa", fontSize:13, marginTop:8 }}>Confirming your Stripe payment, just a moment.</p>
+            </div>
+
+          ) : isAdmin ? (
+            /* Admins skip payment */
             <div>
               <div style={{ background:"#0a2a14", border:"1px solid #27ae60", borderRadius:8,
                 padding:"10px 14px", marginBottom:14, fontSize:13, color:"#2ecc71" }}>
@@ -1267,128 +1281,77 @@ export default function App() {
               </button>
             </div>
 
-          ) : !venmoClicked ? (
-            /* ── Step 1: Send $10 on Venmo ── */
+          ) : !paymentConfirmed ? (
+            /* Step 1: Pay $10 via Stripe */
             <div>
-              <div style={{ textAlign:"center", marginBottom:20 }}>
-                <div style={{ fontSize:40, marginBottom:8 }}>💸</div>
-                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:2, color:"#f0c040", marginBottom:6 }}>
+              <div style={{ textAlign:"center", marginBottom:24 }}>
+                <div style={{ fontSize:40, marginBottom:8 }}>💳</div>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:2, color:"#f0c040", marginBottom:8 }}>
                   $10 Entry Fee Required
                 </div>
-                <p style={{ color:"#8899cc", fontSize:13, margin:0 }}>
-                  Send <strong style={{color:"#fff"}}>$10</strong> via Venmo to create a league.
-                  After sending, you'll instantly receive a code to continue.
+                <p style={{ color:"#8899cc", fontSize:13, margin:0, lineHeight:1.6 }}>
+                  Creating a league costs <strong style={{color:"#fff"}}>$10</strong>.
+                  Pay securely via Stripe — league creation unlocks <strong style={{color:"#fff"}}>instantly</strong> after payment.
                 </p>
               </div>
 
-              <a href="https://venmo.com/stephen-sevenich?txn=pay&amount=10&note=Bracket%20Bucks%20League%20Fee"
-                target="_blank" rel="noreferrer"
-                style={{ display:"block", textDecoration:"none", marginBottom:20 }}
-                onClick={() => {
-                  const code = generatePayCode(adminPaySecret || "BBDEFAULT2026");
-                  setGeneratedPayCode(code);
-                  setVenmoClicked(true);
-                }}>
-                <div style={{ background:"linear-gradient(135deg,#008CFF,#0074D9)", borderRadius:12,
-                  padding:"16px 20px", cursor:"pointer",
-                  display:"flex", alignItems:"center", gap:14, transition:"opacity 0.15s" }}
-                  onMouseEnter={e=>e.currentTarget.style.opacity="0.85"}
-                  onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
-                  <div style={{ fontSize:30, fontWeight:900, color:"#fff", flexShrink:0 }}>V</div>
-                  <div>
-                    <div style={{ fontWeight:800, fontSize:16, color:"#fff" }}>Pay @stephen-sevenich on Venmo</div>
-                    <div style={{ fontSize:12, color:"rgba(255,255,255,0.8)", marginTop:2 }}>
-                      $10 · Note: "Bracket Bucks League Fee" · Tap to pay & get your code
-                    </div>
+              {/* What you get */}
+              <div style={{ background:"#0a0f1a", border:"1px solid #1a2440", borderRadius:10,
+                padding:"14px 16px", marginBottom:20 }}>
+                {[
+                  ["✅","Instant league creation after payment"],
+                  ["🏀","Full draft board for 8 owners"],
+                  ["💰","Automatic payout calculations all tournament"],
+                  ["🔒","Secure payment via Stripe — card or Apple/Google Pay"],
+                ].map(([icon, text]) => (
+                  <div key={text} style={{ display:"flex", gap:10, alignItems:"center", marginBottom:8, fontSize:13 }}>
+                    <span>{icon}</span><span style={{ color:"#8899cc" }}>{text}</span>
                   </div>
-                  <div style={{ marginLeft:"auto", fontSize:20, color:"#fff" }}>↗</div>
-                </div>
-              </a>
+                ))}
+              </div>
 
-              <p style={{ fontSize:12, color:"#445", textAlign:"center" }}>
-                Tap the button above to open Venmo — your unlock code appears right after.
+              <button
+                onClick={async () => {
+                  setStripeLoading(true);
+                  try {
+                    const res = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/create-checkout`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json",
+                        "Authorization": `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}` },
+                      body: JSON.stringify({ action: "create" }),
+                    });
+                    const data = await res.json();
+                    if (data.url) {
+                      window.location.href = data.url; // redirect to Stripe checkout
+                    } else {
+                      notify("Could not start checkout. Please try again.", "error");
+                      setStripeLoading(false);
+                    }
+                  } catch {
+                    notify("Network error. Please try again.", "error");
+                    setStripeLoading(false);
+                  }
+                }}
+                style={{ ...S.btn(), width:"100%", padding:"15px", fontSize:16, borderRadius:12,
+                  background:"linear-gradient(135deg,#635BFF,#4A44CC)",
+                  opacity: stripeLoading ? 0.7 : 1 }}
+                disabled={stripeLoading}>
+                {stripeLoading ? "Redirecting…" : "💳 Pay $10 with Stripe"}
+              </button>
+
+              <p style={{ fontSize:11, color:"#445", textAlign:"center", marginTop:10 }}>
+                You'll be redirected to Stripe's secure checkout. After paying, you'll return here automatically.
               </p>
             </div>
 
-          ) : !paymentConfirmed ? (
-            /* ── Step 2: Show generated code + ask user to type it back ── */
-            <div>
-              <div style={{ textAlign:"center", marginBottom:20 }}>
-                <div style={{ fontSize:32, marginBottom:8 }}>🔑</div>
-                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2, color:"#f0c040", marginBottom:6 }}>
-                  Your Payment Code
-                </div>
-                <p style={{ color:"#8899cc", fontSize:13, margin:0 }}>
-                  After sending your Venmo payment, copy this code and enter it below to unlock league creation.
-                </p>
-              </div>
-
-              {/* Display the generated code */}
-              <div style={{ background:"#0a0f1a", border:"2px solid #f0c040", borderRadius:12,
-                padding:"20px", textAlign:"center", marginBottom:20 }}>
-                <div style={{ fontSize:11, color:"#6677aa", letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>
-                  Your Unlock Code
-                </div>
-                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:28, fontWeight:800,
-                  color:"#f0c040", letterSpacing:4, marginBottom:10 }}>
-                  {generatedPayCode}
-                </div>
-                <button onClick={() => { navigator.clipboard?.writeText(generatedPayCode); notify("Code copied!"); }}
-                  style={{ background:"#1a2440", border:"1px solid #2a3560", borderRadius:6,
-                    color:"#8899cc", padding:"5px 14px", cursor:"pointer", fontSize:12, fontFamily:"inherit" }}>
-                  📋 Copy Code
-                </button>
-              </div>
-
-              <label style={S.label}>Enter Your Code to Continue</label>
-              <input
-                value={payCodeInput}
-                onChange={e => { setPayCodeInput(e.target.value.toUpperCase()); setPayCodeError(""); }}
-                onKeyDown={e => {
-                  if (e.key === "Enter") {
-                    if (verifyPayCode(payCodeInput, adminPaySecret || "BBDEFAULT2026")) {
-                      setPaymentConfirmed(true); setPayCodeError("");
-                    } else {
-                      setPayCodeError("Incorrect code. Make sure you copied it exactly.");
-                    }
-                  }
-                }}
-                placeholder="e.g. BB-K3FQ2P"
-                style={{ ...S.input, fontFamily:"'DM Mono',monospace", letterSpacing:2, fontSize:16,
-                  textAlign:"center", marginBottom:6,
-                  borderColor: payCodeError ? "#e74c3c" : payCodeInput.length > 3 ? "#2ecc71" : "#2a3350" }}
-                autoFocus />
-              {payCodeError && (
-                <div style={{ color:"#e74c3c", fontSize:12, marginBottom:10 }}>{payCodeError}</div>
-              )}
-
-              <button onClick={() => {
-                  if (verifyPayCode(payCodeInput, adminPaySecret || "BBDEFAULT2026")) {
-                    setPaymentConfirmed(true); setPayCodeError("");
-                  } else {
-                    setPayCodeError("Incorrect code. Make sure you copied it exactly.");
-                  }
-                }}
-                style={{ ...S.btn(), width:"100%", padding:"13px", fontSize:15, borderRadius:10,
-                  opacity: payCodeInput.length > 4 ? 1 : 0.5 }}>
-                ✅ Verify & Continue
-              </button>
-
-              <button onClick={() => { setVenmoClicked(false); setGeneratedPayCode(""); setPayCodeInput(""); setPayCodeError(""); }}
-                style={{ background:"none", border:"none", color:"#445", cursor:"pointer",
-                  fontSize:12, width:"100%", marginTop:10, fontFamily:"inherit" }}>
-                ← Back
-              </button>
-            </div>
-
           ) : (
-            /* ── Step 3: Name the league ── */
+            /* Step 2: Payment confirmed — name the league */
             <div>
               <div style={{ background:"#0a2a14", border:"1px solid #27ae60", borderRadius:8,
                 padding:"12px 14px", marginBottom:16, fontSize:13, color:"#2ecc71",
                 display:"flex", alignItems:"center", gap:8 }}>
                 <span style={{ fontSize:18 }}>✅</span>
-                <span>Payment verified — you're good to go!</span>
+                <span>Payment confirmed — you're good to go!</span>
               </div>
               <label style={S.label}>League Name</label>
               <input value={newLeagueName} onChange={e=>setNewLeagueName(e.target.value)}
@@ -1399,11 +1362,6 @@ export default function App() {
               </p>
               <button onClick={createLeague} style={{ ...S.btn(), marginTop:12, width:"100%", fontSize:15 }}>
                 Create League
-              </button>
-              <button onClick={() => setPaymentConfirmed(false)}
-                style={{ ...S.btn("#0f1625","#6677aa"), border:"1px solid #2a3350",
-                  width:"100%", marginTop:8, fontSize:12 }}>
-                ← Back
               </button>
             </div>
           )}
@@ -2463,44 +2421,20 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Payment Code Secret */}
+              {/* Stripe Payments */}
               <div style={S.card}>
-                <SecTitle>🔑 Payment Code Secret</SecTitle>
+                <SecTitle>💳 Stripe Payments</SecTitle>
                 <p style={{ fontSize:13, color:"#6677aa", marginTop:0, marginBottom:12 }}>
-                  This secret is used to generate unique one-time unlock codes shown to users after they send their Venmo payment.
-                  Change it anytime — old codes instantly stop working.
+                  Non-admin users pay $10 via Stripe before creating a league. Payments are verified automatically — no manual action needed.
                 </p>
-                <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
-                  <input
-                    value={newAdminPaySecret}
-                    onChange={e => setNewAdminPaySecret(e.target.value)}
-                    placeholder={adminPaySecret ? "••••••••••••" : "Set a secret phrase…"}
-                    style={{ ...S.input, flex:1, minWidth:160, fontFamily:"'DM Mono',monospace", fontSize:13 }} />
-                  <button onClick={async () => {
-                      if (!adminUnlocked) { setModal("pin"); return; }
-                      if (!newAdminPaySecret.trim()) return;
-                      const { error } = await supabase.from("leagues").update({ pay_secret: newAdminPaySecret.trim() }).eq("code", leagueCode);
-                      if (error) { notify("Failed to save secret.", "error"); return; }
-                      setAdminPaySecret(newAdminPaySecret.trim());
-                      setNewAdminPaySecret("");
-                      notify("Payment secret updated ✅");
-                    }} style={{ ...S.btn(), whiteSpace:"nowrap" }}>
-                    Save Secret
-                  </button>
-                </div>
-                {adminPaySecret && (
-                  <div style={{ marginTop:10, background:"#0a0f1a", border:"1px solid #1a2440",
-                    borderRadius:8, padding:"10px 14px", fontSize:12, color:"#6677aa" }}>
-                    Current secret is set. Tell people to send $10 to <strong style={{color:"#fff"}}>@stephen-sevenich</strong> on Venmo —
-                    the app will generate a code they enter to unlock league creation.
+                <a href="https://dashboard.stripe.com/test/payments" target="_blank" rel="noreferrer"
+                  style={{ display:"inline-block", textDecoration:"none" }}>
+                  <div style={{ background:"#1a2440", border:"1px solid #635BFF", borderRadius:8,
+                    padding:"10px 16px", fontSize:13, color:"#635BFF", cursor:"pointer",
+                    display:"inline-flex", alignItems:"center", gap:8 }}>
+                    💳 View Payments in Stripe Dashboard ↗
                   </div>
-                )}
-                {!adminPaySecret && (
-                  <div style={{ marginTop:10, background:"#1a0a0a", border:"1px solid #3a1818",
-                    borderRadius:8, padding:"10px 14px", fontSize:12, color:"#e74c3c" }}>
-                    ⚠️ No secret set — users can bypass the payment gate. Set one above!
-                  </div>
-                )}
+                </a>
               </div>
 
               {/* Setup Wizard — add all 8 owners at once */}
