@@ -449,6 +449,8 @@ export default function App() {
   // Team editor
   const [editingOwner, setEditingOwner]   = useState(null);
   const [editTeams, setEditTeams]         = useState([]);
+  const [editingOwnerNameId, setEditingOwnerNameId] = useState(null);
+  const [editOwnerNameVal, setEditOwnerNameVal]     = useState("");
 
   // Setup wizard
   const BLANK_ROSTER = () => Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
@@ -2410,16 +2412,73 @@ export default function App() {
                     {owners.map(o=>(
                       <div key={o.id} style={{ display:"flex", alignItems:"center", gap:10,
                         background:"#0f1625", borderRadius:8, padding:"8px 12px", flexWrap:"wrap" }}>
-                        <div style={{ width:10,height:10,borderRadius:"50%",background:o.color }} />
-                        <span style={{ fontWeight:600, flex:1 }}>{o.name}</span>
-                        <span style={{ fontSize:12, color:"#445" }}>
-                          Seeds: {o.teams.map(t=>t.seed).join(", ")}
-                        </span>
-                        <button onClick={()=>adminUnlocked?openTeamEditor(o):setModal("pin")} style={{
-                          background:"#1a2440", border:"1px solid #2a3560",
-                          borderRadius:6, color:"#f0c040", padding:"4px 12px",
-                          cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit"
-                        }}>✏️ Edit Teams</button>
+                        <div style={{ width:10,height:10,borderRadius:"50%",background:o.color,flexShrink:0 }} />
+
+                        {/* Inline name editor */}
+                        {editingOwnerNameId === o.id ? (
+                          <div style={{ display:"flex", gap:6, flex:1, alignItems:"center", minWidth:160 }}>
+                            <input
+                              value={editOwnerNameVal}
+                              onChange={e => setEditOwnerNameVal(e.target.value)}
+                              onKeyDown={async e => {
+                                if (e.key === "Enter") {
+                                  if (!editOwnerNameVal.trim()) return;
+                                  const { error } = await supabase.from("owners").update({ name: editOwnerNameVal.trim() }).eq("id", o.id);
+                                  if (error) { notify("Failed to save name.", "error"); return; }
+                                  setOwners(prev => prev.map(x => x.id === o.id ? { ...x, name: editOwnerNameVal.trim() } : x));
+                                  setEditingOwnerNameId(null);
+                                  notify(`Name updated to ${editOwnerNameVal.trim()}`);
+                                } else if (e.key === "Escape") {
+                                  setEditingOwnerNameId(null);
+                                }
+                              }}
+                              autoFocus
+                              style={{ ...S.input, padding:"5px 10px", fontSize:13, flex:1 }}
+                            />
+                            <button onClick={async () => {
+                              if (!editOwnerNameVal.trim()) return;
+                              const { error } = await supabase.from("owners").update({ name: editOwnerNameVal.trim() }).eq("id", o.id);
+                              if (error) { notify("Failed to save name.", "error"); return; }
+                              setOwners(prev => prev.map(x => x.id === o.id ? { ...x, name: editOwnerNameVal.trim() } : x));
+                              setEditingOwnerNameId(null);
+                              notify(`Name updated to ${editOwnerNameVal.trim()}`);
+                            }} style={{ ...S.btn(), padding:"5px 12px", fontSize:12 }}>Save</button>
+                            <button onClick={() => setEditingOwnerNameId(null)}
+                              style={{ background:"none", border:"1px solid #2a3560", borderRadius:6,
+                                color:"#6677aa", padding:"5px 10px", cursor:"pointer", fontSize:12, fontFamily:"inherit" }}>
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display:"flex", alignItems:"center", gap:6, flex:1, minWidth:120 }}>
+                            <span style={{ fontWeight:600 }}>{o.name}</span>
+                            <button onClick={() => {
+                              if (!adminUnlocked) { setModal("pin"); return; }
+                              setEditingOwnerNameId(o.id);
+                              setEditOwnerNameVal(o.name);
+                            }} style={{ background:"none", border:"none", color:"#445", cursor:"pointer",
+                              fontSize:12, padding:"2px 4px", fontFamily:"inherit", lineHeight:1 }}
+                              title="Edit name">✎</button>
+                          </div>
+                        )}
+
+                        {editingOwnerNameId !== o.id && (
+                          <span style={{ fontSize:12, color:"#445" }}>
+                            Seeds: {o.teams.map(t=>t.seed).join(", ")}
+                          </span>
+                        )}
+                        <div style={{ display:"flex", gap:6 }}>
+                          <button onClick={()=>{ if(!adminUnlocked){setModal("pin");return;} supabase.from("owners").delete().eq("id",o.id).then(({error})=>{ if(error){notify("Failed to delete owner.","error");return;} setOwners(prev=>prev.filter(x=>x.id!==o.id)); notify(`${o.name} removed.`); }); }} style={{
+                            background:"#2a1418", border:"1px solid #3a1820",
+                            borderRadius:6, color:"#e74c3c", padding:"4px 10px",
+                            cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit"
+                          }}>🗑</button>
+                          <button onClick={()=>adminUnlocked?openTeamEditor(o):setModal("pin")} style={{
+                            background:"#1a2440", border:"1px solid #2a3560",
+                            borderRadius:6, color:"#f0c040", padding:"4px 12px",
+                            cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit"
+                          }}>✏️ Edit Teams</button>
+                        </div>
                       </div>
                     ))}
                   </div>
