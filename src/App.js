@@ -16,6 +16,79 @@ const DEFAULT_ROUNDS = [
   { id: 5, label: "Championship", short: "NCG", dmg: 3.00 },
 ];
 
+
+// ── 2026 NCAA Tournament Teams (editable each Selection Sunday) ──────────
+const NCAA_2026_TEAMS = [
+  // South Region
+  { seed:1,  name:"Duke",            region:"South" },
+  { seed:2,  name:"Tennessee",       region:"South" },
+  { seed:3,  name:"Iowa State",      region:"South" },
+  { seed:4,  name:"Maryland",        region:"South" },
+  { seed:5,  name:"Creighton",       region:"South" },
+  { seed:6,  name:"Missouri",        region:"South" },
+  { seed:7,  name:"UCLA",            region:"South" },
+  { seed:8,  name:"Gonzaga",         region:"South" },
+  { seed:9,  name:"Xavier",          region:"South" },
+  { seed:10, name:"Utah State",      region:"South" },
+  { seed:11, name:"VCU",             region:"South" },
+  { seed:12, name:"McNeese",         region:"South" },
+  { seed:13, name:"High Point",      region:"South" },
+  { seed:14, name:"Montana",         region:"South" },
+  { seed:15, name:"Wofford",         region:"South" },
+  { seed:16, name:"Norfolk State",   region:"South" },
+  // East Region
+  { seed:1,  name:"Auburn",          region:"East" },
+  { seed:2,  name:"Michigan State",  region:"East" },
+  { seed:3,  name:"Wisconsin",       region:"East" },
+  { seed:4,  name:"Arizona",         region:"East" },
+  { seed:5,  name:"Michigan",        region:"East" },
+  { seed:6,  name:"Ole Miss",        region:"East" },
+  { seed:7,  name:"Marquette",       region:"East" },
+  { seed:8,  name:"Louisville",      region:"East" },
+  { seed:9,  name:"Creighton",       region:"East" },
+  { seed:10, name:"New Mexico",      region:"East" },
+  { seed:11, name:"North Carolina",  region:"East" },
+  { seed:12, name:"UC San Diego",    region:"East" },
+  { seed:13, name:"Yale",            region:"East" },
+  { seed:14, name:"Lipscomb",        region:"East" },
+  { seed:15, name:"Bryant",          region:"East" },
+  { seed:16, name:"Alabama State",   region:"East" },
+  // Midwest Region
+  { seed:1,  name:"Houston",         region:"Midwest" },
+  { seed:2,  name:"Alabama",         region:"Midwest" },
+  { seed:3,  name:"Kentucky",        region:"Midwest" },
+  { seed:4,  name:"Purdue",          region:"Midwest" },
+  { seed:5,  name:"Clemson",         region:"Midwest" },
+  { seed:6,  name:"Illinois",        region:"Midwest" },
+  { seed:7,  name:"Saint Marys",     region:"Midwest" },
+  { seed:8,  name:"Mississippi St",  region:"Midwest" },
+  { seed:9,  name:"Baylor",          region:"Midwest" },
+  { seed:10, name:"Arkansas",        region:"Midwest" },
+  { seed:11, name:"Drake",           region:"Midwest" },
+  { seed:12, name:"Colorado State",  region:"Midwest" },
+  { seed:13, name:"Grand Canyon",    region:"Midwest" },
+  { seed:14, name:"Troy",            region:"Midwest" },
+  { seed:15, name:"Robert Morris",   region:"Midwest" },
+  { seed:16, name:"SIU Edwardsville",region:"Midwest" },
+  // West Region
+  { seed:1,  name:"Florida",         region:"West" },
+  { seed:2,  name:"St Johns",        region:"West" },
+  { seed:3,  name:"Texas Tech",      region:"West" },
+  { seed:4,  name:"Kansas",          region:"West" },
+  { seed:5,  name:"Oregon",          region:"West" },
+  { seed:6,  name:"BYU",             region:"West" },
+  { seed:7,  name:"Memphis",         region:"West" },
+  { seed:8,  name:"UConn",           region:"West" },
+  { seed:9,  name:"Oklahoma",        region:"West" },
+  { seed:10, name:"Vanderbilt",      region:"West" },
+  { seed:11, name:"Liberty",         region:"West" },
+  { seed:12, name:"UNLV",            region:"West" },
+  { seed:13, name:"Akron",           region:"West" },
+  { seed:14, name:"UNC Wilmington",  region:"West" },
+  { seed:15, name:"Omaha",           region:"West" },
+  { seed:16, name:"Mount St Marys",  region:"West" },
+];
+
 // ── 2025 NCAA Tournament Bracket Data ───────────────────────────────────
 const BRACKET_2025 = {
   regions: [
@@ -729,6 +802,7 @@ export default function App() {
     {id:"roster",      icon:"👥", label:"Rosters"},
     {id:"payouts",     icon:"💰", label:"Payout Table"},
     {id:"bracket2025", icon:"🏆", label:"2025 Bracket"},
+    {id:"draft",       icon:"🎯", label:"Draft"},
     {id:"profile",     icon:"👤", label:"My Profile"},
     {id:"admin",       icon:"⚙️",  label:"Admin"},
   ];
@@ -835,7 +909,7 @@ export default function App() {
               Welcome to Bracket Bucks — the March Madness Upset Pool!
             </p>
             <p style={{ margin:"0 0 12px" }}>
-              Each player is assigned <strong style={{color:"#f0c040"}}>8 teams</strong> before the tournament starts. Every team has a seed number (1–16). The goal is to collect money when your teams win.
+              Each player drafts <strong style={{color:"#f0c040"}}>8 teams</strong> before the tournament starts. Every team has a seed number (1–16). The goal is to collect money when your teams win.
             </p>
 
             <div style={{ background:"#0f1625", border:"1px solid #1e2840", borderRadius:10, padding:"14px 16px", marginBottom:14 }}>
@@ -1566,6 +1640,245 @@ export default function App() {
             })()}
           </div>
         )}
+
+
+        {/* DRAFT */}
+        {!loading && tab==="draft" && (()=>{
+          // Build list of already-picked team names across all owners
+          const pickedNames = owners.flatMap(o => o.teams.map(t => t.name.toLowerCase().trim()));
+          const available = NCAA_2026_TEAMS.filter(t => !pickedNames.includes(t.name.toLowerCase().trim()));
+
+          // Draft order: snake — round 1: 0..N-1, round 2: N-1..0, etc.
+          // Count total picks made = sum of non-empty team slots across owners
+          const totalPicks = owners.reduce((sum, o) => sum + o.teams.filter(t => t.name && t.name.trim()).length, 0);
+          const numOwners = owners.length;
+          const pickRound = Math.floor(totalPicks / numOwners); // 0-indexed round
+          const posInRound = totalPicks % numOwners;
+          const isEvenRound = pickRound % 2 === 0;
+          const sortedOwners = [...owners].sort((a,b) => a.num - b.num);
+          const currentPickerIdx = isEvenRound ? posInRound : (numOwners - 1 - posInRound);
+          const currentPicker = sortedOwners[currentPickerIdx] || null;
+          const draftComplete = totalPicks >= numOwners * 8;
+
+          // Draft pick function
+          async function draftPick(team) {
+            if (!currentPicker) return;
+            if (!adminUnlocked) { setModal("pin"); return; }
+            const updatedTeams = [...currentPicker.teams];
+            // Find first empty slot
+            const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
+            if (emptyIdx === -1) { notify("This owner already has 8 teams.", "error"); return; }
+            updatedTeams[emptyIdx] = { seed: team.seed, name: team.name };
+            const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
+            if (error) { notify("Failed to save pick.", "error"); return; }
+            setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
+            notify(`✓ ${currentPicker.name} drafted ${team.name}!`);
+          }
+
+          // Reset draft function
+          async function resetDraft() {
+            if (!adminUnlocked) { setModal("pin"); return; }
+            const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
+            for (const o of owners) {
+              await supabase.from("owners").update({ teams: blank }).eq("id", o.id);
+            }
+            setOwners(prev => prev.map(o => ({ ...o, teams: blank })));
+            notify("Draft reset! All picks cleared.");
+          }
+
+          // Build draft board pick history
+          const draftHistory = [];
+          for (let round = 0; round < 8; round++) {
+            const isEven = round % 2 === 0;
+            for (let pos = 0; pos < numOwners; pos++) {
+              const ownerIdx = isEven ? pos : (numOwners - 1 - pos);
+              const owner = sortedOwners[ownerIdx];
+              if (!owner) continue;
+              const pick = owner.teams[round];
+              draftHistory.push({ round, pos, owner, pick: pick?.name ? pick : null });
+            }
+          }
+
+          const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:"#9b59b6" };
+
+          return (
+            <div>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20, flexWrap:"wrap", gap:12 }}>
+                <div>
+                  <h2 style={{ margin:"0 0 4px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>🎯 Snake Draft</h2>
+                  <p style={{ margin:0, color:"#6677aa", fontSize:13 }}>
+                    {draftComplete ? "✅ Draft complete! All teams assigned." :
+                      numOwners === 0 ? "Add owners in Admin tab first." :
+                      `Round ${pickRound + 1} · Pick ${posInRound + 1} of ${numOwners} · ${available.length} teams remaining`}
+                  </p>
+                </div>
+                <div style={{ display:"flex", gap:8 }}>
+                  <button onClick={resetDraft} style={{ ...S.btn("#1a2440","#e74c3c"), border:"1px solid #e74c3c", fontSize:12 }}>
+                    🔄 Reset Draft
+                  </button>
+                </div>
+              </div>
+
+              {/* Current Pick Banner */}
+              {!draftComplete && currentPicker && (
+                <div style={{ background:"linear-gradient(135deg,#1a2e10,#142010)", border:`2px solid ${currentPicker.color}`,
+                  borderRadius:14, padding:"14px 20px", marginBottom:20,
+                  display:"flex", alignItems:"center", gap:14, flexWrap:"wrap" }}>
+                  <div style={{ width:44, height:44, borderRadius:"50%", background:currentPicker.color,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:20, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                    {currentPicker.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:1.5, marginBottom:2 }}>Now Picking</div>
+                    <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:2, color:currentPicker.color }}>
+                      {currentPicker.name}
+                    </div>
+                  </div>
+                  <div style={{ marginLeft:"auto", textAlign:"right" }}>
+                    <div style={{ fontSize:11, color:"#6677aa", marginBottom:2 }}>Round {pickRound + 1} · Pick {totalPicks + 1}</div>
+                    <div style={{ fontSize:12, color:"#dce4f5" }}>{currentPicker.teams.filter(t=>t.name).length}/8 teams drafted</div>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 340px", gap:16, alignItems:"start" }}>
+
+                {/* Available Teams */}
+                <div>
+                  <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:1.5, fontWeight:700, marginBottom:10 }}>
+                    Available Teams ({available.length})
+                  </div>
+                  {["South","East","Midwest","West"].map(region => {
+                    const regionTeams = available.filter(t => t.region === region).sort((a,b) => a.seed - b.seed);
+                    if (!regionTeams.length) return null;
+                    return (
+                      <div key={region} style={{ marginBottom:14 }}>
+                        <div style={{ fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:1.5,
+                          color:regionColors[region], marginBottom:6, display:"flex", alignItems:"center", gap:6 }}>
+                          <span style={{ width:8, height:8, borderRadius:"50%", background:regionColors[region], display:"inline-block" }} />
+                          {region} Region
+                        </div>
+                        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:6 }}>
+                          {regionTeams.map(team => (
+                            <button key={team.region+team.seed} onClick={()=>draftPick(team)}
+                              disabled={draftComplete || !currentPicker}
+                              style={{ display:"flex", alignItems:"center", gap:8,
+                                background: draftComplete || !currentPicker ? "#0a0f1a" : "#0f1625",
+                                border:`1px solid ${draftComplete || !currentPicker ? "#111" : regionColors[region]+"44"}`,
+                                borderRadius:8, padding:"8px 10px", cursor: draftComplete || !currentPicker ? "default" : "pointer",
+                                fontFamily:"inherit", textAlign:"left", transition:"all 0.15s",
+                                opacity: draftComplete || !currentPicker ? 0.5 : 1 }}
+                              onMouseEnter={e => { if (!draftComplete && currentPicker) e.currentTarget.style.background="#1a2e1a"; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = draftComplete || !currentPicker ? "#0a0f1a" : "#0f1625"; }}>
+                              <SeedBadge seed={team.seed} />
+                              <span style={{ fontSize:12, fontWeight:600, color:"#dce4f5", flex:1 }}>{team.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {available.length === 0 && !draftComplete && (
+                    <Empty text="All teams have been drafted!" />
+                  )}
+                </div>
+
+                {/* Draft Board (right side) */}
+                <div>
+                  <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:1.5, fontWeight:700, marginBottom:10 }}>
+                    Draft Board
+                  </div>
+                  <div style={{ background:"#0f1420", border:"1px solid #1a2440", borderRadius:12, overflow:"hidden" }}>
+                    {/* Header row */}
+                    <div style={{ display:"grid", gridTemplateColumns:`80px repeat(${numOwners}, 1fr)`,
+                      background:"#141d38", borderBottom:"1px solid #1a2440", padding:"6px 8px" }}>
+                      <div style={{ fontSize:10, color:"#445", textTransform:"uppercase", letterSpacing:1 }}>Rd</div>
+                      {sortedOwners.map(o => (
+                        <div key={o.id} style={{ fontSize:10, color:o.color, fontWeight:700,
+                          textAlign:"center", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                          {o.name.split(" ")[0]}
+                        </div>
+                      ))}
+                    </div>
+                    {/* Pick rows */}
+                    {Array.from({length:8}, (_,round) => {
+                      const isEvenR = round % 2 === 0;
+                      return (
+                        <div key={round} style={{ display:"grid",
+                          gridTemplateColumns:`80px repeat(${numOwners}, 1fr)`,
+                          borderBottom:"1px solid #111", padding:"4px 8px",
+                          background: round % 2 === 0 ? "#0f1420" : "#0a0f1a" }}>
+                          <div style={{ fontSize:11, color:"#445", display:"flex", alignItems:"center", gap:4 }}>
+                            <span>Rd {round+1}</span>
+                            <span style={{ fontSize:9, color:"#333" }}>{isEvenR?"→":"←"}</span>
+                          </div>
+                          {sortedOwners.map((o, oi) => {
+                            const pick = o.teams[round];
+                            const globalPickNum = round * numOwners + (isEvenR ? oi : numOwners - 1 - oi);
+                            const isCurrent = globalPickNum === totalPicks && !draftComplete;
+                            return (
+                              <div key={o.id} style={{ padding:"3px 4px", borderRadius:5, textAlign:"center",
+                                background: isCurrent ? o.color+"33" : "transparent",
+                                border: isCurrent ? `1px solid ${o.color}` : "1px solid transparent",
+                                minHeight:28, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                                {pick?.name ? (
+                                  <div>
+                                    <div style={{ fontSize:9, color:o.color, fontWeight:700 }}>#{pick.seed}</div>
+                                    <div style={{ fontSize:9, color:"#dce4f5", lineHeight:1.2,
+                                      overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:50 }}>
+                                      {pick.name.split(" ").slice(-1)[0]}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div style={{ width:20, height:2, background: isCurrent ? o.color : "#1a2440", borderRadius:1 }} />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Owner picks summary */}
+                  <div style={{ marginTop:14 }}>
+                    <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:1.5, fontWeight:700, marginBottom:8 }}>
+                      Teams Drafted
+                    </div>
+                    {sortedOwners.map(o => {
+                      const drafted = o.teams.filter(t => t.name && t.name.trim());
+                      return (
+                        <div key={o.id} style={{ marginBottom:8, background:"#0a0f1a",
+                          border:`1px solid ${o.id === currentPicker?.id ? o.color : "#1a2440"}`,
+                          borderRadius:10, padding:"10px 12px" }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
+                            <div style={{ width:8, height:8, borderRadius:"50%", background:o.color }} />
+                            <span style={{ fontWeight:700, fontSize:13, color:o.id===currentPicker?.id?o.color:"#dce4f5" }}>{o.name}</span>
+                            <span style={{ marginLeft:"auto", fontSize:11, color:"#445" }}>{drafted.length}/8</span>
+                          </div>
+                          <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                            {drafted.map((t,i) => (
+                              <span key={i} style={{ fontSize:10, background:"#1a2440", color:"#dce4f5",
+                                borderRadius:4, padding:"2px 6px", display:"flex", alignItems:"center", gap:3 }}>
+                                <SeedBadge seed={t.seed} />
+                                <span>{t.name}</span>
+                              </span>
+                            ))}
+                            {Array.from({length: 8 - drafted.length}).map((_,i) => (
+                              <span key={`empty-${i}`} style={{ fontSize:10, background:"#111", color:"#333",
+                                borderRadius:4, padding:"2px 8px", border:"1px dashed #1a2440" }}>—</span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* PROFILE */}
         {!loading && tab==="profile" && (()=>{
