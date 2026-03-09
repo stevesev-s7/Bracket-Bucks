@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 
-// ── Fonts
+// ââ Fonts
 const FontLink = () => (
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
 );
 
-// ── Constants
+// ââ Constants
 const DEFAULT_ROUNDS = [
   { id: 0, label: "Round 1",      short: "R1",  dmg: 0.50 },
   { id: 1, label: "Round of 32",  short: "R32", dmg: 1.00 },
@@ -17,7 +17,7 @@ const DEFAULT_ROUNDS = [
 ];
 
 
-// ── 2026 NCAA Tournament Teams (editable each Selection Sunday) ──────────
+// ââ 2026 NCAA Tournament Teams (editable each Selection Sunday) ââââââââââ
 const NCAA_2026_TEAMS = [
   // South Region
   { seed:1,  name:"Duke",            region:"South" },
@@ -89,7 +89,7 @@ const NCAA_2026_TEAMS = [
   { seed:16, name:"Mount St Marys",  region:"West" },
 ];
 
-// ── 2025 NCAA Tournament Bracket Data ───────────────────────────────────
+// ââ 2025 NCAA Tournament Bracket Data âââââââââââââââââââââââââââââââââââ
 const BRACKET_2025 = {
   regions: [
     {
@@ -258,7 +258,7 @@ function genCode() {
 
 
 
-// ── Scoring engine (identical to spreadsheet logic)
+// ââ Scoring engine (identical to spreadsheet logic)
 function calcStats(owners, wins, rounds) {
   const N = owners.length;
   const map = {};
@@ -296,7 +296,7 @@ function calcStats(owners, wins, rounds) {
   }).sort((a,b)=>b.net - a.net);
 }
 
-// ── Styles
+// ââ Styles
 const S = {
   btn: (bg="#f0c040", color="#111") => ({
     background:bg, color, border:"none", borderRadius:8,
@@ -320,7 +320,7 @@ const S = {
 const TH = { padding:"10px 14px", textAlign:"left", color:"#6677aa", fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:1, borderBottom:"1px solid #1a2440" };
 const TD = { padding:"10px 14px", verticalAlign:"middle" };
 
-// ── Tiny components
+// ââ Tiny components
 function SeedBadge({ seed }) {
   const hue = Math.round(115 - (seed-1)*7);
   return (
@@ -354,7 +354,7 @@ function Modal({ open, onClose, title, children }) {
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:22 }}>
           <h3 style={{ margin:0, fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:2, color:"#f0c040" }}>{title}</h3>
-          <button onClick={onClose} style={{ background:"none", border:"none", color:"#667", fontSize:22, cursor:"pointer" }}>✕</button>
+          <button onClick={onClose} style={{ background:"none", border:"none", color:"#667", fontSize:22, cursor:"pointer" }}>â</button>
         </div>
         {children}
       </div>
@@ -366,7 +366,7 @@ function Empty({ text }) {
     <div style={{ textAlign:"center", padding:"48px 24px",
       background:"#111827", border:"1px dashed #1a2440",
       borderRadius:14, color:"#334" }}>
-      <div style={{ fontSize:30, marginBottom:10 }}>🏀</div>
+      <div style={{ fontSize:30, marginBottom:10 }}>ð</div>
       <p style={{ margin:0, fontSize:14 }}>{text}</p>
     </div>
   );
@@ -385,14 +385,14 @@ function SecTitle({ children }) {
 function Spinner() {
   return (
     <div style={{ textAlign:"center", padding:"60px 24px", color:"#445" }}>
-      <div style={{ fontSize:30, marginBottom:12, animation:"spin 1s linear infinite", display:"inline-block" }}>⟳</div>
-      <p style={{ margin:0 }}>Loading…</p>
+      <div style={{ fontSize:30, marginBottom:12, animation:"spin 1s linear infinite", display:"inline-block" }}>â³</div>
+      <p style={{ margin:0 }}>Loadingâ¦</p>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
 
-// ── Draft Countdown Banner (live ticking) ──────────────────────────────
+// ââ Draft Countdown Banner (live ticking) ââââââââââââââââââââââââââââââ
 function DraftCountdownBanner({ secondsLeft }) {
   const [secs, setSecs] = React.useState(secondsLeft);
   // Handle Stripe redirect back after payment
@@ -458,7 +458,7 @@ function DraftCountdownBanner({ secondsLeft }) {
 }
 
 
-// ── Main App ─────────────────────────────────────────────────────────────────
+// ââ Main App âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 export default function App() {
   // League state
   const [leagueCode, setLeagueCode] = useState(null);
@@ -475,7 +475,10 @@ export default function App() {
   // Form values
   const [newLeagueName, setNewLeagueName] = useState("");
   const [paymentConfirmed, setPaymentConfirmed]   = useState(false);
-  const [stripeLoading, setStripeLoading]         = useState(false);
+  const [paymentStep, setPaymentStep]             = useState('instructions');
+  const [venmoVerifyError, setVenmoVerifyError]   = useState('');
+  const [paymentStep, setPaymentStep]           = useState('instructions');
+  const [venmoVerifyError, setVenmoVerifyError]  = useState('');
   const [joinCode, setJoinCode]           = useState("");
   const [joinErr, setJoinErr]             = useState("");
   const [newOwnerName, setNewOwnerName]   = useState("");
@@ -559,7 +562,7 @@ export default function App() {
     setTimeout(()=>setToast(null), 3200);
   }
 
-  // ── Auth init ────────────────────────────────────────────────────────────
+  // ââ Auth init ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setAuthUser(session?.user ?? null);
@@ -623,7 +626,7 @@ export default function App() {
     localStorage.setItem(`bb_league_${authUser.id}`, code);
   }
 
-  // ── Load league from Supabase ────────────────────────────────────────────
+  // ââ Load league from Supabase ââââââââââââââââââââââââââââââââââââââââââââ
   const loadLeague = useCallback(async (code) => {
     setLoading(true);
     try {
@@ -660,7 +663,7 @@ export default function App() {
   }, []);
 
 
-  // ── Draft pick timer + auto-pick ────────────────────────────────────────
+  // ââ Draft pick timer + auto-pick ââââââââââââââââââââââââââââââââââââââââ
   useEffect(() => {
     if (!league?.draft_start || !leagueCode) return;
     const draftStart = new Date(league.draft_start);
@@ -705,7 +708,7 @@ export default function App() {
     return () => clearInterval(tick);
   }, [league?.draft_start, league?.pick_timer_start, leagueCode]);
 
-  // ── Real-time subscription ───────────────────────────────────────────────
+  // ââ Real-time subscription âââââââââââââââââââââââââââââââââââââââââââââââ
   useEffect(() => {
     if (!leagueCode) return;
     const channel = supabase.channel(`league_${leagueCode}`)
@@ -719,7 +722,7 @@ export default function App() {
     return () => supabase.removeChannel(channel);
   }, [leagueCode]);
 
-  // ── League ops ───────────────────────────────────────────────────────────
+  // ââ League ops âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   async function autoAddUserAsOwner(code) {
     if (!authUser) return;
     const userName = authUser.user_metadata?.name || authUser.email;
@@ -775,10 +778,10 @@ export default function App() {
     }
   }
 
-  // ── Seed CHI2025 if clicked directly ────────────────────────────────────
+  // ââ Seed CHI2025 if clicked directly ââââââââââââââââââââââââââââââââââââ
   async function loadCHI2025() {
     setLoading(true);
-    // Try to load — if it doesn't exist, create it and seed owners
+    // Try to load â if it doesn't exist, create it and seed owners
     const { data: existing } = await supabase.from("leagues").select("code").eq("code","CHI2025").single();
     if (!existing) {
       await supabase.from("leagues").insert({ code:"CHI2025", name:"CHI 2025 Upset Pool" });
@@ -794,7 +797,7 @@ export default function App() {
     saveToMyLeagues("CHI2025", "CHI 2025 Upset Pool");
   }
 
-  // ── Add owner ────────────────────────────────────────────────────────────
+  // ââ Add owner ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   async function addOwner() {
     if (!newOwnerName.trim() || !leagueCode) return;
     if (owners.length >= 8) { notify("Max 8 owners per league.", "error"); return; }
@@ -809,7 +812,7 @@ export default function App() {
     notify(`${newOwnerName.trim()} added!`);
   }
 
-  // ── Record win ───────────────────────────────────────────────────────────
+  // ââ Record win âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   async function recordWin() {
     if (!winOwnerId || winTeamIdx === "") return;
     const { error } = await supabase.from("wins").insert({
@@ -824,19 +827,19 @@ export default function App() {
     }
     const owner = owners.find(o=>o.id===parseInt(winOwnerId));
     const team = owner?.teams[parseInt(winTeamIdx)];
-    notify(`✓ ${team?.name} win recorded for ${owner?.name}`);
+    notify(`â ${team?.name} win recorded for ${owner?.name}`);
     setWinTeamIdx("");
     setModal(null);
   }
 
-  // ── Remove win ───────────────────────────────────────────────────────────
+  // ââ Remove win âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   async function removeWin(winId) {
     const { error } = await supabase.from("wins").delete().eq("id", winId);
     if (error) notify("Failed to remove win.", "error");
     else notify("Win removed.");
   }
 
-  // ── Edit teams ───────────────────────────────────────────────────────────
+  // ââ Edit teams âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   function openTeamEditor(owner) {
     setEditingOwner(owner);
     setEditTeams(owner.teams.map(t => ({ ...t })));
@@ -856,7 +859,7 @@ export default function App() {
     notify(`${editingOwner.name}'s teams updated!`);
   }
 
-  // ── Bracket ──────────────────────────────────────────────────────────────
+  // ââ Bracket ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   async function fetchBracket() {
     setBracketStatus("loading");
     try {
@@ -876,7 +879,7 @@ export default function App() {
         return {
           id: e.id,
           name: e.name,
-          status: e.status?.type?.description || "—",
+          status: e.status?.type?.description || "â",
           isLive: e.status?.type?.state === "in",
           isFinal: e.status?.type?.completed || false,
           period: e.status?.displayClock || "",
@@ -898,7 +901,7 @@ export default function App() {
     } catch { setBracketStatus("error"); }
   }
 
-  // ── ESPN ─────────────────────────────────────────────────────────────────
+  // ââ ESPN âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   async function fetchESPN() {
     setEspnStatus("loading");
     try {
@@ -907,7 +910,7 @@ export default function App() {
       const data = await res.json();
       setEspnGames((data.events||[]).map(e=>({
         id:e.id, name:e.name,
-        status:e.status?.type?.description||"—",
+        status:e.status?.type?.description||"â",
         isLive:e.status?.type?.state==="in",
         isFinal:e.status?.type?.completed,
         competitors:(e.competitions?.[0]?.competitors||[]).map(c=>({
@@ -923,23 +926,23 @@ export default function App() {
   const totalWins = wins.length;
 
   const TABS = [
-    {id:"leaderboard", icon:"🏆", label:"Leaderboard"},
-    {id:"wins",        icon:"📋", label:"Win Tracker"},
-    {id:"espn",        icon:"📡", label:"Live Scores"},
-    {id:"roster",      icon:"👥", label:"Rosters"},
-    {id:"payouts",     icon:"💰", label:"Payout Table"},
-    {id:"bracket2025", icon:"🏆", label:"2025 Bracket"},
-    {id:"draft",       icon:"🎯", label:"Draft"},
-    {id:"profile",     icon:"👤", label:"My Profile"},
-    {id:"admin",       icon:"⚙️",  label:"Admin"},
+    {id:"leaderboard", icon:"ð", label:"Leaderboard"},
+    {id:"wins",        icon:"ð", label:"Win Tracker"},
+    {id:"espn",        icon:"ð¡", label:"Live Scores"},
+    {id:"roster",      icon:"ð¥", label:"Rosters"},
+    {id:"payouts",     icon:"ð°", label:"Payout Table"},
+    {id:"bracket2025", icon:"ð", label:"2025 Bracket"},
+    {id:"draft",       icon:"ð¯", label:"Draft"},
+    {id:"profile",     icon:"ð¤", label:"My Profile"},
+    {id:"admin",       icon:"âï¸",  label:"Admin"},
   ];
 
-  // ── Auth screen ─────────────────────────────────────────────────────────
+  // ââ Auth screen âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   if (authLoading) {
     return (
       <div style={{ minHeight:"100vh", background:"#0c1120", display:"flex", alignItems:"center", justifyContent:"center" }}>
         <FontLink />
-        <div style={{ color:"#6677aa", fontSize:16 }}>Loading…</div>
+        <div style={{ color:"#6677aa", fontSize:16 }}>Loadingâ¦</div>
       </div>
     );
   }
@@ -953,7 +956,7 @@ export default function App() {
         <div style={{ maxWidth:420, width:"100%", padding:24 }}>
           {/* Logo */}
           <div style={{ textAlign:"center", marginBottom:36 }}>
-            <div style={{ fontSize:52, marginBottom:12 }}>🏀</div>
+            <div style={{ fontSize:52, marginBottom:12 }}>ð</div>
             <h1 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:44, letterSpacing:4,
               color:"#f0c040", margin:0, textShadow:"0 0 30px rgba(240,192,64,0.4)" }}>
               BRACKET BUCKS
@@ -987,7 +990,7 @@ export default function App() {
             <div style={{ marginBottom:20 }}>
               <label style={S.label}>Password</label>
               <input type="password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)}
-                placeholder={isSignUp?"At least 6 characters":"••••••••"} style={S.input}
+                placeholder={isSignUp?"At least 6 characters":"â¢â¢â¢â¢â¢â¢â¢â¢"} style={S.input}
                 onKeyDown={e=>e.key==="Enter"&&(isSignUp?handleSignUp():handleSignIn())} />
             </div>
 
@@ -1004,7 +1007,7 @@ export default function App() {
               disabled={authWorking}
               style={{ ...S.btn(), width:"100%", padding:"13px", fontSize:15, borderRadius:10,
                 opacity: authWorking ? 0.7 : 1 }}>
-              {authWorking ? "Please wait…" : isSignUp ? "Create Account" : "Sign In"}
+              {authWorking ? "Please waitâ¦" : isSignUp ? "Create Account" : "Sign In"}
             </button>
 
             <div style={{ textAlign:"center", marginTop:18, fontSize:13, color:"#6677aa" }}>
@@ -1021,7 +1024,7 @@ export default function App() {
             <button onClick={()=>setModal("howToPlay")} style={{
               background:"none", border:"none", color:"#6677aa",
               fontSize:12, cursor:"pointer", textDecoration:"underline", fontFamily:"inherit"
-            }}>❓ How to Play</button>
+            }}>â How to Play</button>
             <button onClick={()=>setModal("adminLogin")} style={{
               background:"none", border:"none", color:"#2a3560",
               fontSize:11, cursor:"pointer", textDecoration:"underline", fontFamily:"inherit"
@@ -1030,20 +1033,20 @@ export default function App() {
         </div>
 
         {/* How to Play modal */}
-        <Modal open={modal==="howToPlay"} onClose={()=>setModal(null)} title="❓ How to Play">
+        <Modal open={modal==="howToPlay"} onClose={()=>setModal(null)} title="â How to Play">
           <div style={{ fontSize:13, color:"#aab", lineHeight:1.7 }}>
             <p style={{ margin:"0 0 14px", color:"#dce4f5", fontSize:15, fontWeight:600 }}>
-              Welcome to Bracket Bucks — the March Madness Upset Pool!
+              Welcome to Bracket Bucks â the March Madness Upset Pool!
             </p>
             <p style={{ margin:"0 0 12px" }}>
-              Each player drafts <strong style={{color:"#f0c040"}}>8 teams</strong> before the tournament starts. Every team has a seed number (1–16). The goal is to collect money when your teams win.
+              Each player drafts <strong style={{color:"#f0c040"}}>8 teams</strong> before the tournament starts. Every team has a seed number (1â16). The goal is to collect money when your teams win.
             </p>
 
             <div style={{ background:"#0f1625", border:"1px solid #1e2840", borderRadius:10, padding:"14px 16px", marginBottom:14 }}>
-              <div style={{ fontWeight:700, color:"#f0c040", marginBottom:8, fontSize:12, textTransform:"uppercase", letterSpacing:1 }}>💰 How Payouts Work</div>
+              <div style={{ fontWeight:700, color:"#f0c040", marginBottom:8, fontSize:12, textTransform:"uppercase", letterSpacing:1 }}>ð° How Payouts Work</div>
               <p style={{ margin:"0 0 8px" }}>When your team wins a game, every other player pays you:</p>
               <div style={{ fontFamily:"'DM Mono',monospace", background:"#131929", borderRadius:8, padding:"10px 14px", fontSize:13, color:"#2ecc71" }}>
-                Seed # × Round Value = $ per player
+                Seed # Ã Round Value = $ per player
               </div>
               <p style={{ margin:"10px 0 0", color:"#8899cc", fontSize:12 }}>
                 Higher seeds (upsets!) earn more money. A #12 seed winning is worth way more than a #1 seed.
@@ -1051,30 +1054,30 @@ export default function App() {
             </div>
 
             <div style={{ background:"#0f1625", border:"1px solid #1e2840", borderRadius:10, padding:"14px 16px", marginBottom:14 }}>
-              <div style={{ fontWeight:700, color:"#f0c040", marginBottom:10, fontSize:12, textTransform:"uppercase", letterSpacing:1 }}>📋 Round Values</div>
+              <div style={{ fontWeight:700, color:"#f0c040", marginBottom:10, fontSize:12, textTransform:"uppercase", letterSpacing:1 }}>ð Round Values</div>
               {DEFAULT_ROUNDS.map(r => (
                 <div key={r.id} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderBottom:"1px solid #1a2440", fontSize:13 }}>
                   <span style={{ color:"#dce4f5" }}>{r.label}</span>
-                  <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040" }}>${r.dmg} × seed</span>
+                  <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040" }}>${r.dmg} Ã seed</span>
                 </div>
               ))}
             </div>
 
             <div style={{ background:"#0f1625", border:"1px solid #1e2840", borderRadius:10, padding:"14px 16px", marginBottom:14 }}>
-              <div style={{ fontWeight:700, color:"#f0c040", marginBottom:8, fontSize:12, textTransform:"uppercase", letterSpacing:1 }}>🏀 Example</div>
+              <div style={{ fontWeight:700, color:"#f0c040", marginBottom:8, fontSize:12, textTransform:"uppercase", letterSpacing:1 }}>ð Example</div>
               <p style={{ margin:"0 0 6px" }}>Your team: <strong style={{color:"#fff"}}>#10 seed Arkansas</strong> wins in the Round of 32</p>
-              <p style={{ margin:"0 0 6px" }}>Payout: <strong style={{color:"#2ecc71"}}>10 × $1.00 = $10.00 per player</strong></p>
-              <p style={{ margin:0, color:"#8899cc", fontSize:12 }}>With 8 players, you collect $70 total (7 other players × $10)</p>
+              <p style={{ margin:"0 0 6px" }}>Payout: <strong style={{color:"#2ecc71"}}>10 Ã $1.00 = $10.00 per player</strong></p>
+              <p style={{ margin:0, color:"#8899cc", fontSize:12 }}>With 8 players, you collect $70 total (7 other players Ã $10)</p>
             </div>
 
             <p style={{ margin:0, color:"#6677aa", fontSize:12, textAlign:"center" }}>
-              The leaderboard tracks who's up and who's down in real time. May the best bracket win! 🏆
+              The leaderboard tracks who's up and who's down in real time. May the best bracket win! ð
             </p>
           </div>
         </Modal>
 
         {/* Admin login modal on auth screen */}
-        <Modal open={modal==="adminLogin"} onClose={()=>{setModal(null);setAdminPassInput("");setAdminPassError("");}} title="🔐 Admin Login">
+        <Modal open={modal==="adminLogin"} onClose={()=>{setModal(null);setAdminPassInput("");setAdminPassError("");}} title="ð Admin Login">
           <p style={{ color:"#6677aa", fontSize:13, marginBottom:16 }}>Enter your admin password to access all leagues.</p>
           <input type="password" value={adminPassInput} onChange={e=>setAdminPassInput(e.target.value)}
             onKeyDown={e=>{ if(e.key==="Enter"){ if(adminPassInput===ADMIN_PASSWORD){setIsAdmin(true);sessionStorage.setItem("bb_is_admin","true");setModal(null);setAdminPassInput("");setAdminPassError("");}else{setAdminPassError("Incorrect password.");}}}}
@@ -1088,7 +1091,7 @@ export default function App() {
     );
   }
 
-  // ── Landing screen (no league loaded) ───────────────────────────────────
+  // ââ Landing screen (no league loaded) âââââââââââââââââââââââââââââââââââ
   if (!leagueCode) {
     return (
       <div style={{ minHeight:"100vh", background:"#0c1120", fontFamily:"'DM Sans',sans-serif",
@@ -1122,7 +1125,7 @@ export default function App() {
             </div>
           )}
           <div style={{ textAlign:"center", marginBottom:40 }}>
-            <div style={{ fontSize:52, marginBottom:12 }}>🏀</div>
+            <div style={{ fontSize:52, marginBottom:12 }}>ð</div>
             <h1 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:44, letterSpacing:4,
               color:"#f0c040", margin:0, textShadow:"0 0 30px rgba(240,192,64,0.4)" }}>
               BRACKET BUCKS
@@ -1134,7 +1137,7 @@ export default function App() {
 <button onClick={()=>setModal("join")} style={{
               ...S.btn("#1e2840","#dce4f5"), padding:"14px 20px", fontSize:15, borderRadius:12,
             }}>
-              🔑 Join a League
+              ð Join a League
               <div style={{ fontSize:11, fontWeight:400, color:"#6677aa", marginTop:3 }}>
                 Enter your invite code
               </div>
@@ -1144,14 +1147,14 @@ export default function App() {
               ...S.btn("#131929","#dce4f5"), padding:"14px 20px", fontSize:15, borderRadius:12,
               border:"1px solid #2a3350",
             }}>
-              ＋ Create New League
+              ï¼ Create New League
               <div style={{ fontSize:11, fontWeight:400, color:"#6677aa", marginTop:3 }}>
                 Set up a fresh pool for your group
               </div>
             </button>
           </div>
 
-          {loading && <div style={{ marginTop:20, textAlign:"center", color:"#6677aa" }}>Loading…</div>}
+          {loading && <div style={{ marginTop:20, textAlign:"center", color:"#6677aa" }}>Loadingâ¦</div>}
 
           {/* Admin login / My Leagues */}
           {!isAdmin ? (
@@ -1165,7 +1168,7 @@ export default function App() {
             <div style={{ marginTop:28 }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
                 <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:2, fontWeight:700 }}>
-                  🔓 My Leagues
+                  ð My Leagues
                 </div>
                 <button onClick={()=>{ sessionStorage.removeItem("bb_is_admin"); setIsAdmin(false); }}
                   style={{ background:"none", border:"none", color:"#445", fontSize:11, cursor:"pointer", textDecoration:"underline" }}>
@@ -1185,7 +1188,7 @@ export default function App() {
                         Code: <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040" }}>{l.code}</span>
                       </div>
                     </div>
-                    <span style={{ color:"#f0c040", fontSize:18 }}>→</span>
+                    <span style={{ color:"#f0c040", fontSize:18 }}>â</span>
                   </button>
                 ))}
               </div>
@@ -1194,7 +1197,7 @@ export default function App() {
         </div>
 
         {/* Modals */}
-        <Modal open={modal==="adminLogin"} onClose={()=>{setModal(null);setAdminPassInput("");setAdminPassError("");}} title="🔐 Admin Login">
+        <Modal open={modal==="adminLogin"} onClose={()=>{setModal(null);setAdminPassInput("");setAdminPassError("");}} title="ð Admin Login">
           <p style={{ color:"#6677aa", fontSize:13, marginBottom:16 }}>Enter your admin password to access all leagues.</p>
           <input type="password" value={adminPassInput} onChange={e=>setAdminPassInput(e.target.value)}
             onKeyDown={e=>{ if(e.key==="Enter"){ if(adminPassInput===ADMIN_PASSWORD){setIsAdmin(true);sessionStorage.setItem("bb_is_admin","true");setModal(null);setAdminPassInput("");setAdminPassError("");}else{setAdminPassError("Incorrect password.");}}}}
@@ -1204,7 +1207,7 @@ export default function App() {
             style={{ ...S.btn(), width:"100%", marginTop:4 }}>Login</button>
         </Modal>
 
-        <Modal open={modal==="profile"} onClose={()=>setModal(null)} title="👤 My Profile">
+        <Modal open={modal==="profile"} onClose={()=>setModal(null)} title="ð¤ My Profile">
           <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:20,
             background:"#0f1625", borderRadius:12, padding:"14px 18px" }}>
             <div style={{ width:48, height:48, borderRadius:"50%", background:"#f0c040",
@@ -1232,7 +1235,7 @@ export default function App() {
                       <div style={{ fontWeight:700 }}>{l.name}</div>
                       <div style={{ fontSize:11, color:"#6677aa", marginTop:2, fontFamily:"'DM Mono',monospace" }}>{l.code}</div>
                     </div>
-                    <span style={{ color:"#f0c040" }}>→</span>
+                    <span style={{ color:"#f0c040" }}>â</span>
                   </button>
                 ))}
               </div>
@@ -1255,9 +1258,9 @@ export default function App() {
           {stripeLoading ? (
             /* Verifying payment with Stripe */
             <div style={{ textAlign:"center", padding:"30px 0" }}>
-              <div style={{ fontSize:36, marginBottom:12 }}>⏳</div>
+              <div style={{ fontSize:36, marginBottom:12 }}>â³</div>
               <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2, color:"#f0c040" }}>
-                Verifying Payment…
+                Verifying Paymentâ¦
               </div>
               <p style={{ color:"#6677aa", fontSize:13, marginTop:8 }}>Confirming your Stripe payment, just a moment.</p>
             </div>
@@ -1267,7 +1270,7 @@ export default function App() {
             <div>
               <div style={{ background:"#0a2a14", border:"1px solid #27ae60", borderRadius:8,
                 padding:"10px 14px", marginBottom:14, fontSize:13, color:"#2ecc71" }}>
-                🔓 Admin — no payment required
+                ð Admin â no payment required
               </div>
               <label style={S.label}>League Name</label>
               <input value={newLeagueName} onChange={e=>setNewLeagueName(e.target.value)}
@@ -1285,13 +1288,13 @@ export default function App() {
             /* Step 1: Pay $10 via Stripe */
             <div>
               <div style={{ textAlign:"center", marginBottom:24 }}>
-                <div style={{ fontSize:40, marginBottom:8 }}>💳</div>
+                <div style={{ fontSize:40, marginBottom:8 }}>ð³</div>
                 <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:2, color:"#f0c040", marginBottom:8 }}>
                   $10 Entry Fee Required
                 </div>
                 <p style={{ color:"#8899cc", fontSize:13, margin:0, lineHeight:1.6 }}>
                   Creating a league costs <strong style={{color:"#fff"}}>$10</strong>.
-                  Pay securely via Stripe — league creation unlocks <strong style={{color:"#fff"}}>instantly</strong> after payment.
+                  Pay securely via Stripe â league creation unlocks <strong style={{color:"#fff"}}>instantly</strong> after payment.
                 </p>
               </div>
 
@@ -1299,10 +1302,10 @@ export default function App() {
               <div style={{ background:"#0a0f1a", border:"1px solid #1a2440", borderRadius:10,
                 padding:"14px 16px", marginBottom:20 }}>
                 {[
-                  ["✅","Instant league creation after payment"],
-                  ["🏀","Full draft board for 8 owners"],
-                  ["💰","Automatic payout calculations all tournament"],
-                  ["🔒","Secure payment via Stripe — card or Apple/Google Pay"],
+                  ["â","Instant league creation after payment"],
+                  ["ð","Full draft board for 8 owners"],
+                  ["ð°","Automatic payout calculations all tournament"],
+                  ["ð","Secure payment via Stripe â card or Apple/Google Pay"],
                 ].map(([icon, text]) => (
                   <div key={text} style={{ display:"flex", gap:10, alignItems:"center", marginBottom:8, fontSize:13 }}>
                     <span>{icon}</span><span style={{ color:"#8899cc" }}>{text}</span>
@@ -1310,48 +1313,53 @@ export default function App() {
                 ))}
               </div>
 
+
               <button
                 onClick={async () => {
-                  setStripeLoading(true);
+                  setPaymentStep('verifying');
+                  setVenmoVerifyError('');
                   try {
-                    const res = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/create-checkout`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json",
-                        "Authorization": `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}` },
-                      body: JSON.stringify({ action: "create" }),
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const res = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/verify-payment`, {
+                      method: 'POST',
+                      headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: session.user.email })
                     });
-                    const data = await res.json();
-                    if (data.url) {
-                      window.location.href = data.url; // redirect to Stripe checkout
+                    const result = await res.json();
+                    if (result.verified) {
+                      setPaymentConfirmed(true);
+                      setPaymentStep('instructions');
+                      setVenmoVerifyError('');
                     } else {
-                      notify("Could not start checkout. Please try again.", "error");
-                      setStripeLoading(false);
+                      setPaymentStep('error');
+                      setVenmoVerifyError(result.message || 'Payment not found — make sure your email is in the Venmo note.');
                     }
-                  } catch {
-                    notify("Network error. Please try again.", "error");
-                    setStripeLoading(false);
+                  } catch(e) {
+                    setPaymentStep('error');
+                    setVenmoVerifyError('Something went wrong. Please try again.');
                   }
                 }}
-                style={{ ...S.btn(), width:"100%", padding:"15px", fontSize:16, borderRadius:12,
-                  background:"linear-gradient(135deg,#635BFF,#4A44CC)",
-                  opacity: stripeLoading ? 0.7 : 1 }}
-                disabled={stripeLoading}>
-                {stripeLoading ? "Redirecting…" : "💳 Pay $10 with Stripe"}
+                disabled={paymentStep === 'verifying'}
+                data-venmo-btn="true"
+                style={{ ...styles.primaryBtn, width:'100%', opacity: paymentStep === 'verifying' ? 0.7 : 1 }}
+              >
+                {paymentStep === 'verifying' ? '⏳ Checking...' : '✅ I sent it — Verify Payment'}
               </button>
 
               <p style={{ fontSize:11, color:"#445", textAlign:"center", marginTop:10 }}>
-                You'll be redirected to Stripe's secure checkout. After paying, you'll return here automatically.
+                Send $10 on Venmo to @bracket-bucks-app — put your email in the note, then click verify.
+              {venmoVerifyError && <p style={{color:'#ff6b6b',fontSize:13,margin:'8px 0'}}>{venmoVerifyError}</p>}
               </p>
             </div>
 
           ) : (
-            /* Step 2: Payment confirmed — name the league */
+            /* Step 2: Payment confirmed â name the league */
             <div>
               <div style={{ background:"#0a2a14", border:"1px solid #27ae60", borderRadius:8,
                 padding:"12px 14px", marginBottom:16, fontSize:13, color:"#2ecc71",
                 display:"flex", alignItems:"center", gap:8 }}>
-                <span style={{ fontSize:18 }}>✅</span>
-                <span>Payment confirmed — you're good to go!</span>
+                <span style={{ fontSize:18 }}>â</span>
+                <span>Payment confirmed â you're good to go!</span>
               </div>
               <label style={S.label}>League Name</label>
               <input value={newLeagueName} onChange={e=>setNewLeagueName(e.target.value)}
@@ -1371,7 +1379,7 @@ export default function App() {
     );
   }
 
-  // ── Main app (league loaded) ─────────────────────────────────────────────
+  // ââ Main app (league loaded) âââââââââââââââââââââââââââââââââââââââââââââ
   return (
     <div style={{ minHeight:"100vh", background:"#0c1120", fontFamily:"'DM Sans',sans-serif", color:"#dce4f5" }}>
       <FontLink />
@@ -1382,7 +1390,7 @@ export default function App() {
         borderBottom:"2px solid #f0c040", padding:"14px 24px",
         display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-          <span style={{ fontSize:28 }}>🏀</span>
+          <span style={{ fontSize:28 }}>ð</span>
           <div>
             <h1 style={{ margin:0, fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:3,
               color:"#f0c040", textShadow:"0 0 20px rgba(240,192,64,0.35)" }}>BRACKET BUCKS</h1>
@@ -1395,10 +1403,10 @@ export default function App() {
           <div style={{ background:"#1a2440", borderRadius:8, padding:"7px 14px", fontSize:12 }}>
             Code: <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040", fontWeight:700 }}>{leagueCode}</span>
           </div>
-          <button onClick={()=>setTab("profile")} style={{ ...S.btn("#1a2440","#dce4f5"), border:"1px solid #2a3560", fontSize:12 }}>👤 Profile</button>
+          <button onClick={()=>setTab("profile")} style={{ ...S.btn("#1a2440","#dce4f5"), border:"1px solid #2a3560", fontSize:12 }}>ð¤ Profile</button>
           <button onClick={()=>{setLeagueCode(null);setLeague(null);setOwners([]);setWins([]);}}
-            style={S.btn("#1e2840","#dce4f5")}>⬅ Switch League</button>
-          {league && <button onClick={()=>setModal("addWin")} style={S.btn()}>＋ Record Win</button>}
+            style={S.btn("#1e2840","#dce4f5")}>â¬ Switch League</button>
+          {league && <button onClick={()=>setModal("addWin")} style={S.btn()}>ï¼ Record Win</button>}
         </div>
       </header>
 
@@ -1407,7 +1415,7 @@ export default function App() {
         padding:"7px 24px", display:"flex", gap:24, alignItems:"center", flexWrap:"wrap", fontSize:12 }}>
         <span style={{ color:"#6677aa" }}>{owners.length} owners</span>
         <span style={{ color:"#6677aa" }}>{totalWins} wins logged</span>
-        <span style={{ color:"#6677aa" }}>🔴 Live — updates automatically</span>
+        <span style={{ color:"#6677aa" }}>ð´ Live â updates automatically</span>
       </div>
 
       {/* Tabs */}
@@ -1468,7 +1476,7 @@ export default function App() {
                 </div>
                 <div style={{ marginTop:10, textAlign:"right", fontSize:12, color:"#445" }}>
                   League net: <span style={{ color:"#2ecc71", fontWeight:700 }}>
-                    ${stats.reduce((a,s)=>a+s.net,0).toFixed(2)} ✓ zero-sum
+                    ${stats.reduce((a,s)=>a+s.net,0).toFixed(2)} â zero-sum
                   </span>
                 </div>
 
@@ -1521,7 +1529,7 @@ export default function App() {
           <div>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
               <h2 style={{ margin:0, fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Win Log</h2>
-              <button onClick={()=>setModal("addWin")} style={S.btn()}>＋ Record Win</button>
+              <button onClick={()=>setModal("addWin")} style={S.btn()}>ï¼ Record Win</button>
             </div>
             {wins.length===0 ? <Empty text="No wins recorded yet." /> : (
               <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
@@ -1552,7 +1560,7 @@ export default function App() {
                       </div>
                       <button onClick={()=>removeWin(w.id)} style={{ background:"none",
                         border:"1px solid #3a1820", borderRadius:6, color:"#e74c3c",
-                        padding:"3px 8px", cursor:"pointer", fontSize:12 }}>✕</button>
+                        padding:"3px 8px", cursor:"pointer", fontSize:12 }}>â</button>
                     </div>
                   );
                 })}
@@ -1590,7 +1598,7 @@ export default function App() {
                               borderRadius:7, padding:"6px 10px" }}>
                               <SeedBadge seed={team.seed} />
                               <span style={{ fontSize:13, flex:1 }}>{team.name}</span>
-                              {hasWin&&<span style={{ fontSize:10, color:"#2ecc71" }}>✓</span>}
+                              {hasWin&&<span style={{ fontSize:10, color:"#2ecc71" }}>â</span>}
                             </div>
                           );
                         })}
@@ -1611,7 +1619,7 @@ export default function App() {
           <div>
             <h2 style={{ margin:"0 0 6px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Payout Reference</h2>
             <p style={{ color:"#6677aa", fontSize:13, marginBottom:20 }}>
-              Total payout formula: <strong>Seed × Round Value × {owners.length-1} owners</strong>.
+              Total payout formula: <strong>Seed Ã Round Value Ã {owners.length-1} owners</strong>.
               Smaller number shows cost per owner.
             </p>
             <div style={{ overflowX:"auto" }}>
@@ -1657,19 +1665,19 @@ export default function App() {
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
               <h2 style={{ margin:0, fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Live Scores</h2>
               <button onClick={fetchESPN} style={S.btn()} disabled={espnStatus==="loading"}>
-                {espnStatus==="loading"?"⟳ Loading…":"🔄 Fetch from ESPN"}
+                {espnStatus==="loading"?"â³ Loadingâ¦":"ð Fetch from ESPN"}
               </button>
             </div>
             {owners.length>0 && espnStatus==="success" && (
               <div style={{ background:"#0a1428", border:"1px solid #1e2840", borderRadius:10,
                 padding:"10px 14px", marginBottom:16, fontSize:12, color:"#6677aa" }}>
-                💡 <strong style={{ color:"#f0c040" }}>1-click recording:</strong> When a game is final, click <strong style={{ color:"#2ecc71" }}>✓ Record Win</strong> next to the winning team to instantly log it. You'll be prompted to select the round.
+                ð¡ <strong style={{ color:"#f0c040" }}>1-click recording:</strong> When a game is final, click <strong style={{ color:"#2ecc71" }}>â Record Win</strong> next to the winning team to instantly log it. You'll be prompted to select the round.
               </div>
             )}
             {espnStatus==="idle"&&<Empty text='Click "Fetch from ESPN" to load live tournament scores.' />}
             {espnStatus==="error"&&(
               <div style={{ ...S.card, borderColor:"#e74c3c", color:"#e74c3c" }}>
-                <strong>⚠️ Could not reach ESPN API</strong>
+                <strong>â ï¸ Could not reach ESPN API</strong>
                 <p style={{ fontSize:13, marginTop:8, color:"#aaa" }}>
                   Common during off-season or due to CORS. Use "+ Record Win" to log results manually.
                 </p>
@@ -1684,7 +1692,7 @@ export default function App() {
                   <span style={{ fontSize:11, padding:"3px 10px", borderRadius:99, fontWeight:700,
                     background:game.isLive?"#3a0a0a":game.isFinal?"#0a2a14":"#1a2440",
                     color:game.isLive?"#e74c3c":game.isFinal?"#2ecc71":"#6677aa" }}>
-                    {game.isLive?"🔴 LIVE":game.status}
+                    {game.isLive?"ð´ LIVE":game.status}
                   </span>
                 </div>
                 <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
@@ -1727,11 +1735,11 @@ export default function App() {
                             borderRadius:6, color:"#2ecc71", padding:"4px 10px",
                             cursor:"pointer", fontSize:12, fontWeight:700, fontFamily:"inherit",
                             whiteSpace:"nowrap" }}>
-                            ✓ Record Win
+                            â Record Win
                           </button>
                         )}
                         {c.winner && alreadyWon && (
-                          <span style={{ fontSize:11, color:"#2ecc71", fontWeight:700 }}>✓ Logged</span>
+                          <span style={{ fontSize:11, color:"#2ecc71", fontWeight:700 }}>â Logged</span>
                         )}
                         {c.winner && !match && (
                           <button onClick={()=>{
@@ -1756,8 +1764,8 @@ export default function App() {
         {/* LIVE BRACKET */}
         {!loading && tab==="bracket2025" && (
           <div>
-            <h2 style={{ margin:"0 0 4px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Live Bracket — 2025 NCAA Tournament</h2>
-            <p style={{ color:"#6677aa", fontSize:13, marginBottom:20 }}>🏆 Champion: <strong style={{ color:"#f0c040" }}>Florida</strong> · Final: Florida 65, Houston 63</p>
+            <h2 style={{ margin:"0 0 4px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Live Bracket â 2025 NCAA Tournament</h2>
+            <p style={{ color:"#6677aa", fontSize:13, marginBottom:20 }}>ð Champion: <strong style={{ color:"#f0c040" }}>Florida</strong> Â· Final: Florida 65, Houston 63</p>
 
             {/* Helper to find owner of a team */}
             {(() => {
@@ -1801,7 +1809,7 @@ export default function App() {
                             {t.score}
                           </span>
                         )}
-                        {t.name===game.winner && <span style={{ color:"#2ecc71", fontSize:12 }}>✓</span>}
+                        {t.name===game.winner && <span style={{ color:"#2ecc71", fontSize:12 }}>â</span>}
                       </div>
                     ))}
                   </div>
@@ -1812,15 +1820,15 @@ export default function App() {
 
               return (
                 <div>
-                  {/* Championship — top of page */}
+                  {/* Championship â top of page */}
                   <div style={{ marginBottom:28, background:"linear-gradient(135deg,#1a2010,#141d30)",
                     border:"2px solid #f0c040", borderRadius:14, padding:"18px 20px" }}>
                     <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:2,
                       color:"#f0c040", marginBottom:12 }}>
-                      🏆 National Championship — April 7, 2025
+                      ð National Championship â April 7, 2025
                     </div>
                     <div style={{ maxWidth:340 }}>
-                      <GameCard game={BRACKET_2025.championship} label="Florida 65 · Houston 63" />
+                      <GameCard game={BRACKET_2025.championship} label="Florida 65 Â· Houston 63" />
                     </div>
                   </div>
 
@@ -1829,7 +1837,7 @@ export default function App() {
                     borderRadius:14, padding:"18px 20px" }}>
                     <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2,
                       color:"#f0c040", marginBottom:12 }}>
-                      🏀 Final Four — San Antonio, TX
+                      ð Final Four â San Antonio, TX
                     </div>
                     <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:8 }}>
                       {BRACKET_2025.finalFour.map((g,i) => (
@@ -1841,7 +1849,7 @@ export default function App() {
                   {/* Divider */}
                   <div style={{ fontSize:11, color:"#445", textTransform:"uppercase", letterSpacing:2,
                     fontWeight:700, marginBottom:20, paddingTop:4 }}>
-                    ── Regional Results ──
+                    ââ Regional Results ââ
                   </div>
 
                   {/* Regions */}
@@ -1874,7 +1882,7 @@ export default function App() {
 
         {/* DRAFT */}
         {!loading && tab==="draft" && (()=>{
-          // ── Draft helpers ──────────────────────────────────────────────
+          // ââ Draft helpers ââââââââââââââââââââââââââââââââââââââââââââââ
           const pickedNames = owners.flatMap(o => o.teams.map(t => (t.name||"").toLowerCase().trim()));
           const available = NCAA_2026_TEAMS.filter(t => !pickedNames.includes(t.name.toLowerCase().trim()));
           const totalPicks = owners.reduce((sum, o) => sum + o.teams.filter(t => t.name && t.name.trim()).length, 0);
@@ -1887,13 +1895,13 @@ export default function App() {
           const currentPicker = sortedOwners[currentPickerIdx] || null;
           const draftComplete = totalPicks >= numOwners * 8 && numOwners > 0;
 
-          // ── Draft scheduled time ───────────────────────────────────────
+          // ââ Draft scheduled time âââââââââââââââââââââââââââââââââââââââ
           const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
           const now = new Date();
           const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
           const draftHasStarted = draftStart ? now >= draftStart : false;
 
-          // ── Draft a team ───────────────────────────────────────────────
+          // ââ Draft a team âââââââââââââââââââââââââââââââââââââââââââââââ
           async function draftPick(team, fromAutoPick = false) {
             if (!currentPicker) return;
             if (!fromAutoPick && !adminUnlocked) { setModal("pin"); return; }
@@ -1906,18 +1914,18 @@ export default function App() {
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
             // Reset pick timer in league
             await supabase.from("leagues").update({ pick_timer_start: new Date().toISOString() }).eq("code", leagueCode);
-            if (fromAutoPick) notify(`⏱ Auto-picked ${team.name} for ${currentPicker.name}`);
-            else notify(`✓ ${currentPicker.name} drafted ${team.name}!`);
+            if (fromAutoPick) notify(`â± Auto-picked ${team.name} for ${currentPicker.name}`);
+            else notify(`â ${currentPicker.name} drafted ${team.name}!`);
           }
 
-          // ── Auto-pick (highest available seed = lowest seed number) ───
+          // ââ Auto-pick (highest available seed = lowest seed number) âââ
           async function autoPick() {
             if (!available.length || !currentPicker) return;
             const best = [...available].sort((a,b) => a.seed - b.seed)[0];
             await draftPick(best, true);
           }
 
-          // ── Reset draft ────────────────────────────────────────────────
+          // ââ Reset draft ââââââââââââââââââââââââââââââââââââââââââââââââ
           async function resetDraft() {
             if (!adminUnlocked) { setModal("pin"); return; }
             const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
@@ -1928,7 +1936,7 @@ export default function App() {
             notify("Draft reset! All picks cleared.");
           }
 
-          // ── Save draft start time ──────────────────────────────────────
+          // ââ Save draft start time ââââââââââââââââââââââââââââââââââââââ
           async function saveDraftStart() {
             if (!draftStartInput) return;
             const { error } = await supabase.from("leagues")
@@ -1936,12 +1944,12 @@ export default function App() {
               .eq("code", leagueCode);
             if (error) { notify("Failed to save draft time.", "error"); return; }
             setLeague(prev => ({ ...prev, draft_start: new Date(draftStartInput).toISOString() }));
-            notify("✅ Draft start time saved!");
+            notify("â Draft start time saved!");
           }
 
           const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:"#9b59b6" };
 
-          // ── Pick timer logic ───────────────────────────────────────────
+          // ââ Pick timer logic âââââââââââââââââââââââââââââââââââââââââââ
           // We derive time remaining from league.pick_timer_start (stored in Supabase)
           const pickTimerStart = league?.pick_timer_start ? new Date(league.pick_timer_start) : null;
           const secondsElapsed = pickTimerStart ? Math.floor((now - pickTimerStart) / 1000) : 0;
@@ -1954,25 +1962,25 @@ export default function App() {
               {/* Header */}
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20, flexWrap:"wrap", gap:12 }}>
                 <div>
-                  <h2 style={{ margin:"0 0 4px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>🎯 Snake Draft</h2>
+                  <h2 style={{ margin:"0 0 4px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>ð¯ Snake Draft</h2>
                   <p style={{ margin:0, color:"#6677aa", fontSize:13 }}>
-                    {draftComplete ? "✅ Draft complete! All teams assigned." :
+                    {draftComplete ? "â Draft complete! All teams assigned." :
                       numOwners === 0 ? "Add owners in Admin tab first." :
-                      !draftHasStarted && draftStart ? `⏳ Draft starts ${draftStart.toLocaleString()}` :
-                      `Round ${pickRound + 1} · Pick ${posInRound + 1} of ${numOwners} · ${available.length} teams remaining`}
+                      !draftHasStarted && draftStart ? `â³ Draft starts ${draftStart.toLocaleString()}` :
+                      `Round ${pickRound + 1} Â· Pick ${posInRound + 1} of ${numOwners} Â· ${available.length} teams remaining`}
                   </p>
                 </div>
                 <div style={{ display:"flex", gap:8 }}>
                   <button onClick={resetDraft} style={{ ...S.btn("#1a2440","#e74c3c"), border:"1px solid #e74c3c", fontSize:12 }}>
-                    🔄 Reset Draft
+                    ð Reset Draft
                   </button>
                 </div>
               </div>
 
-              {/* ── Schedule Section ── */}
+              {/* ââ Schedule Section ââ */}
               <div style={{ ...S.card, marginBottom:20, background:"#0f1420" }}>
                 <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:2, color:"#f0c040", marginBottom:12 }}>
-                  📅 Draft Schedule
+                  ð Draft Schedule
                 </div>
                 <div style={{ display:"flex", gap:12, alignItems:"flex-end", flexWrap:"wrap" }}>
                   <div style={{ flex:1, minWidth:220 }}>
@@ -1982,7 +1990,7 @@ export default function App() {
                       style={{ ...S.input, fontFamily:"'DM Mono',monospace" }} />
                   </div>
                   <button onClick={saveDraftStart} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
-                    💾 Set Draft Time
+                    ð¾ Set Draft Time
                   </button>
                 </div>
                 {draftStart && (
@@ -2001,18 +2009,18 @@ export default function App() {
                     {draftHasStarted && !draftComplete && (
                       <span style={{ fontSize:12, background:"#0a2a14", color:"#2ecc71",
                         border:"1px solid #27ae60", borderRadius:6, padding:"4px 10px", fontWeight:700 }}>
-                        🟢 DRAFT LIVE
+                        ð¢ DRAFT LIVE
                       </span>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* ── Countdown / Not started yet ── */}
+              {/* ââ Countdown / Not started yet ââ */}
               {!draftHasStarted && draftStart && (
                 <div style={{ textAlign:"center", padding:"40px 24px", background:"#0f1420",
                   border:"1px solid #1a2440", borderRadius:14, marginBottom:20 }}>
-                  <div style={{ fontSize:44, marginBottom:8 }}>⏳</div>
+                  <div style={{ fontSize:44, marginBottom:8 }}>â³</div>
                   <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:3, color:"#f0c040", marginBottom:4 }}>
                     Draft Hasn't Started Yet
                   </div>
@@ -2022,14 +2030,14 @@ export default function App() {
                 </div>
               )}
 
-              {/* ── Live Draft UI ── */}
+              {/* ââ Live Draft UI ââ */}
               {(draftHasStarted || !draftStart) && (
                 <>
                   {/* Pick Timer Bar */}
                   {draftHasStarted && !draftComplete && currentPicker && (
                     <div style={{ marginBottom:16 }}>
                       <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6, fontSize:12 }}>
-                        <span style={{ color:"#6677aa" }}>⏱ Pick Timer</span>
+                        <span style={{ color:"#6677aa" }}>â± Pick Timer</span>
                         <span style={{ fontFamily:"'DM Mono',monospace", fontWeight:800, color:timerColor, fontSize:16 }}>
                           {pickSecondsLeft}s
                         </span>
@@ -2041,7 +2049,7 @@ export default function App() {
                       </div>
                       {pickSecondsLeft === 0 && (
                         <div style={{ fontSize:12, color:"#e74c3c", marginTop:6, fontWeight:700 }}>
-                          ⚡ Time up! Auto-picking best available team…
+                          â¡ Time up! Auto-picking best available teamâ¦
                         </div>
                       )}
                     </div>
@@ -2064,7 +2072,7 @@ export default function App() {
                         </div>
                       </div>
                       <div style={{ marginLeft:"auto", textAlign:"right" }}>
-                        <div style={{ fontSize:11, color:"#6677aa", marginBottom:2 }}>Round {pickRound + 1} · Pick {totalPicks + 1}</div>
+                        <div style={{ fontSize:11, color:"#6677aa", marginBottom:2 }}>Round {pickRound + 1} Â· Pick {totalPicks + 1}</div>
                         <div style={{ fontSize:12, color:"#dce4f5" }}>{currentPicker.teams.filter(t=>t.name).length}/8 teams drafted</div>
                       </div>
                     </div>
@@ -2073,7 +2081,7 @@ export default function App() {
                   {draftComplete && (
                     <div style={{ textAlign:"center", padding:"32px", background:"linear-gradient(135deg,#1a2e10,#142010)",
                       border:"2px solid #2ecc71", borderRadius:14, marginBottom:20 }}>
-                      <div style={{ fontSize:40, marginBottom:8 }}>🏆</div>
+                      <div style={{ fontSize:40, marginBottom:8 }}>ð</div>
                       <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:3, color:"#2ecc71" }}>
                         Draft Complete!
                       </div>
@@ -2145,7 +2153,7 @@ export default function App() {
                               background: round % 2 === 0 ? "#0f1420" : "#0a0f1a" }}>
                               <div style={{ fontSize:11, color:"#445", display:"flex", alignItems:"center", gap:4 }}>
                                 <span>Rd {round+1}</span>
-                                <span style={{ fontSize:9, color:"#333" }}>{isEvenR?"→":"←"}</span>
+                                <span style={{ fontSize:9, color:"#333" }}>{isEvenR?"â":"â"}</span>
                               </div>
                               {sortedOwners.map((o, oi) => {
                                 const pick = o.teams[round];
@@ -2201,7 +2209,7 @@ export default function App() {
                                 ))}
                                 {Array.from({length: 8 - drafted.length}).map((_,i) => (
                                   <span key={`empty-${i}`} style={{ fontSize:10, background:"#111", color:"#333",
-                                    borderRadius:4, padding:"2px 8px", border:"1px dashed #1a2440" }}>—</span>
+                                    borderRadius:4, padding:"2px 8px", border:"1px dashed #1a2440" }}>â</span>
                                 ))}
                               </div>
                             </div>
@@ -2265,7 +2273,7 @@ export default function App() {
                     ["Total Earned", `$${myStats.totalEarned.toFixed(2)}`, "#2ecc71"],
                     ["Total Paid", `$${myStats.totalCost.toFixed(2)}`, "#e74c3c"],
                     ["Wins This Year", allTimeWins, "#f0c040"],
-                    ["Avg Seed", myOwner ? (myOwner.teams.reduce((a,t)=>a+t.seed,0)/myOwner.teams.length).toFixed(1) : "—", "#6677aa"],
+                    ["Avg Seed", myOwner ? (myOwner.teams.reduce((a,t)=>a+t.seed,0)/myOwner.teams.length).toFixed(1) : "â", "#6677aa"],
                   ].map(([label, val, color]) => (
                     <div key={label} style={{ background:"#0f1625", border:"1px solid #1e2840",
                       borderRadius:12, padding:"16px 18px" }}>
@@ -2276,7 +2284,7 @@ export default function App() {
                 </div>
               ) : (
                 <div style={{ ...S.card, borderColor:"#2a3350", color:"#6677aa", fontSize:13, marginBottom:20 }}>
-                  <strong style={{ color:"#f0c040" }}>👋 You're not listed as an owner in this league.</strong>
+                  <strong style={{ color:"#f0c040" }}>ð You're not listed as an owner in this league.</strong>
                   <p style={{ margin:"8px 0 0" }}>Your profile name <strong>"{userName}"</strong> doesn't match any owner in {league?.name}. Ask your admin to add you, or make sure your profile name matches exactly.</p>
                 </div>
               )}
@@ -2285,7 +2293,7 @@ export default function App() {
               {myOwner && (
                 <div style={{ ...S.card, marginBottom:20 }}>
                   <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:18, letterSpacing:2, color:"#f0c040", marginBottom:14 }}>
-                    🏀 My Teams — {league?.name}
+                    ð My Teams â {league?.name}
                   </div>
                   <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:8 }}>
                     {myOwner.teams.map((t, i) => {
@@ -2302,11 +2310,11 @@ export default function App() {
                             <div style={{ fontWeight:600, fontSize:13 }}>{t.name || "TBD"}</div>
                             {teamWins.length > 0 && (
                               <div style={{ fontSize:11, color:"#2ecc71", marginTop:2 }}>
-                                {teamWins.length} win{teamWins.length!==1?"s":""} · +${earned.toFixed(2)}
+                                {teamWins.length} win{teamWins.length!==1?"s":""} Â· +${earned.toFixed(2)}
                               </div>
                             )}
                           </div>
-                          {teamWins.length > 0 && <span style={{ color:"#2ecc71" }}>✓</span>}
+                          {teamWins.length > 0 && <span style={{ color:"#2ecc71" }}>â</span>}
                         </div>
                       );
                     })}
@@ -2318,7 +2326,7 @@ export default function App() {
               {myStats && (
                 <div style={{ ...S.card, marginBottom:20 }}>
                   <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:18, letterSpacing:2, color:"#f0c040", marginBottom:14 }}>
-                    📊 Round-by-Round Breakdown
+                    ð Round-by-Round Breakdown
                   </div>
                   <div style={{ overflowX:"auto" }}>
                     <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
@@ -2362,7 +2370,7 @@ export default function App() {
               {/* My Leagues History */}
               <div style={S.card}>
                 <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:18, letterSpacing:2, color:"#f0c040", marginBottom:14 }}>
-                  🏆 My Leagues
+                  ð My Leagues
                 </div>
                 {userLeagues.length === 0 ? (
                   <div style={{ color:"#445", fontSize:13 }}>No leagues joined yet.</div>
@@ -2377,10 +2385,10 @@ export default function App() {
                           <div style={{ fontWeight:700 }}>{l.name}</div>
                           <div style={{ fontSize:11, color:"#6677aa", marginTop:2 }}>
                             Code: <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040" }}>{l.code}</span>
-                            {l.code===leagueCode && <span style={{ color:"#2ecc71", marginLeft:8 }}>● Active</span>}
+                            {l.code===leagueCode && <span style={{ color:"#2ecc71", marginLeft:8 }}>â Active</span>}
                           </div>
                         </div>
-                        <span style={{ color:"#f0c040" }}>→</span>
+                        <span style={{ color:"#f0c040" }}>â</span>
                       </button>
                     ))}
                   </div>
@@ -2412,53 +2420,53 @@ export default function App() {
                 </div>
                 <div style={{ marginTop:16, padding:14, background:"#0f1625", borderRadius:10,
                   border:"1px solid #1a2440", fontSize:13 }}>
-                  <strong style={{ color:"#f0c040" }}>📣 Share this invite code with your league:</strong>
+                  <strong style={{ color:"#f0c040" }}>ð£ Share this invite code with your league:</strong>
                   <div style={{ fontFamily:"'DM Mono',monospace", fontSize:28, fontWeight:800,
                     color:"#fff", letterSpacing:6, marginTop:8 }}>{leagueCode}</div>
                   <div style={{ color:"#6677aa", fontSize:12, marginTop:4 }}>
-                    They visit the site → "Join a League" → enter this code → instant access
+                    They visit the site â "Join a League" â enter this code â instant access
                   </div>
                 </div>
               </div>
 
               {/* Stripe Payments */}
               <div style={S.card}>
-                <SecTitle>💳 Stripe Payments</SecTitle>
+                <SecTitle>ð³ Stripe Payments</SecTitle>
                 <p style={{ fontSize:13, color:"#6677aa", marginTop:0, marginBottom:12 }}>
-                  Non-admin users pay $10 via Stripe before creating a league. Payments are verified automatically — no manual action needed.
+                  Non-admin users pay $10 via Stripe before creating a league. Payments are verified automatically â no manual action needed.
                 </p>
                 <a href="https://dashboard.stripe.com/test/payments" target="_blank" rel="noreferrer"
                   style={{ display:"inline-block", textDecoration:"none" }}>
                   <div style={{ background:"#1a2440", border:"1px solid #635BFF", borderRadius:8,
                     padding:"10px 16px", fontSize:13, color:"#635BFF", cursor:"pointer",
                     display:"inline-flex", alignItems:"center", gap:8 }}>
-                    💳 View Payments in Stripe Dashboard ↗
+                    ð³ View Payments in Stripe Dashboard â
                   </div>
                 </a>
               </div>
 
-              {/* Setup Wizard — add all 8 owners at once */}
+              {/* Setup Wizard â add all 8 owners at once */}
               {owners.length === 0 && (
                 <div style={S.card}>
-                  <SecTitle>🏀 League Setup — Add All 8 Owners</SecTitle>
+                  <SecTitle>ð League Setup â Add All 8 Owners</SecTitle>
                   <p style={{ fontSize:13, color:"#6677aa", marginTop:0, marginBottom:16 }}>
                     Fill in each owner's name and their 8 teams below, then click Save All Owners.
                   </p>
                   {setupOwners.map((owner, oi) => (
                     <div key={oi} style={{ marginBottom:8, border:"1px solid #1e2840", borderRadius:10, overflow:"hidden" }}>
-                      {/* Owner header — click to expand */}
+                      {/* Owner header â click to expand */}
                       <div onClick={()=>setSetupStep(setupStep===oi?-1:oi)} style={{
                         display:"flex", alignItems:"center", gap:10, padding:"10px 16px",
                         background: setupStep===oi ? "#1a2440" : "#0f1625", cursor:"pointer"
                       }}>
                         <div style={{ width:10,height:10,borderRadius:"50%",background:OWNER_COLORS[oi%8],flexShrink:0 }} />
                         <span style={{ fontWeight:600, flex:1, color: owner.name?"#dce4f5":"#445" }}>
-                          {owner.name || `Owner ${oi+1} — click to expand`}
+                          {owner.name || `Owner ${oi+1} â click to expand`}
                         </span>
                         <span style={{ color:"#445", fontSize:12 }}>
                           {owner.teams.filter(t=>t.name).length}/8 teams
                         </span>
-                        <span style={{ color:"#f0c040" }}>{setupStep===oi?"▲":"▼"}</span>
+                        <span style={{ color:"#f0c040" }}>{setupStep===oi?"â²":"â¼"}</span>
                       </div>
                       {setupStep===oi && (
                         <div style={{ padding:"14px 16px", background:"#0a0f1a", display:"flex", flexDirection:"column", gap:10 }}>
@@ -2484,7 +2492,7 @@ export default function App() {
                           </div>
                           <button onClick={()=>setSetupStep(oi+1<8?oi+1:-1)}
                             style={{ ...S.btn("#1a2e1a","#2ecc71"), border:"1px solid #27ae60", alignSelf:"flex-end" }}>
-                            Next Owner ▶
+                            Next Owner â¶
                           </button>
                         </div>
                       )}
@@ -2504,18 +2512,18 @@ export default function App() {
                     const { data } = await supabase.from("owners").select("*").eq("league_code", leagueCode).order("num");
                     setOwners(data||[]);
                     setLoading(false);
-                    notify(`${filled.length} owners saved! 🎉`);
+                    notify(`${filled.length} owners saved! ð`);
                   }} style={{ ...S.btn(), width:"100%", marginTop:8, padding:"13px", fontSize:15 }}>
-                    💾 Save All Owners to League
+                    ð¾ Save All Owners to League
                   </button>
                 </div>
               )}
 
               {/* Payout Settings */}
               <div style={S.card}>
-                <SecTitle>💰 Payout Settings</SecTitle>
+                <SecTitle>ð° Payout Settings</SecTitle>
                 <p style={{ fontSize:13, color:"#6677aa", margin:"0 0 14px" }}>
-                  Set the dollar amount per seed point for each round. Formula: Seed × Amount × (Owners − 1)
+                  Set the dollar amount per seed point for each round. Formula: Seed Ã Amount Ã (Owners â 1)
                 </p>
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:10 }}>
                   {rounds.map((r, i) => (
@@ -2559,7 +2567,7 @@ export default function App() {
                   {owners.length < 8 && (
                     <div style={{ display:"flex", gap:10, marginBottom:14 }}>
                       <input value={newOwnerName} onChange={e=>setNewOwnerName(e.target.value)}
-                        placeholder="Add owner name…" style={{ ...S.input, flex:1 }}
+                        placeholder="Add owner nameâ¦" style={{ ...S.input, flex:1 }}
                         onKeyDown={e=>e.key==="Enter"&&(adminUnlocked?addOwner():setModal("pin"))} />
                       <button onClick={()=>adminUnlocked?addOwner():setModal("pin")} style={S.btn()}>Add</button>
                     </div>
@@ -2602,7 +2610,7 @@ export default function App() {
                             <button onClick={() => setEditingOwnerNameId(null)}
                               style={{ background:"none", border:"1px solid #2a3560", borderRadius:6,
                                 color:"#6677aa", padding:"5px 10px", cursor:"pointer", fontSize:12, fontFamily:"inherit" }}>
-                              ✕
+                              â
                             </button>
                           </div>
                         ) : (
@@ -2614,7 +2622,7 @@ export default function App() {
                               setEditOwnerNameVal(o.name);
                             }} style={{ background:"none", border:"none", color:"#445", cursor:"pointer",
                               fontSize:12, padding:"2px 4px", fontFamily:"inherit", lineHeight:1 }}
-                              title="Edit name">✎</button>
+                              title="Edit name">â</button>
                           </div>
                         )}
 
@@ -2628,12 +2636,12 @@ export default function App() {
                             background:"#2a1418", border:"1px solid #3a1820",
                             borderRadius:6, color:"#e74c3c", padding:"4px 10px",
                             cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit"
-                          }}>🗑</button>
+                          }}>ð</button>
                           <button onClick={()=>adminUnlocked?openTeamEditor(o):setModal("pin")} style={{
                             background:"#1a2440", border:"1px solid #2a3560",
                             borderRadius:6, color:"#f0c040", padding:"4px 12px",
                             cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit"
-                          }}>✏️ Edit Teams</button>
+                          }}>âï¸ Edit Teams</button>
                         </div>
                       </div>
                     ))}
@@ -2646,27 +2654,27 @@ export default function App() {
         )}
       </main>
 
-      {/* ── Modals ── */}
+      {/* ââ Modals ââ */}
       <Modal open={modal==="addWin"} onClose={()=>setModal(null)} title="Record a Win">
         <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
           <div>
             <label style={S.label}>Owner</label>
             <select value={winOwnerId} onChange={e=>{setWinOwnerId(e.target.value);setWinTeamIdx("");}} style={S.input}>
-              <option value="">— Select owner —</option>
+              <option value="">â Select owner â</option>
               {owners.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}
             </select>
           </div>
           <div>
             <label style={S.label}>Round</label>
             <select value={winRoundId} onChange={e=>setWinRoundId(parseInt(e.target.value))} style={S.input}>
-              {rounds.map(r=><option key={r.id} value={r.id}>{r.label} (${r.dmg} × seed)</option>)}
+              {rounds.map(r=><option key={r.id} value={r.id}>{r.label} (${r.dmg} Ã seed)</option>)}
             </select>
           </div>
           {winOwnerId&&(
             <div>
               <label style={S.label}>Winning Team</label>
               <select value={winTeamIdx} onChange={e=>setWinTeamIdx(e.target.value)} style={S.input}>
-                <option value="">— Select team —</option>
+                <option value="">â Select team â</option>
                 {owners.find(o=>o.id===parseInt(winOwnerId))?.teams.map((t,i)=>(
                   <option key={i} value={i}>#{t.seed} {t.name}</option>
                 ))}
@@ -2684,7 +2692,7 @@ export default function App() {
                 borderRadius:10, padding:14, fontSize:13 }}>
                 <div style={{ color:"#6677aa", marginBottom:8, fontWeight:600,
                   textTransform:"uppercase", fontSize:11, letterSpacing:1 }}>Payout Preview</div>
-                <div>Seed <strong>#{team?.seed}</strong> × ${round.dmg} =
+                <div>Seed <strong>#{team?.seed}</strong> Ã ${round.dmg} =
                   <strong style={{ color:"#f0c040" }}> ${pp.toFixed(2)}</strong>/owner</div>
                 <div style={{ marginTop:4 }}>
                   {owner?.name} collects:{" "}
@@ -2698,18 +2706,18 @@ export default function App() {
       </Modal>
 
       {/* PIN Modal */}
-      <Modal open={modal==="pin"} onClose={()=>{setModal(null);setPinInput("");setPinError("");}} title="🔒 Admin Access">
+      <Modal open={modal==="pin"} onClose={()=>{setModal(null);setPinInput("");setPinError("");}} title="ð Admin Access">
         <p style={{ color:"#6677aa", fontSize:13, marginBottom:16 }}>Enter your admin PIN to make changes.</p>
         <input type="password" value={pinInput} onChange={e=>setPinInput(e.target.value)}
-          onKeyDown={e=>{ if(e.key==="Enter"){ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");notify("Admin unlocked ✓");}else{setPinError("Incorrect PIN.");}}}}
+          onKeyDown={e=>{ if(e.key==="Enter"){ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");notify("Admin unlocked â");}else{setPinError("Incorrect PIN.");}}}}
           placeholder="Enter PIN" style={{ ...S.input, letterSpacing:6, fontSize:20, textAlign:"center", marginBottom:8 }} autoFocus />
         {pinError && <div style={{ color:"#e74c3c", fontSize:12, marginBottom:8 }}>{pinError}</div>}
-        <button onClick={()=>{ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");notify("Admin unlocked ✓");}else{setPinError("Incorrect PIN.");}}}
+        <button onClick={()=>{ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");notify("Admin unlocked â");}else{setPinError("Incorrect PIN.");}}}
           style={{ ...S.btn(), width:"100%" }}>Unlock</button>
       </Modal>
 
       {/* Edit Teams Modal */}
-      <Modal open={modal==="editTeams"} onClose={()=>setModal(null)} title={`Edit Teams — ${editingOwner?.name}`}>
+      <Modal open={modal==="editTeams"} onClose={()=>setModal(null)} title={`Edit Teams â ${editingOwner?.name}`}>
         <div style={{ display:"flex", flexDirection:"column", gap:10, maxHeight:"60vh", overflowY:"auto", marginBottom:16 }}>
           {editTeams.map((team, i) => (
             <div key={i} style={{ display:"flex", alignItems:"center", gap:8 }}>
@@ -2735,9 +2743,9 @@ export default function App() {
           ))}
         </div>
         <div style={{ fontSize:11, color:"#6677aa", marginBottom:12 }}>
-          Left box = seed number (1–16) · Right box = team name
+          Left box = seed number (1â16) Â· Right box = team name
         </div>
-        <button onClick={saveTeams} style={{ ...S.btn(), width:"100%" }}>💾 Save Teams</button>
+        <button onClick={saveTeams} style={{ ...S.btn(), width:"100%" }}>ð¾ Save Teams</button>
       </Modal>
 
       <style>{`select option{background:#131929;} *{box-sizing:border-box;}`}</style>
