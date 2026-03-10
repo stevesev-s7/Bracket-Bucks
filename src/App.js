@@ -1935,11 +1935,11 @@ export default function App() {
                   <div style={{ flex:1, minWidth:220 }}>
                     <label style={S.label}>Draft Start Date & Time</label>
                     <input type="datetime-local" value={draftStartInput}
-                      disabled={draftLive || (!adminUnlocked && authUser?.id !== league?.created_by)}
+                      disabled={draftLive && !adminUnlocked}
                       onChange={e => setDraftStartInput(e.target.value)}
                       style={{ ...S.input, fontFamily:"'DM Mono',monospace" }} />
                   </div>
-                  <button onClick={()=>{ if(draftLive||(!adminUnlocked&&authUser?.id!==league?.created_by)) return; saveDraftStart(); }} style={{opacity:(draftLive||(!adminUnlocked&&authUser?.id!==league?.created_by))?0.4:1,cursor:(draftLive||(!adminUnlocked&&authUser?.id!==league?.created_by))?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
+                  <button onClick={saveDraftStart} style={{opacity:(draftLive&&!adminUnlocked)?0.4:1,cursor:(draftLive&&!adminUnlocked)?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
                     💾 Set Draft Time
                   </button>
                 </div>
