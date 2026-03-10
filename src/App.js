@@ -715,7 +715,7 @@ export default function App() {
     const code = genCode();
     setLoading(true);
 
-    const { error } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim() });
+    const { error } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim(), created_by: authUser?.id });
     if (error) { notify("Failed to create league.", "error"); setLoading(false); return; }
 
     const ok = await loadLeague(code);
@@ -1934,10 +1934,11 @@ export default function App() {
                   <div style={{ flex:1, minWidth:220 }}>
                     <label style={S.label}>Draft Start Date & Time</label>
                     <input type="datetime-local" value={draftStartInput}
+                      disabled={draftLive || (!adminUnlocked && authUser?.id !== league?.created_by)}
                       onChange={e => setDraftStartInput(e.target.value)}
                       style={{ ...S.input, fontFamily:"'DM Mono',monospace" }} />
                   </div>
-                  <button onClick={saveDraftStart} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
+                  <button onClick={saveDraftStart} disabled={draftLive || (!adminUnlocked && authUser?.id !== league?.created_by)} style={{opacity:(draftLive||(!adminUnlocked&&authUser?.id!==league?.created_by))?0.4:1,cursor:(draftLive||(!adminUnlocked&&authUser?.id!==league?.created_by))?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
                     💾 Set Draft Time
                   </button>
                 </div>
@@ -2481,7 +2482,7 @@ export default function App() {
                         letterSpacing:1, marginBottom:6 }}>{r.label}</div>
                       <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                         <span style={{ color:"#f0c040", fontWeight:700 }}>$</span>
-                        <input type="number" min="0" step="0.25" value={r.dmg}
+                        <input type="number" min="0" step="0.25" value={r.dmg} disabled={draftLive && !adminUnlocked} style={{opacity:(draftLive&&!adminUnlocked)?0.5:1}}
                           onChange={e => {
                             if (!adminUnlocked) { setModal("pin"); return; }
                             const val = parseFloat(e.target.value) || 0;
