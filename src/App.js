@@ -1938,7 +1938,7 @@ export default function App() {
                       onChange={e => setDraftStartInput(e.target.value)}
                       style={{ ...S.input, fontFamily:"'DM Mono',monospace" }} />
                   </div>
-                  <button onClick={saveDraftStart} disabled={draftLive || (!adminUnlocked && authUser?.id !== league?.created_by)} style={{opacity:(draftLive||(!adminUnlocked&&authUser?.id!==league?.created_by))?0.4:1,cursor:(draftLive||(!adminUnlocked&&authUser?.id!==league?.created_by))?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
+                  <button onClick={()=>{ if(draftLive||(!adminUnlocked&&authUser?.id!==league?.created_by)) return; saveDraftStart(); }} style={{opacity:(draftLive||(!adminUnlocked&&authUser?.id!==league?.created_by))?0.4:1,cursor:(draftLive||(!adminUnlocked&&authUser?.id!==league?.created_by))?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
                     💾 Set Draft Time
                   </button>
                 </div>
