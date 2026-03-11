@@ -1889,9 +1889,11 @@ export default function App() {
 
           // ── Save draft start time ──────────────────────────────────────
           async function saveDraftStart() {
-            if (!draftStartInput) return;
+            if (!draftStartInput) { notify("Please select a date and time first.", "error"); return; }
+            const parsedDate = new Date(draftStartInput);
+            if (isNaN(parsedDate.getTime())) { notify("Invalid date. Please select a valid date and time.", "error"); return; }
             const { error } = await supabase.from("leagues")
-              .update({ draft_start: new Date(draftStartInput).toISOString() })
+              .update({ draft_start: parsedDate.toISOString() })
               .eq("code", leagueCode);
             if (error) { notify("Failed to save draft time.", "error"); return; }
             setLeague(prev => ({ ...prev, draft_start: new Date(draftStartInput).toISOString() }));
