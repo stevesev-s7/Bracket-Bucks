@@ -1934,7 +1934,7 @@ export default function App() {
                 <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:2, color:"#f0c040", marginBottom:12 }}>
                   📅 Draft Schedule
                 </div>
-                <div style={{ display<div style={{position:'relative'}}>
+                <div style={{position:'relative'}}>
                       {/* Date + Time row */}
                       <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                         {/* Date picker button */}
