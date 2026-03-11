@@ -1889,15 +1889,21 @@ export default function App() {
 
           // ── Save draft start time ──────────────────────────────────────
           async function saveDraftStart() {
-            if (!draftStartInput) { notify("Please select a date and time first.", "error"); return; }
-            const parsedDate = new Date(draftStartInput);
-            if (isNaN(parsedDate.getTime())) { notify("Invalid date. Please select a valid date and time.", "error"); return; }
-            const { error } = await supabase.from("leagues")
-              .update({ draft_start: parsedDate.toISOString() })
-              .eq("code", leagueCode);
-            if (error) { notify("Failed to save draft time.", "error"); return; }
-            setLeague(prev => ({ ...prev, draft_start: new Date(draftStartInput).toISOString() }));
-            notify("✅ Draft start time saved!");
+            try {
+              if (!draftStartInput) { notify("Please select a date and time first."); return; }
+              const parsedDate = new Date(draftStartInput);
+              if (isNaN(parsedDate.getTime())) { notify("Invalid date/time. Please try again."); return; }
+              supabase
+                .from("leagues")
+                .update({ draft_start: parsedDate.toISOString() })
+                .eq("code", leagueCode)
+                .then(({ error }) => {
+                  if (error) { notify("Error saving draft time: " + error.message); return; }
+                  setDraftStart(parsedDate);
+                  setDraftScheduled(true);
+                  notify("Draft time saved!");
+                });
+            } catch(e) { notify("Error: " + e.message); }
           }
 
           const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:"#9b59b6" };
