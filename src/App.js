@@ -1,3 +1,4 @@
+// v1773124569843
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 
@@ -715,7 +716,7 @@ export default function App() {
     const code = genCode();
     setLoading(true);
 
-    const { error } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim() });
+    const { error } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim(), created_by: authUser?.id });
     if (error) { notify("Failed to create league.", "error"); setLoading(false); return; }
 
     const ok = await loadLeague(code);
@@ -1938,7 +1939,7 @@ export default function App() {
                       onChange={e => setDraftStartInput(e.target.value)}
                       style={{ ...S.input, fontFamily:"'DM Mono',monospace" }} />
                   </div>
-                  <button onClick={saveDraftStart} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
+                  <button onClick={saveDraftStart} style={{opacity:(draftLive&&!adminUnlocked)?0.4:1,cursor:(draftLive&&!adminUnlocked)?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
                     💾 Set Draft Time
                   </button>
                 </div>
@@ -2482,7 +2483,7 @@ export default function App() {
                         letterSpacing:1, marginBottom:6 }}>{r.label}</div>
                       <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                         <span style={{ color:"#f0c040", fontWeight:700 }}>$</span>
-                        <input type="number" min="0" step="0.25" value={r.dmg}
+                        <input type="number" min="0" step="0.25" value={r.dmg} disabled={draftLive && !adminUnlocked} style={{opacity:(draftLive&&!adminUnlocked)?0.5:1}}
                           onChange={e => {
                             if (!adminUnlocked) { setModal("pin"); return; }
                             const val = parseFloat(e.target.value) || 0;
