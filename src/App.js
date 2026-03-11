@@ -523,6 +523,9 @@ export default function App() {
   // Draft state
   const [draftScheduled, setDraftScheduled] = useState(null); // ISO string from league.draft_start
   const [draftStartInput, setDraftStartInput] = useState("");
+  const [calPickerOpen, setCalPickerOpen] = useState(false);
+  const [calViewMonth, setCalViewMonth] = useState(new Date().getMonth());
+  const [calViewYear, setCalViewYear] = useState(new Date().getFullYear());
   const [draftCountdown, setDraftCountdown] = useState(null); // seconds until draft starts
   const [pickTimer, setPickTimer]         = useState(15);    // seconds left for current pick
   const [draftLive, setDraftLive]         = useState(false);
@@ -1931,15 +1934,75 @@ export default function App() {
                 <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:2, color:"#f0c040", marginBottom:12 }}>
                   📅 Draft Schedule
                 </div>
-                <div style={{ display:"flex", gap:12, alignItems:"flex-end", flexWrap:"wrap" }}>
-                  <div style={{ flex:1, minWidth:220 }}>
-                    <label style={S.label}>Draft Start Date & Time</label>
-                    <input type="datetime-local" value={draftStartInput}
-                      disabled={draftLive && !adminUnlocked}
-                      onChange={e => setDraftStartInput(e.target.value)}
-                      style={{ ...S.input, fontFamily:"'DM Mono',monospace" }} />
-                  </div>
-                  <button onClick={saveDraftStart} style={{opacity:(draftLive&&!adminUnlocked)?0.4:1,cursor:(draftLive&&!adminUnlocked)?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
+                <div style={{ display<div style={{position:'relative'}}>
+                      {/* Date + Time row */}
+                      <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+                        {/* Date picker button */}
+                        <button
+                          type="button"
+                          disabled={draftLive && !adminUnlocked}
+                          onClick={()=>{ if(!(draftLive&&!adminUnlocked)) setCalPickerOpen(p=>!p); }}
+                          style={{flex:'1 1 160px',padding:'10px 14px',background:'#1a1a2e',border:'2px solid #f5a623',borderRadius:8,color:'#fff',fontSize:15,cursor:'pointer',textAlign:'left',minWidth:160}}
+                        >
+                          {draftStartInput ? draftStartInput.split('T')[0] : '📅 Pick a Date'}
+                        </button>
+                        {/* Time dropdown */}
+                        <select
+                          disabled={draftLive && !adminUnlocked}
+                          value={draftStartInput ? draftStartInput.split('T')[1] || '' : ''}
+                          onChange={e => {
+                            const datePart = draftStartInput ? draftStartInput.split('T')[0] : '';
+                            if(datePart) setDraftStartInput(datePart + 'T' + e.target.value);
+                          }}
+                          style={{flex:'1 1 140px',padding:'10px 14px',background:'#1a1a2e',border:'2px solid #f5a623',borderRadius:8,color: (draftStartInput&&draftStartInput.split('T')[1]) ? '#fff' : '#888',fontSize:15,cursor:'pointer',minWidth:140}}
+                        >
+                          <option value="">🕐 Pick Time</option>
+                          {['07:00','07:30','08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30'].map(t => {
+                            const [h,m] = t.split(':');
+                            const hr = parseInt(h);
+                            const label = (hr===0?12:hr>12?hr-12:hr)+':'+m+(hr<12?' AM':' PM');
+                            return <option key={t} value={t}>{label}</option>;
+                          })}
+                        </select>
+                        {/* Set button */}
+                        <button
+                          onClick={saveDraftStart}
+                          style={{padding:'10px 20px',background: (draftLive&&!adminUnlocked)?'#555':'#f5a623',color:'#000',border:'none',borderRadius:8,fontWeight:'bold',fontSize:15,cursor:(draftLive&&!adminUnlocked)?'not-allowed':'pointer',opacity:(draftLive&&!adminUnlocked)?0.5:1,whiteSpace:'nowrap'}}
+                          disabled={draftLive && !adminUnlocked}
+                        >📅 Set Draft Time</button>
+                      </div>
+                      {/* Calendar popup */}
+                      {calPickerOpen && (
+                        <div style={{position:'absolute',top:'calc(100% + 8px)',left:0,zIndex:999,background:'#1a1a2e',border:'2px solid #f5a623',borderRadius:12,padding:16,minWidth:280,boxShadow:'0 8px 32px rgba(0,0,0,0.6)'}}>
+                          {/* Month nav */}
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+                            <button type="button" onClick={()=>{ if(calViewMonth===0){setCalViewMonth(11);setCalViewYear(y=>y-1);}else setCalViewMonth(m=>m-1); }} style={{background:'none',border:'none',color:'#f5a623',fontSize:20,cursor:'pointer'}}>‹</button>
+                            <span style={{color:'#fff',fontWeight:'bold',fontSize:15}}>{['January','February','March','April','May','June','July','August','September','October','November','December'][calViewMonth]} {calViewYear}</span>
+                            <button type="button" onClick={()=>{ if(calViewMonth===11){setCalViewMonth(0);setCalViewYear(y=>y+1);}else setCalViewMonth(m=>m+1); }} style={{background:'none',border:'none',color:'#f5a623',fontSize:20,cursor:'pointer'}}>›</button>
+                          </div>
+                          {/* Day headers */}
+                          <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2,marginBottom:4}}>
+                            {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=><div key={d} style={{textAlign:'center',color:'#888',fontSize:12,padding:4}}>{d}</div>)}
+                          </div>
+                          {/* Days grid */}
+                          {(()=>{
+                            const firstDay = new Date(calViewYear, calViewMonth, 1).getDay();
+                            const daysInMonth = new Date(calViewYear, calViewMonth+1, 0).getDate();
+                            const cells = [];
+                            for(let i=0;i<firstDay;i++) cells.push(<div key={'e'+i}/>);
+                            for(let d=1;d<=daysInMonth;d++){
+                              const dateStr = calViewYear+'-'+String(calViewMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+                              const isSelected = draftStartInput && draftStartInput.startsWith(dateStr);
+                              const today = new Date(); const isToday = d===today.getDate()&&calViewMonth===today.getMonth()&&calViewYear===today.getFullYear();
+                              cells.push(
+                                <div key={d} onClick={()=>{ const timePart = draftStartInput&&draftStartInput.includes('T') ? draftStartInput.split('T')[1] : ''; setDraftStartInput(dateStr+(timePart?'T'+timePart:'')); setCalPickerOpen(false); }} style={{textAlign:'center',padding:'6px 2px',borderRadius:6,cursor:'pointer',background:isSelected?'#f5a623':isToday?'rgba(245,166,35,0.2)':'transparent',color:isSelected?'#000':'#fff',fontWeight:isSelected?'bold':'normal',fontSize:14,border:isToday&&!isSelected?'1px solid #f5a623':'1px solid transparent'}}>{d}</div>
+                              );
+                            }
+                            return <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2}}>{cells}</div>;
+                          })()}
+                        </div>
+                      )}
+                    </div>e&&!adminUnlocked)?0.4:1,cursor:(draftLive&&!adminUnlocked)?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
                     💾 Set Draft Time
                   </button>
                 </div>
