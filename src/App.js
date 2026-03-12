@@ -1888,7 +1888,7 @@ export default function App() {
           }
 
           // ── Save draft start time ──────────────────────────────────────
-          async function saveDraftStart() {
+          async function function saveDraftStart() {
             try {
               if (!draftStartInput) { notify("Please select a date and time first."); return; }
               const parsedDate = new Date(draftStartInput);
