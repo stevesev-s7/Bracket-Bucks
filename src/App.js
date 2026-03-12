@@ -1889,21 +1889,16 @@ export default function App() {
 
           // ── Save draft start time ──────────────────────────────────────
           async function function saveDraftStart() {
-            try {
-              if (!draftStartInput) { notify("Please select a date and time first."); return; }
-              const parsedDate = new Date(draftStartInput);
-              if (isNaN(parsedDate.getTime())) { notify("Invalid date/time. Please try again."); return; }
-              supabase
-                .from("leagues")
-                .update({ draft_start: parsedDate.toISOString() })
-                .eq("code", leagueCode)
-                .then(({ error }) => {
-                  if (error) { notify("Error saving draft time: " + error.message); return; }
-                  setDraftStart(parsedDate);
-                  setDraftScheduled(true);
-                  notify("Draft time saved!");
-                });
-            } catch(e) { notify("Error: " + e.message); }
+            if (!draftStartInput) { alert("Please select a date and time first."); return; }
+            const pd = new Date(draftStartInput);
+            if (isNaN(pd.getTime())) { alert("Invalid date/time."); return; }
+            supabase.from("leagues").update({ draft_start: pd.toISOString() }).eq("code", leagueCode)
+              .then(({ error }) => {
+                if (error) { alert("Save error: " + error.message); return; }
+                setDraftStart(pd);
+                setDraftScheduled(true);
+                alert("Draft time saved!");
+              }).catch(e => alert("Error: " + e.message));
           }
 
           const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:"#9b59b6" };
