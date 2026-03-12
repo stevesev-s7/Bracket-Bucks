@@ -1887,7 +1887,7 @@ export default function App() {
           }
 
           // ── Save draft start time ──────────────────────────────────────
-          async function function saveDraftStart() {
+          async function saveDraftStart() {
             if (!draftStartInput) { alert("Please select a date and time first."); return; }
             const pd = new Date(draftStartInput);
             if (isNaN(pd.getTime())) { alert("Invalid date/time."); return; }
