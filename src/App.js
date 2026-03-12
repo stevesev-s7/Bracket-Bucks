@@ -1895,7 +1895,7 @@ export default function App() {
             supabase.from("leagues").update({ draft_start: pd.toISOString() }).eq("code", leagueCode)
               .then(({ error }) => {
                 if (error) { alert("Save error: " + error.message); return; }
-                setDraftStartInput(pd);
+                setDraftStartInput(pd.toISOString());
                 setDraftScheduled(pd.toISOString());
                 alert("Draft time saved!");
               }).catch(e => alert("Error: " + e.message));
