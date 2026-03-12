@@ -1887,14 +1887,14 @@ export default function App() {
           }
 
           // ── Save draft start time ──────────────────────────────────────
-          async function saveDraftStart() {
+          async function function saveDraftStart() {
             if (!draftStartInput) { alert("Please select a date and time first."); return; }
             const pd = new Date(draftStartInput);
             if (isNaN(pd.getTime())) { alert("Invalid date/time."); return; }
             supabase.from("leagues").update({ draft_start: pd.toISOString() }).eq("code", leagueCode)
               .then(({ error }) => {
                 if (error) { alert("Save error: " + error.message); return; }
-                setDraftStart(pd);
+                setDraftStartInput(pd);
                 setDraftScheduled(true);
                 alert("Draft time saved!");
               }).catch(e => alert("Error: " + e.message));
