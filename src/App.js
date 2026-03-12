@@ -1895,7 +1895,7 @@ export default function App() {
             supabase.from("leagues").update({ draft_start: pd.toISOString() }).eq("code", leagueCode)
               .then(({ error }) => {
                 if (error) { alert("Save error: " + error.message); return; }
-                setDraftStartInput(pd.toISOString());
+                setDraftStartInput(pd);
                 setDraftScheduled(pd.toISOString());
                 alert("Draft time saved!");
               }).catch(e => alert("Error: " + e.message));
@@ -1929,7 +1929,7 @@ export default function App() {
                     <span style={{fontSize:18}}>📅</span>
                     <div>
                       <div style={{color:"#d4af37",fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Draft Scheduled</div>
-                      <div style={{color:"#fff",fontSize:15,fontWeight:600,marginTop:2}}>{new Date(league.draft_start).toLocaleString([],{weekday:"short",month:"short",day:"numeric",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>
+                      <div style={{color:"#fff",fontSize:15,fontWeight:600,marginTop:2}}>{new Date(draftScheduled).toLocaleString([],{weekday:"short",month:"short",day:"numeric",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>
                     </div>
                   </div>
                 )}
