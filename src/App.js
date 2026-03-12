@@ -1887,7 +1887,7 @@ export default function App() {
           }
 
           // ── Save draft start time ──────────────────────────────────────
-          async function function saveDraftStart() {
+          async function saveDraftStart() {
             if (!draftStartInput) { alert("Please select a date and time first."); return; }
             const pd = new Date(draftStartInput);
             if (isNaN(pd.getTime())) { alert("Invalid date/time."); return; }
@@ -1923,6 +1923,15 @@ export default function App() {
                       `Round ${pickRound + 1} · Pick ${posInRound + 1} of ${numOwners} · ${available.length} teams remaining`}
                   </p>
                 </div>
+                {draftScheduled && (
+                  <div style={{ background: "rgba(212,175,55,0.12)", border: "1px solid rgba(212,175,55,0.4)", borderRadius: 8, padding: "10px 18px", marginTop: 10, display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 18 }}>📅</span>
+                    <div>
+                      <div style={{ color: "#d4af37", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Draft Scheduled</div>
+                      <div style={{ color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 2 }}>{new Date(draftScheduled).toLocaleString([], { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
+                    </div>
+                  </div>
+                )}
                 {draftScheduled && (
                   <div style={{ background: "rgba(212,175,55,0.12)", border: "1px solid rgba(212,175,55,0.4)", borderRadius: 8, padding: "10px 18px", marginTop: 10, marginBottom: 2, display: "flex", alignItems: "center", gap: 10 }}>
                     <span style={{ fontSize: 18 }}>📅</span>
