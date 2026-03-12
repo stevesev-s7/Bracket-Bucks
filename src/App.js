@@ -615,6 +615,7 @@ export default function App() {
         .from("wins").select("*").eq("league_code", code);
 
       setLeague(lg);
+      if (lg && lg.draft_start) setDraftScheduled(lg.draft_start);
       setOwners(ownersData || []);
       setWins(winsData || []);
       setLeagueCode(code);
@@ -637,7 +638,7 @@ export default function App() {
   // ── Draft pick timer + auto-pick ────────────────────────────────────────
   useEffect(() => {
     if (!league?.draft_start || !leagueCode) return;
-    const draftStart = new Date(league.draft_start);
+    const draftStart = new Date(draftScheduled);
 
     const tick = setInterval(async () => {
       const now = new Date();
@@ -1895,7 +1896,7 @@ export default function App() {
               .then(({ error }) => {
                 if (error) { alert("Save error: " + error.message); return; }
                 setDraftStartInput(pd);
-                setDraftScheduled(true);
+                setDraftScheduled(pd.toISOString());
                 alert("Draft time saved!");
               }).catch(e => alert("Error: " + e.message));
           }
@@ -1923,7 +1924,7 @@ export default function App() {
                       `Round ${pickRound + 1} · Pick ${posInRound + 1} of ${numOwners} · ${available.length} teams remaining`}
                   </p>
                 </div>
-                {league && league.draft_start && (
+                {draftScheduled && (
                   <div style={{background:"rgba(212,175,55,0.12)",border:"1px solid rgba(212,175,55,0.4)",borderRadius:8,padding:"10px 18px",marginTop:10,display:"flex",alignItems:"center",gap:10}}>
                     <span style={{fontSize:18}}>📅</span>
                     <div>
