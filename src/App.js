@@ -1251,6 +1251,7 @@ export default function App() {
               <p style={{ fontSize:12, color:"#445", marginTop:8 }}>
                 A 6-character invite code is generated automatically.
               </p>
+              {!isAdmin && (
               <button
                     onClick={async () => {
                       setPaymentStep('verifying');
@@ -1302,6 +1303,7 @@ export default function App() {
                 You'll be redirected to Stripe's secure checkout. After paying, you'll return here automatically.
               </p>
             </div>
+              )}
 
           ) : (
             /* Step 2: Payment confirmed — name the league */
