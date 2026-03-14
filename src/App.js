@@ -604,7 +604,7 @@ export default function App() {
       // Load league info
       const { data: lg, error: lgErr } = await supabase
         .from("leagues").select("*").eq("code", code).single();
-      if (lgErr || !lg) { notify("League not found.", "error"); setLoading(false); return false; }
+      if (lgErr || !lg) { alert("League not found."); setLoading(false); return false; }
 
       // Load owners
       const { data: ownersData } = await supabase
@@ -628,7 +628,7 @@ export default function App() {
       setLoading(false);
       return true;
     } catch {
-      notify("Failed to load league.", "error");
+      alert("Failed to load league.");
       setLoading(false);
       return false;
     }
@@ -719,7 +719,7 @@ export default function App() {
     setLoading(true);
 
     const { error } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim(), created_by: authUser?.id });
-    if (error) { notify("Failed to create league.", "error"); setLoading(false); return; }
+    if (error) { alert("Failed to create league."); setLoading(false); return; }
 
     const ok = await loadLeague(code);
     if (ok) {
@@ -772,14 +772,14 @@ export default function App() {
   // ── Add owner ────────────────────────────────────────────────────────────
   async function addOwner() {
     if (!newOwnerName.trim() || !leagueCode) return;
-    if (owners.length >= 8) { notify("Max 8 owners per league.", "error"); return; }
+    if (owners.length >= 8) { alert("Max 8 owners per league."); return; }
     const color = OWNER_COLORS[owners.length % OWNER_COLORS.length];
     const defaultTeams = Array.from({length:8}, (_,i)=>({ seed:i+1, name:`Team ${i+1}` }));
     const { error } = await supabase.from("owners").insert({
       league_code: leagueCode, name: newOwnerName.trim(),
       color, num: owners.length + 1, teams: defaultTeams,
     });
-    if (error) { notify("Failed to add owner.", "error"); return; }
+    if (error) { alert("Failed to add owner."); return; }
     setNewOwnerName("");
     notify(`${newOwnerName.trim()} added!`);
   }
@@ -807,8 +807,8 @@ export default function App() {
   // ── Remove win ───────────────────────────────────────────────────────────
   async function removeWin(winId) {
     const { error } = await supabase.from("wins").delete().eq("id", winId);
-    if (error) notify("Failed to remove win.", "error");
-    else notify("Win removed.");
+    if (error) alert("Failed to remove win.");
+    else alert("Win removed.");
   }
 
   // ── Edit teams ───────────────────────────────────────────────────────────
@@ -824,7 +824,7 @@ export default function App() {
       .from("owners")
       .update({ teams: editTeams })
       .eq("id", editingOwner.id);
-    if (error) { notify("Failed to save teams.", "error"); return; }
+    if (error) { alert("Failed to save teams."); return; }
     setOwners(prev => prev.map(o => o.id === editingOwner.id ? { ...o, teams: editTeams } : o));
     setModal(null);
     setEditingOwner(null);
@@ -1861,10 +1861,10 @@ export default function App() {
             if (!fromAutoPick && !adminUnlocked) { setModal("pin"); return; }
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
-            if (emptyIdx === -1) { notify("This owner already has 8 teams.", "error"); return; }
+            if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
             updatedTeams[emptyIdx] = { seed: team.seed, name: team.name };
             const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
-            if (error) { notify("Failed to save pick.", "error"); return; }
+            if (error) { alert("Failed to save pick."); return; }
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
             // Reset pick timer in league
             await supabase.from("leagues").update({ pick_timer_start: new Date().toISOString() }).eq("code", leagueCode);
@@ -1887,7 +1887,7 @@ export default function App() {
               await supabase.from("owners").update({ teams: blank }).eq("id", o.id);
             }
             setOwners(prev => prev.map(o => ({ ...o, teams: blank })));
-            notify("Draft reset! All picks cleared.");
+            alert("Draft reset! All picks cleared.");
           }
 
           // ── Save draft start time ──────────────────────────────────────
@@ -2467,7 +2467,7 @@ export default function App() {
                   ))}
                   <button onClick={async()=>{
                     const filled = setupOwners.filter(o=>o.name.trim());
-                    if (!filled.length) { notify("Enter at least one owner name.","error"); return; }
+                    if (!filled.length) { alert("Enter at least one owner name."); return; }
                     setLoading(true);
                     for (let i=0; i<filled.length; i++) {
                       const o = filled[i];
@@ -2521,7 +2521,7 @@ export default function App() {
                 <button onClick={()=>{
                   setRounds(DEFAULT_ROUNDS);
                   sessionStorage.removeItem(`bb_rounds_${leagueCode}`);
-                  notify("Payouts reset to defaults.");
+                  alert("Payouts reset to defaults.");
                 }} style={{ ...S.btn("#1a2440","#6677aa"), border:"1px solid #2a3560", marginTop:12, fontSize:12 }}>
                   Reset to Defaults
                 </button>
@@ -2555,7 +2555,7 @@ export default function App() {
                                 if (e.key === "Enter") {
                                   if (!editOwnerNameVal.trim()) return;
                                   const { error } = await supabase.from("owners").update({ name: editOwnerNameVal.trim() }).eq("id", o.id);
-                                  if (error) { notify("Failed to save name.", "error"); return; }
+                                  if (error) { alert("Failed to save name."); return; }
                                   setOwners(prev => prev.map(x => x.id === o.id ? { ...x, name: editOwnerNameVal.trim() } : x));
                                   setEditingOwnerNameId(null);
                                   notify(`Name updated to ${editOwnerNameVal.trim()}`);
@@ -2569,7 +2569,7 @@ export default function App() {
                             <button onClick={async () => {
                               if (!editOwnerNameVal.trim()) return;
                               const { error } = await supabase.from("owners").update({ name: editOwnerNameVal.trim() }).eq("id", o.id);
-                              if (error) { notify("Failed to save name.", "error"); return; }
+                              if (error) { alert("Failed to save name."); return; }
                               setOwners(prev => prev.map(x => x.id === o.id ? { ...x, name: editOwnerNameVal.trim() } : x));
                               setEditingOwnerNameId(null);
                               notify(`Name updated to ${editOwnerNameVal.trim()}`);
@@ -2599,7 +2599,7 @@ export default function App() {
                           </span>
                         )}
                         <div style={{ display:"flex", gap:6 }}>
-                          <button onClick={()=>{ if(!adminUnlocked){setModal("pin");return;} supabase.from("owners").delete().eq("id",o.id).then(({error})=>{ if(error){notify("Failed to delete owner.","error");return;} setOwners(prev=>prev.filter(x=>x.id!==o.id)); notify(`${o.name} removed.`); }); }} style={{
+                          <button onClick={()=>{ if(!adminUnlocked){setModal("pin");return;} supabase.from("owners").delete().eq("id",o.id).then(({error})=>{ if(error){alert("Failed to delete owner.");return;} setOwners(prev=>prev.filter(x=>x.id!==o.id)); notify(`${o.name} removed.`); }); }} style={{
                             background:"#2a1418", border:"1px solid #3a1820",
                             borderRadius:6, color:"#e74c3c", padding:"4px 10px",
                             cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit"
@@ -2676,10 +2676,10 @@ export default function App() {
       <Modal open={modal==="pin"} onClose={()=>{setModal(null);setPinInput("");setPinError("");}} title="🔒 Admin Access">
         <p style={{ color:"#6677aa", fontSize:13, marginBottom:16 }}>Enter your admin PIN to make changes.</p>
         <input type="password" value={pinInput} onChange={e=>setPinInput(e.target.value)}
-          onKeyDown={e=>{ if(e.key==="Enter"){ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");notify("Admin unlocked ✓");}else{setPinError("Incorrect PIN.");}}}}
+          onKeyDown={e=>{ if(e.key==="Enter"){ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");alert("Admin unlocked ✓");}else{setPinError("Incorrect PIN.");}}}}
           placeholder="Enter PIN" style={{ ...S.input, letterSpacing:6, fontSize:20, textAlign:"center", marginBottom:8 }} autoFocus />
         {pinError && <div style={{ color:"#e74c3c", fontSize:12, marginBottom:8 }}>{pinError}</div>}
-        <button onClick={()=>{ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");notify("Admin unlocked ✓");}else{setPinError("Incorrect PIN.");}}}
+        <button onClick={()=>{ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");alert("Admin unlocked ✓");}else{setPinError("Incorrect PIN.");}}}
           style={{ ...S.btn(), width:"100%" }}>Unlock</button>
       </Modal>
 
