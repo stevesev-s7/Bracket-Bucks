@@ -528,7 +528,7 @@ export default function App() {
   const [pickTimer, setPickTimer]         = useState(15);    // seconds left for current pick
   const [draftLive, setDraftLive]         = useState(false);
 
-  function notify(msg, type="success") {
+  function alert(msg, type="success") {
     setToast({ msg, type });
     setTimeout(()=>setToast(null), 3200);
   }
@@ -728,7 +728,7 @@ export default function App() {
       saveLeagueToUser(code, newLeagueName.trim());
       setNewLeagueName("");
       setModal(null);
-      notify(`League created! Invite code: ${code}`);
+      alert(`League created! Invite code: ${code}`);
     }
   }
 
@@ -741,7 +741,7 @@ export default function App() {
 
       // Auto-add the user as an owner if they're not already in the league
       await autoAddUserAsOwner(code);
-      notify(`Joined league: ${league?.name || code}`);
+      alert(`Joined league: ${league?.name || code}`);
 
       setJoinCode(""); setJoinErr("");
       setModal(null);
@@ -781,7 +781,7 @@ export default function App() {
     });
     if (error) { alert("Failed to add owner."); return; }
     setNewOwnerName("");
-    notify(`${newOwnerName.trim()} added!`);
+    alert(`${newOwnerName.trim()} added!`);
   }
 
   // ── Record win ───────────────────────────────────────────────────────────
@@ -794,12 +794,12 @@ export default function App() {
       team_index: parseInt(winTeamIdx),
     });
     if (error) {
-      notify(error.code === "23505" ? "Win already recorded." : "Failed to record win.", "error");
+      alert(error.code === "23505" ? "Win already recorded." : "Failed to record win.", "error");
       return;
     }
     const owner = owners.find(o=>o.id===parseInt(winOwnerId));
     const team = owner?.teams[parseInt(winTeamIdx)];
-    notify(`✓ ${team?.name} win recorded for ${owner?.name}`);
+    alert(`✓ ${team?.name} win recorded for ${owner?.name}`);
     setWinTeamIdx("");
     setModal(null);
   }
@@ -828,7 +828,7 @@ export default function App() {
     setOwners(prev => prev.map(o => o.id === editingOwner.id ? { ...o, teams: editTeams } : o));
     setModal(null);
     setEditingOwner(null);
-    notify(`${editingOwner.name}'s teams updated!`);
+    alert(`${editingOwner.name}'s teams updated!`);
   }
 
   // ── Bracket ──────────────────────────────────────────────────────────────
@@ -1868,8 +1868,8 @@ export default function App() {
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
             // Reset pick timer in league
             await supabase.from("leagues").update({ pick_timer_start: new Date().toISOString() }).eq("code", leagueCode);
-            if (fromAutoPick) notify(`⏱ Auto-picked ${team.name} for ${currentPicker.name}`);
-            else notify(`✓ ${currentPicker.name} drafted ${team.name}!`);
+            if (fromAutoPick) alert(`⏱ Auto-picked ${team.name} for ${currentPicker.name}`);
+            else alert(`✓ ${currentPicker.name} drafted ${team.name}!`);
           }
 
           // ── Auto-pick (highest available seed = lowest seed number) ───
@@ -2479,7 +2479,7 @@ export default function App() {
                     const { data } = await supabase.from("owners").select("*").eq("league_code", leagueCode).order("num");
                     setOwners(data||[]);
                     setLoading(false);
-                    notify(`${filled.length} owners saved! 🎉`);
+                    alert(`${filled.length} owners saved! 🎉`);
                   }} style={{ ...S.btn(), width:"100%", marginTop:8, padding:"13px", fontSize:15 }}>
                     💾 Save All Owners to League
                   </button>
@@ -2558,7 +2558,7 @@ export default function App() {
                                   if (error) { alert("Failed to save name."); return; }
                                   setOwners(prev => prev.map(x => x.id === o.id ? { ...x, name: editOwnerNameVal.trim() } : x));
                                   setEditingOwnerNameId(null);
-                                  notify(`Name updated to ${editOwnerNameVal.trim()}`);
+                                  alert(`Name updated to ${editOwnerNameVal.trim()}`);
                                 } else if (e.key === "Escape") {
                                   setEditingOwnerNameId(null);
                                 }
@@ -2572,7 +2572,7 @@ export default function App() {
                               if (error) { alert("Failed to save name."); return; }
                               setOwners(prev => prev.map(x => x.id === o.id ? { ...x, name: editOwnerNameVal.trim() } : x));
                               setEditingOwnerNameId(null);
-                              notify(`Name updated to ${editOwnerNameVal.trim()}`);
+                              alert(`Name updated to ${editOwnerNameVal.trim()}`);
                             }} style={{ ...S.btn(), padding:"5px 12px", fontSize:12 }}>Save</button>
                             <button onClick={() => setEditingOwnerNameId(null)}
                               style={{ background:"none", border:"1px solid #2a3560", borderRadius:6,
@@ -2599,7 +2599,7 @@ export default function App() {
                           </span>
                         )}
                         <div style={{ display:"flex", gap:6 }}>
-                          <button onClick={()=>{ if(!adminUnlocked){setModal("pin");return;} supabase.from("owners").delete().eq("id",o.id).then(({error})=>{ if(error){alert("Failed to delete owner.");return;} setOwners(prev=>prev.filter(x=>x.id!==o.id)); notify(`${o.name} removed.`); }); }} style={{
+                          <button onClick={()=>{ if(!adminUnlocked){setModal("pin");return;} supabase.from("owners").delete().eq("id",o.id).then(({error})=>{ if(error){alert("Failed to delete owner.");return;} setOwners(prev=>prev.filter(x=>x.id!==o.id)); alert(`${o.name} removed.`); }); }} style={{
                             background:"#2a1418", border:"1px solid #3a1820",
                             borderRadius:6, color:"#e74c3c", padding:"4px 10px",
                             cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit"
