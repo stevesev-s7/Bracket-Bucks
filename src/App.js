@@ -718,7 +718,7 @@ export default function App() {
     const code = genCode();
     setLoading(true);
 
-    const { error } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim(), created_by: authUser?.id });
+    const { error } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim() });
     if (error) { alert("Failed to create league."); setLoading(false); return; }
 
     const ok = await loadLeague(code);
