@@ -397,7 +397,7 @@ function Spinner() {
 // ── Draft Countdown Banner (live ticking) ──────────────────────────────
 function DraftCountdownBanner({ secondsLeft }) {
   const [secs, setSecs] = React.useState(secondsLeft);
-  // Handle Stripe redirect back after payment
+  // Handle Venmo redirect back after payment
   React.  // Payment handled via Venmo verify-payment edge function
 
   React.useEffect(() => {
@@ -447,7 +447,7 @@ export default function App() {
   // Form values
   const [newLeagueName, setNewLeagueName] = useState("");
   const [paymentConfirmed, setPaymentConfirmed]   = useState(false);
-  const [stripeLoading, setStripeLoading]         = useState(false);
+  const [venmoLoading, setVenmoLoading]         = useState(false);
   const [paymentStep, setPaymentStep] = useState('instructions');
   const [venmoVerifyError, setVenmoVerifyError] = useState('');
   const [joinCode, setJoinCode]           = useState("");
@@ -1227,14 +1227,14 @@ export default function App() {
         </Modal>
 
         <Modal open={modal==="create"} onClose={()=>{ setModal(null); setPaymentConfirmed(false); setNewLeagueName(""); }} title="Create New League">
-          {stripeLoading ? (
-            /* Verifying payment with Stripe */
+          {venmoLoading ? (
+            /* Verifying payment with Venmo */
             <div style={{ textAlign:"center", padding:"30px 0" }}>
               <div style={{ fontSize:36, marginBottom:12 }}>⏳</div>
               <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2, color:"#f0c040" }}>
                 Verifying Payment…
               </div>
-              <p style={{ color:"#6677aa", fontSize:13, marginTop:8 }}>Confirming your Stripe payment, just a moment.</p>
+              <p style={{ color:"#6677aa", fontSize:13, marginTop:8 }}>Confirming your Venmo payment, just a moment.</p>
             </div>
 
           ) : isAdmin ? (
@@ -1302,7 +1302,7 @@ export default function App() {
                   {venmoVerifyError && <p style={{color:'#ff6b6b', fontSize: 13, margin: '8px 0 0'}}>{venmoVerifyError}</p>}
 
               <p style={{ fontSize:11, color:"#445", textAlign:"center", marginTop:10 }}>
-                You'll be redirected to Stripe's secure checkout. After paying, you'll return here automatically.
+                Send $10 to @bracket-bucks-app on Venmo with your email in the note, then click 'I sent it' above.
               </p>
             </div>
 
@@ -2396,18 +2396,18 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Stripe Payments */}
+              {/* Venmo Payments */}
               <div style={S.card}>
-                <SecTitle>💳 Stripe Payments</SecTitle>
+                <SecTitle>💳 Venmo Payments</SecTitle>
                 <p style={{ fontSize:13, color:"#6677aa", marginTop:0, marginBottom:12 }}>
-                  Non-admin users pay $10 via Stripe before creating a league. Payments are verified automatically — no manual action needed.
+                  Non-admin users pay $10 via Venmo to @bracket-bucks-app before creating a league.
                 </p>
-                <a href="https://dashboard.stripe.com/test/payments" target="_blank" rel="noreferrer"
+                <a href="https://dashboard.venmo.com/test/payments" target="_blank" rel="noreferrer"
                   style={{ display:"inline-block", textDecoration:"none" }}>
                   <div style={{ background:"#1a2440", border:"1px solid #635BFF", borderRadius:8,
                     padding:"10px 16px", fontSize:13, color:"#635BFF", cursor:"pointer",
                     display:"inline-flex", alignItems:"center", gap:8 }}>
-                    💳 View Payments in Stripe Dashboard ↗
+                    💳 View Payments in Venmo ↗
                   </div>
                 </a>
               </div>
