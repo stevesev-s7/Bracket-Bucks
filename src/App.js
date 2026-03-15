@@ -2402,7 +2402,7 @@ export default function App() {
                 <p style={{ fontSize:13, color:"#6677aa", marginTop:0, marginBottom:12 }}>
                   Non-admin users pay $10 via Venmo to @bracket-bucks-app before creating a league.
                 </p>
-                <a href="https://dashboard.venmo.com/test/payments" target="_blank" rel="noreferrer"
+                <a href="https://venmo.com/u/bracket-bucks-app" target="_blank" rel="noreferrer"
                   style={{ display:"inline-block", textDecoration:"none" }}>
                   <div style={{ background:"#1a2440", border:"1px solid #635BFF", borderRadius:8,
                     padding:"10px 16px", fontSize:13, color:"#635BFF", cursor:"pointer",
