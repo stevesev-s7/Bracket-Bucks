@@ -2196,7 +2196,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                     <span style={{fontSize:18}}>📅</span>
                     <div>
                       <div style={{color:"#d4af37",fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Draft Scheduled</div>
-                      <div style={{color:"#fff",fontSize:15,fontWeight:600,marginTop:2}}>{new Date(draftScheduled).toLocaleString([],{weekday:"short",month:"short",day:"numeric",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>
+                      <div style={{color:"#fff",fontSize:15,fontWeight:600,marginTop:2}}>{fmtDraftTime(new Date(draftScheduled))}</div>
                     </div>
                   </div>
                 )}
@@ -2230,7 +2230,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                     <div style={{ fontSize:13 }}>
                       <span style={{ color:"#6677aa" }}>Scheduled: </span>
                       <span style={{ color:"#dce4f5", fontWeight:600, fontFamily:"'DM Mono',monospace" }}>
-                        {draftStart.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"})}
+                        {draftStart.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric",timeZone:userTZ})}
                         {" at "}
                         {fmtDraftTimeShort(draftStart)}
                       </span>
