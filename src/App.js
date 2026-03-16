@@ -13,6 +13,9 @@
       supabase.from("owners").update({ num: idx + 1 }).eq("id", owner.id)
     );
     await Promise.all(updates);
+    // Update local state immediately so draft board reflects new order
+    const reordered = shuffled.map((o, i) => ({ ...o, num: i + 1 }));
+    setOwners(reordered);
     alert("Draft order shuffled!");
   }// v1773286522751
 import React, { useState, useEffect, useCallback } from "react";
