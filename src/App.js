@@ -1897,12 +1897,7 @@ export default function App() {
           // ── Draft a team ───────────────────────────────────────────────
           async function draftPick(team, fromAutoPick = false) {
             if (!currentPicker) return;
-                const pickerName = currentPicker ? currentPicker.name.toLowerCase() : "";
-    const userEmail = authUser ? (authUser.email || "").toLowerCase() : "";
-    const userName = authUser ? ((authUser.user_metadata || {}).name || "").toLowerCase() : "";
-    const isMyTurn = isAdmin || !authUser || !currentPicker || userEmail === pickerName || userName === pickerName;
-    if (!isMyTurn && !fromAutoPick) { alert("Not your turn to pick!"); return; }
-    if (!fromAutoPick && !adminUnlocked) { setModal("pin"); return; }
+            if (!fromAutoPick && !adminUnlocked) { setModal("pin"); return; }
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
             if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
@@ -2119,7 +2114,7 @@ export default function App() {
                             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                               {regionTeams.map(team => (
                                 <button key={team.region+team.seed} onClick={()=>draftPick(team)}
-                                  disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftScheduled) || (!isAdmin && !!authUser && !!currentPicker && (authUser.email||"").toLowerCase() !== currentPicker.name.toLowerCase() && ((authUser.user_metadata||{}).name||"").toLowerCase() !== currentPicker.name.toLowerCase())}
+                                  disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftStart)}
                                   style={{ display:"flex", alignItems:"center", gap:8,
                                     background:"#0f1625",
                                     border:`1px solid ${regionColors[region]}44`,
