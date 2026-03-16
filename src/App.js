@@ -509,6 +509,22 @@ export default function App() {
     });
   }
 
+  // Validate stored leagues against DB - remove any that no longer exist
+  useEffect(() => {
+    if (myLeagues.length === 0) return;
+    const codes = myLeagues.map(l => l.code);
+    supabase.from("leagues").select("code").in("code", codes)
+      .then(({ data }) => {
+        if (!data) return;
+        const existing = new Set(data.map(l => l.code));
+        const valid = myLeagues.filter(l => existing.has(l.code));
+        if (valid.length !== myLeagues.length) {
+          setMyLeagues(valid);
+          localStorage.setItem("bb_my_leagues", JSON.stringify(valid));
+        }
+      });
+  }, []);
+
   // Round payouts (editable per league)
   const [rounds, setRounds] = useState(() => {
     const saved = sessionStorage.getItem("bb_rounds");
