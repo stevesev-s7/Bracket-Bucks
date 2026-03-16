@@ -89,6 +89,7 @@ const NCAA_2026_TEAMS = [
   { seed:10, name:"Santa Clara",      region:"Midwest" },
   { seed:2,  name:"Iowa State",       region:"Midwest" }, // vs 15
   { seed:15, name:"Tennessee State",  region:"Midwest" }
+]
 
 // ── 2025 NCAA Tournament Bracket Data ───────────────────────────────────
 const BRACKET_2025 = {
