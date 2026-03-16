@@ -691,7 +691,7 @@ export default function App() {
         const picker = sorted[pickerIdx];
         if (!picker) return;
 
-        const best = [...avail].sort((a,b) => a.seed - b.seed)[0];
+        const best = [...avail][0];
         const updatedTeams = [...picker.teams];
         const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
         if (emptyIdx === -1) return;
