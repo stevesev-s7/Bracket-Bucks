@@ -1,3 +1,4 @@
+// v1773286522751
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 const _APP_BUILD = "1773204216116";
@@ -720,7 +721,7 @@ export default function App() {
   // ── League ops ───────────────────────────────────────────────────────────
   async function autoAddUserAsOwner(code) {
     if (!authUser) return;
-    const userName = (authUser.user_metadata||{}).name || authUser.email;
+    const userName = authUser.user_metadata?.name || authUser.email;
     const { data: existingOwners } = await supabase
       .from("owners").select("name").eq("league_code", code);
     const alreadyOwner = existingOwners?.some(o =>
@@ -1119,11 +1120,11 @@ export default function App() {
                 <div style={{ width:36, height:36, borderRadius:"50%", background:"#f0c040",
                   display:"flex", alignItems:"center", justifyContent:"center",
                   fontSize:16, fontWeight:800, color:"#111", flexShrink:0 }}>
-                  {((authUser.user_metadata||{}).name || authUser.email).charAt(0).toUpperCase()}
+                  {(authUser.user_metadata?.name || authUser.email).charAt(0).toUpperCase()}
                 </div>
                 <div style={{ textAlign:"left" }}>
                   <div style={{ fontSize:13, fontWeight:700, color:"#dce4f5" }}>
-                    {(authUser.user_metadata||{}).name || authUser.email}
+                    {authUser.user_metadata?.name || authUser.email}
                   </div>
                   <div style={{ fontSize:11, color:"#6677aa" }}>View Profile</div>
                 </div>
@@ -1896,11 +1897,11 @@ export default function App() {
           // ── Draft a team ───────────────────────────────────────────────
           async function draftPick(team, fromAutoPick = false) {
             if (!currentPicker) return;
-            const pickerName=(currentPicker&&currentPicker.name?currentPicker.name:'').toLowerCase();
-    const userEmail=(authUser&&authUser.email?authUser.email:'').toLowerCase();
-    const userName=((authUser&&(authUser.user_metadata||{}).name)||'').toLowerCase();
-    const isMyTurn=isAdmin||!authUser||!currentPicker||userEmail===pickerName||userName===pickerName;
-    if(!isMyTurn&&!fromAutoPick){alert("Not your turn to pick!");return;}
+                const pickerName = currentPicker ? currentPicker.name.toLowerCase() : "";
+    const userEmail = authUser ? (authUser.email || "").toLowerCase() : "";
+    const userName = authUser ? ((authUser.user_metadata || {}).name || "").toLowerCase() : "";
+    const isMyTurn = isAdmin || !authUser || !currentPicker || userEmail === pickerName || userName === pickerName;
+    if (!isMyTurn && !fromAutoPick) { alert("Not your turn to pick!"); return; }
     if (!fromAutoPick && !adminUnlocked) { setModal("pin"); return; }
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
@@ -1923,23 +1924,7 @@ export default function App() {
           }
 
           // ── Reset draft ────────────────────────────────────────────────
-          async function shuffleDraftOrder() {
-    if (!window.confirm("Randomly shuffle the draft order for all owners?")) return;
-    const shuffled = [...owners];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    const updates = shuffled.map((owner, idx) =>
-      supabase.from("owners").update({ num: idx + 1 }).eq("id", owner.id)
-    );
-    await Promise.all(updates);
-    const reordered = shuffled.map((o, i) => ({ ...o, num: i + 1 }));
-    setOwners(reordered);
-    alert("Draft order shuffled!");
-  }
-
-    async function resetDraft() {
+          async function resetDraft() {
             if (!adminUnlocked) { setModal("pin"); return; }
             const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
             for (const o of owners) {
@@ -1996,9 +1981,6 @@ export default function App() {
                   </div>
                 )}
                 <div style={{ display:"flex", gap:8 }}>
-                  {isAdmin && <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#d4af37"), border:"1px solid #d4af37", fontSize:13, padding:"8px 14px" }}>
-                    🔀 Shuffle Order
-                  </button>}
                   <button onClick={resetDraft} style={{ ...S.btn("#1a2440","#e74c3c"), border:"1px solid #e74c3c", fontSize:12 }}>
                     🔄 Reset Draft
                   </button>
@@ -2137,7 +2119,7 @@ export default function App() {
                             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                               {regionTeams.map(team => (
                                 <button key={team.region+team.seed} onClick={()=>draftPick(team)}
-                                  disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftScheduled) ||(!isAdmin&&!!authUser&&!!currentPicker&&(authUser.email||'').toLowerCase()!==(currentPicker.name||'').toLowerCase()&&((authUser.user_metadata||{}).name||'').toLowerCase()!==(currentPicker.name||'').toLowerCase())}).name||"").toLowerCase() !== currentPicker.name.toLowerCase())}
+                                  disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftScheduled) || (!isAdmin && !!authUser && !!currentPicker && (authUser.email||"").toLowerCase() !== currentPicker.name.toLowerCase() && ((authUser.user_metadata||{}).name||"").toLowerCase() !== currentPicker.name.toLowerCase())}
                                   style={{ display:"flex", alignItems:"center", gap:8,
                                     background:"#0f1625",
                                     border:`1px solid ${regionColors[region]}44`,
