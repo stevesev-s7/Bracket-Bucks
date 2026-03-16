@@ -2134,7 +2134,7 @@ export default function App() {
                             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                               {regionTeams.map(team => (
                                 <button key={team.region+team.seed} onClick={()=>draftPick(team)}
-                                  disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftStart)}
+                                  disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftScheduled) || (!isAdmin && !!authUser && !!currentPicker && authUser.email !== currentPicker.name && (authUser.user_metadata?.name||"").toLowerCase() !== currentPicker.name.toLowerCase())}
                                   style={{ display:"flex", alignItems:"center", gap:8,
                                     background:"#0f1625",
                                     border:`1px solid ${regionColors[region]}44`,
