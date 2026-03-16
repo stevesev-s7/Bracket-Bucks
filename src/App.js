@@ -1914,7 +1914,7 @@ export default function App() {
           // ── Auto-pick (highest available seed = lowest seed number) ───
           async function autoPick() {
             if (!available.length || !currentPicker) return;
-            const best = [...available].sort((a,b) => a.seed - b.seed)[0];
+            const best = [...available][0];
             await draftPick(best, true);
           }
 
@@ -2102,7 +2102,7 @@ export default function App() {
                         Available Teams ({available.length})
                       </div>
                       {["South","East","Midwest","West"].map(region => {
-                        const regionTeams = available.filter(t => t.region === region).sort((a,b) => a.seed - b.seed);
+                        const regionTeams = available.filter(t => t.region === region);
                         if (!regionTeams.length) return null;
                         return (
                           <div key={region} style={{ marginBottom:14 }}>
@@ -2111,150 +2111,39 @@ export default function App() {
                               <span style={{ width:8, height:8, borderRadius:"50%", background:regionColors[region], display:"inline-block" }} />
                               {region} Region
                             </div>
-                            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:6 }}>
-                              {regionTeams.map(team => (
-                                <button key={team.region+team.seed} onClick={()=>draftPick(team)}
-                                  disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftStart)}
-                                  style={{ display:"flex", alignItems:"center", gap:8,
-                                    background:"#0f1625",
-                                    border:`1px solid ${regionColors[region]}44`,
-                                    borderRadius:8, padding:"8px 10px", cursor:"pointer",
-                                    fontFamily:"inherit", textAlign:"left",
-                                    opacity: draftComplete || (!draftHasStarted && !!draftStart) ? 0.4 : 1 }}
-                                  onMouseEnter={e => { e.currentTarget.style.background="#1a2e1a"; e.currentTarget.style.borderColor=regionColors[region]; }}
-                                  onMouseLeave={e => { e.currentTarget.style.background="#0f1625"; e.currentTarget.style.borderColor=regionColors[region]+"44"; }}>
-                                  <SeedBadge seed={team.seed} />
-                                  <span style={{ fontSize:12, fontWeight:600, color:"#dce4f5", flex:1 }}>{team.name}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {available.length === 0 && !draftComplete && <Empty text="All teams have been drafted!" />}
+                            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {Array.from({length:Math.ceil(regionTeams.length/2)},(_,pi)=>pi).map(pi => {
+                  const t1=regionTeams[pi*2], t2=regionTeams[pi*2+1];
+                  const btnStyle=(team)=>({
+                    flex:1, display:"flex", alignItems:"center", gap:8,
+                    background:"#0f1625",
+                    border:"1px solid "+regionColors[region]+"44",
+                    borderRadius:8, padding:"8px 10px", cursor:"pointer",
+                    fontFamily:"inherit", textAlign:"left",
+                    opacity: draftComplete || (!draftHasStarted && !!draftScheduled) ? 0.5 : 1
+                  });
+                  return (
+                    <div key={pi} style={{display:"flex",alignItems:"stretch",gap:6}}>
+                      {t1 && <button key={t1.region+t1.seed} onClick={()=>draftPick(t1)}
+                        disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftScheduled)}
+                        style={btnStyle(t1)}
+                        onMouseEnter={e=>{e.currentTarget.style.background="#1a2740"}}
+                        onMouseLeave={e=>{e.currentTarget.style.background="#0f1625"}}>
+                        <SeedBadge seed={t1.seed} />
+                        <span style={{fontSize:12,fontWeight:600,color:"#dce4f5"}}>{t1.name}</span>
+                      </button>}
+                      {t2 && <div style={{display:"flex",alignItems:"center",padding:"0 2px",color:"#445",fontSize:10,fontWeight:700}}>vs</div>}
+                      {t2 && <button key={t2.region+t2.seed} onClick={()=>draftPick(t2)}
+                        disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftScheduled)}
+                        style={btnStyle(t2)}
+                        onMouseEnter={e=>{e.currentTarget.style.background="#1a2740"}}
+                        onMouseLeave={e=>{e.currentTarget.style.background="#0f1625"}}>
+                        <SeedBadge seed={t2.seed} />
+                        <span style={{fontSize:12,fontWeight:600,color:"#dce4f5"}}>{t2.name}</span>
+                      </button>}
                     </div>
-
-                    {/* Draft Board */}
-                    <div>
-                      <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:1.5, fontWeight:700, marginBottom:10 }}>
-                        Draft Board
-                      </div>
-                      <div style={{ background:"#0f1420", border:"1px solid #1a2440", borderRadius:12, overflow:"hidden" }}>
-                        <div style={{ display:"grid", gridTemplateColumns:`70px repeat(${numOwners}, 1fr)`,
-                          background:"#141d38", borderBottom:"1px solid #1a2440", padding:"6px 8px" }}>
-                          <div style={{ fontSize:10, color:"#445", textTransform:"uppercase", letterSpacing:1 }}>Rd</div>
-                          {sortedOwners.map(o => (
-                            <div key={o.id} style={{ fontSize:10, color:o.color, fontWeight:700,
-                              textAlign:"center", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                              {o.name.split(" ")[0]}
-                            </div>
-                          ))}
-                        </div>
-                        {Array.from({length:8}, (_,round) => {
-                          const isEvenR = round % 2 === 0;
-                          return (
-                            <div key={round} style={{ display:"grid",
-                              gridTemplateColumns:`70px repeat(${numOwners}, 1fr)`,
-                              borderBottom:"1px solid #111", padding:"4px 8px",
-                              background: round % 2 === 0 ? "#0f1420" : "#0a0f1a" }}>
-                              <div style={{ fontSize:11, color:"#445", display:"flex", alignItems:"center", gap:4 }}>
-                                <span>Rd {round+1}</span>
-                                <span style={{ fontSize:9, color:"#333" }}>{isEvenR?"→":"←"}</span>
-                              </div>
-                              {sortedOwners.map((o, oi) => {
-                                const pick = o.teams[round];
-                                const globalPickNum = round * numOwners + (isEvenR ? oi : numOwners - 1 - oi);
-                                const isCurrent = globalPickNum === totalPicks && !draftComplete;
-                                return (
-                                  <div key={o.id} style={{ padding:"3px 4px", borderRadius:5, textAlign:"center",
-                                    background: isCurrent ? o.color+"33" : "transparent",
-                                    border: isCurrent ? `1px solid ${o.color}` : "1px solid transparent",
-                                    minHeight:28, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                                    {pick?.name ? (
-                                      <div>
-                                        <div style={{ fontSize:9, color:o.color, fontWeight:700 }}>#{pick.seed}</div>
-                                        <div style={{ fontSize:9, color:"#dce4f5", lineHeight:1.2,
-                                          overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:50 }}>
-                                          {pick.name.split(" ").slice(-1)[0]}
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      <div style={{ width:20, height:2, background: isCurrent ? o.color : "#1a2440", borderRadius:1 }} />
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Owner picks summary */}
-                      <div style={{ marginTop:14 }}>
-                        <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:1.5, fontWeight:700, marginBottom:8 }}>
-                          Teams Drafted
-                        </div>
-                        {sortedOwners.map(o => {
-                          const drafted = o.teams.filter(t => t.name && t.name.trim());
-                          return (
-                            <div key={o.id} style={{ marginBottom:8, background:"#0a0f1a",
-                              border:`1px solid ${o.id === currentPicker?.id ? o.color : "#1a2440"}`,
-                              borderRadius:10, padding:"10px 12px" }}>
-                              <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
-                                <div style={{ width:8, height:8, borderRadius:"50%", background:o.color }} />
-                                <span style={{ fontWeight:700, fontSize:13, color:o.id===currentPicker?.id?o.color:"#dce4f5" }}>{o.name}</span>
-                                <span style={{ marginLeft:"auto", fontSize:11, color:"#445" }}>{drafted.length}/8</span>
-                              </div>
-                              <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
-                                {drafted.map((t,i) => (
-                                  <span key={i} style={{ fontSize:10, background:"#1a2440", color:"#dce4f5",
-                                    borderRadius:4, padding:"2px 6px", display:"flex", alignItems:"center", gap:3 }}>
-                                    <SeedBadge seed={t.seed} />
-                                    <span>{t.name}</span>
-                                  </span>
-                                ))}
-                                {Array.from({length: 8 - drafted.length}).map((_,i) => (
-                                  <span key={`empty-${i}`} style={{ fontSize:10, background:"#111", color:"#333",
-                                    borderRadius:4, padding:"2px 8px", border:"1px dashed #1a2440" }}>—</span>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })()}
-
-        {/* PROFILE */}
-        {!loading && tab==="profile" && (()=>{
-          const userName = authUser?.user_metadata?.name || authUser?.email || "Player";
-          const userLeagues = authUser?.user_metadata?.leagues || [];
-
-          // Find this user's owner entry in current league by matching name
-          const myOwner = owners.find(o =>
-            o.name.toLowerCase().replace(/\s/g,"") === userName.toLowerCase().replace(/\s/g,"")
-          );
-          const myStats = myOwner ? stats.find(s => s.id === myOwner.id) : null;
-
-          // All-time: aggregate across saved leagues (current league data only for now)
-          const allTimeWins = myOwner ? wins.filter(w => w.owner_id === myOwner.id).length : 0;
-          const standing = myStats ? stats.findIndex(s => s.id === myOwner.id) + 1 : null;
-
-          return (
-            <div>
-              {/* Profile Header */}
-              <div style={{ ...S.card, background:"linear-gradient(135deg,#111827,#1a2440)",
-                display:"flex", alignItems:"center", gap:20, flexWrap:"wrap", marginBottom:20 }}>
-                <div style={{ width:64, height:64, borderRadius:"50%",
-                  background: myOwner?.color || "#f0c040",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                  fontSize:28, fontWeight:800, color:"#fff", flexShrink:0 }}>
-                  {userName.charAt(0).toUpperCase()}
+                  );
+                })}
                 </div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:2, color:"#f0c040" }}>
