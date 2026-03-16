@@ -1444,73 +1444,6 @@ export default function App() {
                   </span>
                 </div>
 
-        {/* League Management */}
-        <div style={{background:"#0d1528",border:"1px solid #1e2d4a",borderRadius:10,padding:"20px 24px",marginBottom:20}}>
-          <div style={{color:"#d4af37",fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:1,marginBottom:12}}>
-            🗑️ LEAGUE MANAGEMENT
-          </div>
-          <p style={{fontSize:13,color:"#6677aa",marginBottom:16}}>Delete a league and all its data permanently.</p>
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            {owners.length===0
-              ? <p style={{color:"#445",fontSize:13}}>No leagues found.</p>
-              : [...new Set(owners.map(o=>o.league_code))].map(function(code){
-                  return (
-                    <div key={code} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"#131929",borderRadius:8,padding:"10px 14px"}}>
-                      <span style={{color:"#dce4f5",fontFamily:"'DM Mono',monospace",fontSize:14}}>{code}</span>
-                      <button onClick={()=>deleteLeague(code)}
-                        style={{background:"#c0392b",color:"#fff",border:"none",borderRadius:6,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-                        Delete
-                      </button>
-                    </div>
-                  );
-                })
-            }
-          </div>
-        </div>
-
-                {/* Cumulative table */}
-                <div style={{ ...S.card, marginTop:24 }}>
-                  <SecTitle>Cumulative by Round</SecTitle>
-                  <div style={{ overflowX:"auto" }}>
-                    <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
-                      <thead>
-                        <tr style={{ background:"#1a2040" }}>
-                          <th style={TH}>Owner</th>
-                          {rounds.map(r=><th key={r.id} style={TH}>{r.short}</th>)}
-                          <th style={TH}>Final Net</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {stats.map(s=>(
-                          <tr key={s.id} style={{ borderBottom:"1px solid #1a2440" }}>
-                            <td style={{ ...TD, fontWeight:600 }}>
-                              <span style={{ display:"inline-flex", alignItems:"center", gap:7 }}>
-                                <span style={{ width:8,height:8,borderRadius:"50%",background:s.color,display:"inline-block" }} />
-                                {s.name}
-                              </span>
-                            </td>
-                            {s.cumByRound.map((v,i)=>(
-                              <td key={i} style={{ ...TD, textAlign:"center", fontWeight:600,
-                                color:v>0?"#2ecc71":v<0?"#e74c3c":"#667",
-                                fontFamily:"'DM Mono',monospace" }}>
-                                {v>=0?"+":""}${v.toFixed(2)}
-                              </td>
-                            ))}
-                            <td style={{ ...TD, textAlign:"center", fontWeight:800, fontSize:15,
-                              color:s.net>0?"#2ecc71":s.net<0?"#e74c3c":"#667",
-                              fontFamily:"'DM Mono',monospace" }}>
-                              {s.net>=0?"+":""}${s.net.toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
 
         {/* WIN TRACKER */}
         {!loading && tab==="wins" && (
@@ -2445,6 +2378,23 @@ export default function App() {
                   </div>
                 </a>
               </div>
+
+        {/* League Management */}
+        <div style={{background:"#0d1528",border:"1px solid #1e2d4a",borderRadius:10,padding:"20px 24px",marginBottom:20}}>
+          <div style={{color:"#d4af37",fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:1,marginBottom:12}}>🗑️ LEAGUE MANAGEMENT</div>
+          <p style={{fontSize:13,color:"#6677aa",marginBottom:16}}>Delete a league and all its data permanently.</p>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {[...new Set(owners.map(o=>o.league_code))].length===0
+              ? <p style={{color:"#445",fontSize:13}}>No leagues found.</p>
+              : [...new Set(owners.map(o=>o.league_code))].map(function(code){return(
+                  <div key={code} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"#131929",borderRadius:8,padding:"10px 14px"}}>
+                    <span style={{color:"#dce4f5",fontFamily:"'DM Mono',monospace",fontSize:14}}>{code}</span>
+                    <button onClick={()=>deleteLeague(code)} style={{background:"#c0392b",color:"#fff",border:"none",borderRadius:6,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer"}}>Delete</button>
+                  </div>
+                );})
+            }
+          </div>
+        </div>
 
               {/* Setup Wizard — add all 8 owners at once */}
               {owners.length === 0 && (
