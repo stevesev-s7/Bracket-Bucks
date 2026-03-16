@@ -764,6 +764,10 @@ export default function App() {
     if (error) { alert("Delete failed: " + error.message); return; }
     alert("League " + code + " deleted!");
     removeFromMyLeagues(code);
+    // Also clear bb_league_<userId> keys pointing to this league
+    Object.keys(localStorage).forEach(function(k){
+      if(k.startsWith("bb_league_") && localStorage.getItem(k)===code) localStorage.removeItem(k);
+    });
     window.location.reload();
   }
 
