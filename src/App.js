@@ -21,203 +21,75 @@ const DEFAULT_ROUNDS = [
 
 // ── 2026 NCAA Tournament Teams (editable each Selection Sunday) ──────────
 const NCAA_2026_TEAMS = [
-  // South Region — No. 1 seed: Florida
-  { seed:1,  name:"Florida",          region:"South" },
-  { seed:2,  name:"Houston",          region:"South" },
-  { seed:3,  name:"Illinois",         region:"South" },
-  { seed:4,  name:"Nebraska",         region:"South" },
-  { seed:5,  name:"Vanderbilt",       region:"South" },
-  { seed:6,  name:"North Carolina",   region:"South" },
-  { seed:7,  name:"Saint Mary's",     region:"South" },
-  { seed:8,  name:"Clemson",          region:"South" },
-  { seed:9,  name:"Iowa",             region:"South" },
-  { seed:10, name:"Texas A&M",        region:"South" },
-  { seed:11, name:"VCU",              region:"South" },
-  { seed:12, name:"McNeese",          region:"South" },
-  { seed:13, name:"Troy",             region:"South" },
-  { seed:14, name:"Penn",             region:"South" },
-  { seed:15, name:"Idaho",            region:"South" },
+  // SOUTH REGION — No. 1 seed: Florida
+  { seed:1,  name:"Florida",          region:"South" },  // vs 16
   { seed:16, name:"Prairie View A&M", region:"South" },
-  // East Region — No. 1 seed: Duke
-  { seed:1,  name:"Duke",             region:"East" },
-  { seed:2,  name:"UConn",            region:"East" },
-  { seed:3,  name:"Michigan State",   region:"East" },
-  { seed:4,  name:"Kansas",           region:"East" },
-  { seed:5,  name:"St. John's",       region:"East" },
-  { seed:6,  name:"Louisville",       region:"East" },
-  { seed:7,  name:"UCLA",             region:"East" },
-  { seed:8,  name:"Ohio State",       region:"East" },
-  { seed:9,  name:"TCU",              region:"East" },
-  { seed:10, name:"UCF",              region:"East" },
-  { seed:11, name:"South Florida",    region:"East" },
-  { seed:12, name:"Northern Iowa",    region:"East" },
-  { seed:13, name:"Cal Baptist",      region:"East" },
-  { seed:14, name:"North Dakota St",  region:"East" },
-  { seed:15, name:"Furman",           region:"East" },
+  { seed:8,  name:"Clemson",          region:"South" },  // vs 9
+  { seed:9,  name:"Iowa",             region:"South" },
+  { seed:5,  name:"Vanderbilt",       region:"South" },  // vs 12
+  { seed:12, name:"McNeese",          region:"South" },
+  { seed:4,  name:"Nebraska",         region:"South" },  // vs 13
+  { seed:13, name:"Troy",             region:"South" },
+  { seed:6,  name:"North Carolina",   region:"South" },  // vs 11
+  { seed:11, name:"VCU",              region:"South" },
+  { seed:3,  name:"Illinois",         region:"South" },  // vs 14
+  { seed:14, name:"Penn",             region:"South" },
+  { seed:7,  name:"Saint Mary's",     region:"South" },  // vs 10
+  { seed:10, name:"Texas A&M",        region:"South" },
+  { seed:2,  name:"Houston",          region:"South" },  // vs 15
+  { seed:15, name:"Idaho",            region:"South" },
+  // EAST REGION — No. 1 seed: Duke
+  { seed:1,  name:"Duke",             region:"East" },   // vs 16
   { seed:16, name:"Siena",            region:"East" },
-  // West Region — No. 1 seed: Arizona
-  { seed:1,  name:"Arizona",          region:"West" },
-  { seed:2,  name:"Purdue",           region:"West" },
-  { seed:3,  name:"Gonzaga",          region:"West" },
-  { seed:4,  name:"Arkansas",         region:"West" },
-  { seed:5,  name:"Wisconsin",        region:"West" },
-  { seed:6,  name:"BYU",              region:"West" },
-  { seed:7,  name:"Miami (FL)",       region:"West" },
-  { seed:8,  name:"Villanova",        region:"West" },
-  { seed:9,  name:"Utah State",       region:"West" },
-  { seed:10, name:"Missouri",         region:"West" },
-  { seed:11, name:"Texas",            region:"West" },
-  { seed:12, name:"High Point",       region:"West" },
-  { seed:13, name:"Hawaii",           region:"West" },
-  { seed:14, name:"Kennesaw State",   region:"West" },
-  { seed:15, name:"Queens",           region:"West" },
+  { seed:8,  name:"Ohio State",       region:"East" },   // vs 9
+  { seed:9,  name:"TCU",              region:"East" },
+  { seed:5,  name:"St. John's",       region:"East" },   // vs 12
+  { seed:12, name:"Northern Iowa",    region:"East" },
+  { seed:4,  name:"Kansas",           region:"East" },   // vs 13
+  { seed:13, name:"Cal Baptist",      region:"East" },
+  { seed:6,  name:"Louisville",       region:"East" },   // vs 11
+  { seed:11, name:"South Florida",    region:"East" },
+  { seed:3,  name:"Michigan State",   region:"East" },   // vs 14
+  { seed:14, name:"North Dakota St",  region:"East" },
+  { seed:7,  name:"UCLA",             region:"East" },   // vs 10
+  { seed:10, name:"UCF",              region:"East" },
+  { seed:2,  name:"UConn",            region:"East" },   // vs 15
+  { seed:15, name:"Furman",           region:"East" },
+  // WEST REGION — No. 1 seed: Arizona
+  { seed:1,  name:"Arizona",          region:"West" },   // vs 16
   { seed:16, name:"LIU",              region:"West" },
-  // Midwest Region — No. 1 seed: Michigan
-  { seed:1,  name:"Michigan",         region:"Midwest" },
-  { seed:2,  name:"Iowa State",       region:"Midwest" },
-  { seed:3,  name:"Virginia",         region:"Midwest" },
-  { seed:4,  name:"Alabama",          region:"Midwest" },
-  { seed:5,  name:"Texas Tech",       region:"Midwest" },
-  { seed:6,  name:"Tennessee",        region:"Midwest" },
-  { seed:7,  name:"Kentucky",         region:"Midwest" },
-  { seed:8,  name:"Georgia",          region:"Midwest" },
-  { seed:9,  name:"Saint Louis",      region:"Midwest" },
-  { seed:10, name:"Santa Clara",      region:"Midwest" },
-  { seed:11, name:"SMU",              region:"Midwest" },
-  { seed:12, name:"Akron",            region:"Midwest" },
-  { seed:13, name:"Hofstra",          region:"Midwest" },
-  { seed:14, name:"Wright State",     region:"Midwest" },
-  { seed:15, name:"Tennessee State",  region:"Midwest" },
+  { seed:8,  name:"Villanova",        region:"West" },   // vs 9
+  { seed:9,  name:"Utah State",       region:"West" },
+  { seed:5,  name:"Wisconsin",        region:"West" },   // vs 12
+  { seed:12, name:"High Point",       region:"West" },
+  { seed:4,  name:"Arkansas",         region:"West" },   // vs 13
+  { seed:13, name:"Hawaii",           region:"West" },
+  { seed:6,  name:"BYU",              region:"West" },   // vs 11
+  { seed:11, name:"Texas",            region:"West" },
+  { seed:3,  name:"Gonzaga",          region:"West" },   // vs 14
+  { seed:14, name:"Kennesaw State",   region:"West" },
+  { seed:7,  name:"Miami (FL)",       region:"West" },   // vs 10
+  { seed:10, name:"Missouri",         region:"West" },
+  { seed:2,  name:"Purdue",           region:"West" },   // vs 15
+  { seed:15, name:"Queens",           region:"West" },
+  // MIDWEST REGION — No. 1 seed: Michigan
+  { seed:1,  name:"Michigan",         region:"Midwest" }, // vs 16
   { seed:16, name:"UMBC",             region:"Midwest" },
+  { seed:8,  name:"Georgia",          region:"Midwest" }, // vs 9
+  { seed:9,  name:"Saint Louis",      region:"Midwest" },
+  { seed:5,  name:"Texas Tech",       region:"Midwest" }, // vs 12
+  { seed:12, name:"Akron",            region:"Midwest" },
+  { seed:4,  name:"Alabama",          region:"Midwest" }, // vs 13
+  { seed:13, name:"Hofstra",          region:"Midwest" },
+  { seed:6,  name:"Tennessee",        region:"Midwest" }, // vs 11
+  { seed:11, name:"SMU",              region:"Midwest" },
+  { seed:3,  name:"Virginia",         region:"Midwest" }, // vs 14
+  { seed:14, name:"Wright State",     region:"Midwest" },
+  { seed:7,  name:"Kentucky",         region:"Midwest" }, // vs 10
+  { seed:10, name:"Santa Clara",      region:"Midwest" },
+  { seed:2,  name:"Iowa State",       region:"Midwest" }, // vs 15
+  { seed:15, name:"Tennessee State",  region:"Midwest" },
 ]
-
-// ── 2025 NCAA Tournament Bracket Data ───────────────────────────────────
-const BRACKET_2025 = {
-  regions: [
-    {
-      name: "South", seed1: "Auburn",
-      games: {
-        r64: [
-          {top:{seed:1,name:"Auburn",score:83},bot:{seed:16,name:"Alabama State",score:63},winner:"Auburn"},
-          {top:{seed:8,name:"Louisville",score:75},bot:{seed:9,name:"Creighton",score:89},winner:"Creighton"},
-          {top:{seed:5,name:"Michigan",score:68},bot:{seed:12,name:"UC San Diego",score:65},winner:"Michigan"},
-          {top:{seed:4,name:"Texas A&M",score:80},bot:{seed:13,name:"Yale",score:71},winner:"Texas A&M"},
-          {top:{seed:6,name:"Ole Miss",score:71},bot:{seed:11,name:"N Carolina",score:64},winner:"Ole Miss"},
-          {top:{seed:3,name:"Iowa State",score:82},bot:{seed:14,name:"Lipscomb",score:55},winner:"Iowa State"},
-          {top:{seed:7,name:"Marquette",score:66},bot:{seed:10,name:"New Mexico",score:75},winner:"New Mexico"},
-          {top:{seed:2,name:"Michigan St",score:87},bot:{seed:15,name:"Bryant",score:62},winner:"Michigan St"},
-        ],
-        r32: [
-          {top:{seed:1,name:"Auburn",score:82},bot:{seed:9,name:"Creighton",score:70},winner:"Auburn"},
-          {top:{seed:5,name:"Michigan",score:91},bot:{seed:4,name:"Texas A&M",score:79},winner:"Michigan"},
-          {top:{seed:6,name:"Ole Miss",score:91},bot:{seed:3,name:"Iowa State",score:78},winner:"Ole Miss"},
-          {top:{seed:10,name:"New Mexico",score:63},bot:{seed:2,name:"Michigan St",score:71},winner:"Michigan St"},
-        ],
-        s16: [
-          {top:{seed:1,name:"Auburn",score:78},bot:{seed:5,name:"Michigan",score:65},winner:"Auburn"},
-          {top:{seed:6,name:"Ole Miss",score:70},bot:{seed:2,name:"Michigan St",score:73},winner:"Michigan St"},
-        ],
-        e8: [
-          {top:{seed:1,name:"Auburn",score:70},bot:{seed:2,name:"Michigan St",score:64},winner:"Auburn"},
-        ],
-      }
-    },
-    {
-      name: "East", seed1: "Duke",
-      games: {
-        r64: [
-          {top:{seed:1,name:"Duke",score:93},bot:{seed:16,name:"Mount St Mary's",score:49},winner:"Duke"},
-          {top:{seed:8,name:"Mississippi St",score:72},bot:{seed:9,name:"Baylor",score:75},winner:"Baylor"},
-          {top:{seed:5,name:"Oregon",score:81},bot:{seed:12,name:"Liberty",score:52},winner:"Oregon"},
-          {top:{seed:4,name:"Arizona",score:93},bot:{seed:13,name:"Akron",score:65},winner:"Arizona"},
-          {top:{seed:6,name:"BYU",score:80},bot:{seed:11,name:"VCU",score:71},winner:"BYU"},
-          {top:{seed:3,name:"Wisconsin",score:85},bot:{seed:14,name:"Montana",score:66},winner:"Wisconsin"},
-          {top:{seed:7,name:"Saint Mary's",score:59},bot:{seed:10,name:"Vanderbilt",score:56},winner:"Saint Mary's"},
-          {top:{seed:2,name:"Alabama",score:90},bot:{seed:15,name:"Robert Morris",score:81},winner:"Alabama"},
-        ],
-        r32: [
-          {top:{seed:1,name:"Duke",score:89},bot:{seed:9,name:"Baylor",score:66},winner:"Duke"},
-          {top:{seed:5,name:"Oregon",score:83},bot:{seed:4,name:"Arizona",score:87},winner:"Arizona"},
-          {top:{seed:6,name:"BYU",score:91},bot:{seed:3,name:"Wisconsin",score:89},winner:"BYU"},
-          {top:{seed:7,name:"Saint Mary's",score:66},bot:{seed:2,name:"Alabama",score:80},winner:"Alabama"},
-        ],
-        s16: [
-          {top:{seed:1,name:"Duke",score:100},bot:{seed:4,name:"Arizona",score:93},winner:"Duke"},
-          {top:{seed:6,name:"BYU",score:88},bot:{seed:2,name:"Alabama",score:113},winner:"Alabama"},
-        ],
-        e8: [
-          {top:{seed:1,name:"Duke",score:85},bot:{seed:2,name:"Alabama",score:65},winner:"Duke"},
-        ],
-      }
-    },
-    {
-      name: "Midwest", seed1: "Houston",
-      games: {
-        r64: [
-          {top:{seed:1,name:"Houston",score:78},bot:{seed:16,name:"SIU Edwardsville",score:40},winner:"Houston"},
-          {top:{seed:8,name:"Gonzaga",score:89},bot:{seed:9,name:"Georgia",score:68},winner:"Gonzaga"},
-          {top:{seed:5,name:"Clemson",score:67},bot:{seed:12,name:"McNeese",score:69},winner:"McNeese"},
-          {top:{seed:4,name:"Purdue",score:75},bot:{seed:13,name:"High Point",score:63},winner:"Purdue"},
-          {top:{seed:6,name:"Illinois",score:86},bot:{seed:11,name:"Xavier",score:73},winner:"Illinois"},
-          {top:{seed:3,name:"Kentucky",score:76},bot:{seed:14,name:"Troy",score:57},winner:"Kentucky"},
-          {top:{seed:7,name:"UCLA",score:72},bot:{seed:10,name:"Utah St",score:47},winner:"UCLA"},
-          {top:{seed:2,name:"Tennessee",score:77},bot:{seed:15,name:"Wofford",score:62},winner:"Tennessee"},
-        ],
-        r32: [
-          {top:{seed:1,name:"Houston",score:81},bot:{seed:8,name:"Gonzaga",score:76},winner:"Houston"},
-          {top:{seed:12,name:"McNeese",score:62},bot:{seed:4,name:"Purdue",score:76},winner:"Purdue"},
-          {top:{seed:6,name:"Illinois",score:75},bot:{seed:3,name:"Kentucky",score:84},winner:"Kentucky"},
-          {top:{seed:7,name:"UCLA",score:58},bot:{seed:2,name:"Tennessee",score:67},winner:"Tennessee"},
-        ],
-        s16: [
-          {top:{seed:1,name:"Houston",score:62},bot:{seed:4,name:"Purdue",score:60},winner:"Houston"},
-          {top:{seed:3,name:"Kentucky",score:65},bot:{seed:2,name:"Tennessee",score:78},winner:"Tennessee"},
-        ],
-        e8: [
-          {top:{seed:1,name:"Houston",score:69},bot:{seed:2,name:"Tennessee",score:50},winner:"Houston"},
-        ],
-      }
-    },
-    {
-      name: "West", seed1: "Florida",
-      games: {
-        r64: [
-          {top:{seed:1,name:"Florida",score:95},bot:{seed:16,name:"Norfolk St",score:69},winner:"Florida"},
-          {top:{seed:8,name:"UConn",score:67},bot:{seed:9,name:"Oklahoma",score:59},winner:"UConn"},
-          {top:{seed:5,name:"Memphis",score:70},bot:{seed:12,name:"Colorado St",score:78},winner:"Colorado St"},
-          {top:{seed:4,name:"Maryland",score:81},bot:{seed:13,name:"Grand Canyon",score:49},winner:"Maryland"},
-          {top:{seed:6,name:"Missouri",score:57},bot:{seed:11,name:"Drake",score:67},winner:"Drake"},
-          {top:{seed:3,name:"Texas Tech",score:82},bot:{seed:14,name:"UNCW",score:72},winner:"Texas Tech"},
-          {top:{seed:7,name:"Kansas",score:72},bot:{seed:10,name:"Arkansas",score:79},winner:"Arkansas"},
-          {top:{seed:2,name:"St John's",score:83},bot:{seed:15,name:"Omaha",score:53},winner:"St John's"},
-        ],
-        r32: [
-          {top:{seed:1,name:"Florida",score:77},bot:{seed:8,name:"UConn",score:75},winner:"Florida"},
-          {top:{seed:12,name:"Colorado St",score:71},bot:{seed:4,name:"Maryland",score:72},winner:"Maryland"},
-          {top:{seed:11,name:"Drake",score:64},bot:{seed:3,name:"Texas Tech",score:77},winner:"Texas Tech"},
-          {top:{seed:10,name:"Arkansas",score:75},bot:{seed:2,name:"St John's",score:66},winner:"Arkansas"},
-        ],
-        s16: [
-          {top:{seed:1,name:"Florida",score:77},bot:{seed:4,name:"Maryland",score:62},winner:"Florida"},
-          {top:{seed:3,name:"Texas Tech",score:85},bot:{seed:10,name:"Arkansas",score:83},winner:"Texas Tech"},
-        ],
-        e8: [
-          {top:{seed:1,name:"Florida",score:84},bot:{seed:3,name:"Texas Tech",score:79},winner:"Florida"},
-        ],
-      }
-    },
-  ],
-  finalFour: [
-    {top:{seed:1,name:"Auburn",region:"South",score:67},bot:{seed:1,name:"Florida",region:"West",score:79},winner:"Florida"},
-    {top:{seed:1,name:"Houston",region:"Midwest",score:65},bot:{seed:1,name:"Duke",region:"East",score:64},winner:"Houston"},
-  ],
-  championship: {top:{seed:1,name:"Florida",score:65},bot:{seed:1,name:"Houston",score:63},winner:"Florida"},
-};
-
-const OWNER_COLORS = [
-  "#e05c3a","#3a9be0","#2ecc71","#f0c040",
-  "#9b59b6","#1abc9c","#e67e22","#e91e63"
-];
 
 const CHI2025_OWNERS = [
   { name:"Stephen Sevenich", color:"#e05c3a", num:2, teams:[
