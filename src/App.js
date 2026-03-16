@@ -1520,7 +1520,7 @@ export default function App() {
               </p>
             </div>
 
-          ) : (
+          ) : paymentConfirmed ? (
             /* Step 2: Payment confirmed — name the league */
             <div>
               <div style={{ background:"#0a2a14", border:"1px solid #27ae60", borderRadius:8,
@@ -1540,6 +1540,54 @@ export default function App() {
                 Create League
               </button>
             </div>
+        ) : (
+        /* Step 1: Pay and verify */
+        <div>
+          {paymentStep === "error" && venmoVerifyError && (
+            <div style={{background:"#2a0a0a",border:"1px solid #e74c3c",borderRadius:8,padding:"10px 14px",marginBottom:12,fontSize:13,color:"#e74c3c"}}>
+              ⚠️ {venmoVerifyError}
+            </div>
+          )}
+          <div style={{background:"#0a1a2a",border:"1px solid #1e3a5a",borderRadius:8,padding:"14px",marginBottom:14,fontSize:13,color:"#6677aa",lineHeight:1.6}}>
+            <div style={{color:"#d4af37",fontWeight:700,marginBottom:6}}>How to create a league:</div>
+            <div>1. Send <strong style={{color:"#fff"}}>$10</strong> to <strong style={{color:"#1db954"}}>@bracket-bucks-app</strong> on Venmo</div>
+            <div style={{marginTop:4}}>2. Include your email <strong style={{color:"#fff"}}>({authUser?.email})</strong> in the Venmo note</div>
+            <div style={{marginTop:4}}>3. Click the button below to verify</div>
+          </div>
+          <a href="https://venmo.com/u/bracket-bucks-app" target="_blank" rel="noreferrer"
+            style={{display:"block",textAlign:"center",background:"#3d95ce",color:"#fff",borderRadius:8,padding:"12px",marginBottom:10,fontWeight:700,fontSize:14,textDecoration:"none"}}>
+            💳 Send $10 on Venmo
+          </a>
+          <button
+            onClick={async () => {
+              setPaymentStep("verifying");
+              setVenmoVerifyError("");
+              try {
+                const res = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/verify-payment`, {
+                  method: "POST",
+                  headers: {"Authorization": `Bearer ${session.access_token}`, "Content-Type": "application/json"},
+                  body: JSON.stringify({ email: session.user.email })
+                });
+                const result = await res.json();
+                if (result.verified) {
+                  setPaymentConfirmed(true);
+                  setPaymentStep("instructions");
+                  setVenmoVerifyError("");
+                } else {
+                  setPaymentStep("error");
+                  setVenmoVerifyError(result.message || "Payment not found — make sure your email in the Venmo note matches your account email.");
+                }
+              } catch(e) {
+                setPaymentStep("error");
+                setVenmoVerifyError("Something went wrong. Please try again.");
+              }
+            }}
+            disabled={paymentStep === "verifying"}
+            style={{width:"100%",background:paymentStep==="verifying"?"#333":"#f7b731",color:"#1a1a2e",border:"none",borderRadius:8,padding:"13px",fontSize:15,fontWeight:700,cursor:paymentStep==="verifying"?"not-allowed":"pointer",opacity:paymentStep==="verifying"?0.7:1}}>
+            {paymentStep === "verifying" ? "⏳ Checking payment..." : "✅ I sent it — Verify Payment"}
+          </button>
+          <p style={{fontSize:11,color:"#445",textAlign:"center",marginTop:8}}>Include your email ({authUser?.email}) in the Venmo note.</p>
+        </div>
           )}
         </Modal>
         <style>{`select option { background: #131929; } * { box-sizing: border-box; }`}</style>
