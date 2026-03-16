@@ -398,7 +398,6 @@ function Spinner() {
 function DraftCountdownBanner({ secondsLeft }) {
   const [secs, setSecs] = React.useState(secondsLeft);
   // Handle Venmo redirect back after payment
-  React.  // Payment handled via Venmo verify-payment edge function
 
   React.useEffect(() => {
     setSecs(secondsLeft);
