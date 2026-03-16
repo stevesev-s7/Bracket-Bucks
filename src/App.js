@@ -2204,7 +2204,7 @@ export default function App() {
               </div>
 
               {/* ── Countdown / Not started yet ── */}
-              {!draftHasStarted && draftStart && (
+              {!draftHasStarted && (
                 <div style={{ textAlign:"center", padding:"40px 24px", background:"#0f1420",
                   border:"1px solid #1a2440", borderRadius:14, marginBottom:20 }}>
                   <div style={{ fontSize:44, marginBottom:8 }}>⏳</div>
@@ -2212,13 +2212,13 @@ export default function App() {
                     Draft Hasn't Started Yet
                   </div>
                   <div style={{ color:"#6677aa", fontSize:14 }}>
-                    Come back at {draftStart.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} on {draftStart.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})}
+                    {draftStart ? "Come back at " + draftStart.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}) + " on " + draftStart.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"}) : "Set a draft time below to get started."}
                   </div>
                 </div>
               )}
 
               {/* ── Live Draft UI ── */}
-              {(draftHasStarted || !draftStart) && (
+              {draftHasStarted && (
                 <>
                   {/* Pick Timer Bar */}
                   {draftHasStarted && !draftComplete && currentPicker && (
