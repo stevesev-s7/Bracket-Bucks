@@ -2100,7 +2100,21 @@ export default function App() {
           }
 
           // ── Reset draft ────────────────────────────────────────────────
-          async function resetDraft() {
+          async function shuffleDraftOrder() {
+    if (!window.confirm("Randomly shuffle the draft order for all owners?")) return;
+    const shuffled = [...owners];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    await Promise.all(shuffled.map((o, idx) =>
+      supabase.from("owners").update({ num: idx + 1 }).eq("id", o.id)
+    ));
+    setOwners(shuffled.map((o, i) => ({ ...o, num: i + 1 })));
+    alert("Draft order shuffled! New order: " + shuffled.map(o=>o.name).join(", "));
+  }
+
+  async function resetDraft() {
             if (!adminUnlocked) { setModal("pin"); return; }
             const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
             for (const o of owners) {
@@ -2157,6 +2171,7 @@ export default function App() {
                   </div>
                 )}
                 <div style={{ display:"flex", gap:8 }}>
+                  {isAdmin && <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#d4af37"), border:"1px solid #d4af37", fontSize:13, padding:"8px 16px" }}>🔀 Shuffle Order</button>}
                   <button onClick={resetDraft} style={{ ...S.btn("#1a2440","#e74c3c"), border:"1px solid #e74c3c", fontSize:12 }}>
                     🔄 Reset Draft
                   </button>
@@ -2881,7 +2896,13 @@ export default function App() {
                   <option key={i} value={i}>#{t.seed} {t.name}</option>
                 ))}
               </select>
-            </div>
+            
+          {isAdmin && (
+            <button onClick={shuffleDraftOrder}
+              style={{marginTop:20,padding:"10px 28px",background:"#d4af37",color:"#111",border:"none",borderRadius:8,fontSize:15,fontWeight:800,cursor:"pointer",letterSpacing:1}}>
+              🔀 Randomize Draft Order
+            </button>
+          )}</div>
           )}
           {winOwnerId&&winTeamIdx!==""&&(()=>{
             const owner=owners.find(o=>o.id===parseInt(winOwnerId));
