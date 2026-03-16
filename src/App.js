@@ -501,6 +501,14 @@ export default function App() {
     });
   }
 
+  function removeFromMyLeagues(code) {
+    setMyLeagues(prev => {
+      const updated = prev.filter(l => l.code !== code);
+      localStorage.setItem("bb_my_leagues", JSON.stringify(updated));
+      return updated;
+    });
+  }
+
   // Round payouts (editable per league)
   const [rounds, setRounds] = useState(() => {
     const saved = sessionStorage.getItem("bb_rounds");
@@ -739,6 +747,7 @@ export default function App() {
     const { error } = await supabase.from("leagues").delete().eq("code", code);
     if (error) { alert("Delete failed: " + error.message); return; }
     alert("League " + code + " deleted!");
+    removeFromMyLeagues(code);
     window.location.reload();
   }
 
