@@ -1445,6 +1445,7 @@ export default function App() {
                 </div>
 
 
+        </>
         {/* WIN TRACKER */}
         {!loading && tab==="wins" && (
           <div>
@@ -2378,6 +2379,13 @@ export default function App() {
                   </div>
                 </a>
               </div>
+
+        {/* League Management */}
+        <div style={{background:"#0d1528",border:"1px solid #1e2d4a",borderRadius:10,padding:"20px 24px",marginBottom:20}}>
+          <div style={{color:"#d4af37",fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:1,marginBottom:12}}>🗑️ LEAGUE MANAGEMENT</div>
+          <p style={{fontSize:13,color:"#6677aa",marginBottom:16}}>Delete a league and all its data permanently.</p>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>{owners.length===0?<p style={{color:"#445",fontSize:13}}>No leagues found.</p>:[...new Set(owners.map(o=>o.league_code))].map(function(code){return(<div key={code} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"#131929",borderRadius:8,padding:"10px 14px"}}><span style={{color:"#dce4f5",fontSize:14}}>{code}</span><button onClick={function(){deleteLeague(code)}} style={{background:"#c0392b",color:"#fff",border:"none",borderRadius:6,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer"}}>Delete</button></div>);})}</div>
+        </div>
 
         {/* League Management */}
         <div style={{background:"#0d1528",border:"1px solid #1e2d4a",borderRadius:10,padding:"20px 24px",marginBottom:20}}>
