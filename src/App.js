@@ -1,23 +1,3 @@
-
-
-  async function shuffleDraftOrder() {
-    if (!window.confirm("Randomly shuffle the draft order for all owners?")) return;
-    // Fisher-Yates shuffle
-    const shuffled = [...owners];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    // Update num field for each owner in Supabase
-    const updates = shuffled.map((owner, idx) =>
-      supabase.from("owners").update({ num: idx + 1 }).eq("id", owner.id)
-    );
-    await Promise.all(updates);
-    // Update local state immediately so draft board reflects new order
-    const reordered = shuffled.map((o, i) => ({ ...o, num: i + 1 }));
-    setOwners(reordered);
-    alert("Draft order shuffled!");
-  }// v1773286522751
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 const _APP_BUILD = "1773204216116";
@@ -1938,7 +1918,23 @@ export default function App() {
           }
 
           // ── Reset draft ────────────────────────────────────────────────
-          async function resetDraft() {
+          async function shuffleDraftOrder() {
+    if (!window.confirm("Randomly shuffle the draft order for all owners?")) return;
+    const shuffled = [...owners];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    const updates = shuffled.map((owner, idx) =>
+      supabase.from("owners").update({ num: idx + 1 }).eq("id", owner.id)
+    );
+    await Promise.all(updates);
+    const reordered = shuffled.map((o, i) => ({ ...o, num: i + 1 }));
+    setOwners(reordered);
+    alert("Draft order shuffled!");
+  }
+
+    async function resetDraft() {
             if (!adminUnlocked) { setModal("pin"); return; }
             const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
             for (const o of owners) {
