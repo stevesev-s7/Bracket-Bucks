@@ -1896,7 +1896,9 @@ export default function App() {
           // ── Draft a team ───────────────────────────────────────────────
           async function draftPick(team, fromAutoPick = false) {
             if (!currentPicker) return;
-            if (!fromAutoPick && !adminUnlocked) { setModal("pin"); return; }
+            const isMyTurn = isAdmin || !authUser || authUser.email === currentPicker.name || (authUser.user_metadata?.name||"").toLowerCase() === currentPicker.name.toLowerCase();
+    if (!isMyTurn && !fromAutoPick) { alert("It\'s not your turn to pick!"); return; }
+    if (!fromAutoPick && !adminUnlocked) { setModal("pin"); return; }
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
             if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
