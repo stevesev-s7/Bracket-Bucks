@@ -2127,7 +2127,16 @@ export default function App() {
           // ── Save draft start time ──────────────────────────────────────
           async function saveDraftStart() {
             if (!draftStartInput) { alert("Please select a date and time first."); return; }
-            const pd = new Date(draftStartInput);
+            // Treat the input as CST (America/Chicago)
+        const cstDate = new Date(draftStartInput + ":00");
+        // Get the UTC offset for America/Chicago at that moment
+        const cstFormatter = new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Chicago", hour: "numeric", timeZoneName: "short"
+        });
+        const parts = cstFormatter.formatToParts(cstDate);
+        const tzName = (parts.find(p=>p.type==="timeZoneName")||{}).value||"CST";
+        const offset = tzName.includes("CDT") ? "-05:00" : "-06:00";
+        const pd = new Date(draftStartInput + ":00" + offset);
             if (isNaN(pd.getTime())) { alert("Invalid date/time."); return; }
             supabase.from("leagues").update({ draft_start: pd.toISOString() }).eq("code", leagueCode)
               .then(({ error }) => {
@@ -2138,7 +2147,28 @@ export default function App() {
               }).catch(e => alert("Error: " + e.message));
           }
 
-          const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:"#9b59b6" };
+          
+  // ── Timezone-aware date formatting ─────────────────────────────────────
+  const userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const TZ_LABELS = {
+    "America/Chicago":"CST", "America/New_York":"EST", "America/Los_Angeles":"PST",
+    "America/Denver":"MT", "America/Phoenix":"MT", "America/Anchorage":"AKT",
+    "Pacific/Honolulu":"HST"
+  };
+  const tzLabel = TZ_LABELS[userTZ] || new Date().toLocaleTimeString("en-US",{timeZoneName:"short"}).split(" ").pop();
+  function fmtDraftTime(date) {
+    if (!date) return "";
+    return date.toLocaleString("en-US",{
+      weekday:"short", month:"short", day:"numeric",
+      hour:"numeric", minute:"2-digit", timeZone:userTZ
+    }) + " " + tzLabel;
+  }
+  function fmtDraftTimeShort(date) {
+    if (!date) return "";
+    return date.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:userTZ}) + " " + tzLabel;
+  }
+
+const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:"#9b59b6" };
 
           // ── Pick timer logic ───────────────────────────────────────────
           // We derive time remaining from league.pick_timer_start (stored in Supabase)
@@ -2157,7 +2187,7 @@ export default function App() {
                   <p style={{ margin:0, color:"#6677aa", fontSize:13 }}>
                     {draftComplete ? "✅ Draft complete! All teams assigned." :
                       numOwners === 0 ? "Add owners in Admin tab first." :
-                      !draftHasStarted && draftStart ? `⏳ Draft starts ${draftStart.toLocaleString()}` :
+                      !draftHasStarted && draftStart ? `⏳ Draft starts ${fmtDraftTime(draftStart)}` :
                       `Round ${pickRound + 1} · Pick ${posInRound + 1} of ${numOwners} · ${available.length} teams remaining`}
                   </p>
                 </div>
@@ -2202,7 +2232,7 @@ export default function App() {
                       <span style={{ color:"#dce4f5", fontWeight:600, fontFamily:"'DM Mono',monospace" }}>
                         {draftStart.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"})}
                         {" at "}
-                        {draftStart.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}
+                        {fmtDraftTimeShort(draftStart)}
                       </span>
                     </div>
                     {!draftHasStarted && secondsUntilDraft !== null && (
@@ -2227,7 +2257,7 @@ export default function App() {
                     Draft Hasn't Started Yet
                   </div>
                   <div style={{ color:"#6677aa", fontSize:14 }}>
-                    {draftStart ? "Come back at " + draftStart.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}) + " on " + draftStart.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"}) : "Set a draft time below to get started."}
+                    {draftStart ? "Come back at " + fmtDraftTime(draftStart) : "Set a draft time below to get started."}
                   </div>
                 </div>
               )}
