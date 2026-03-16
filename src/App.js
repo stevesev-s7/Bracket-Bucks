@@ -2280,7 +2280,46 @@ export default function App() {
                     </div>
                   )}
 
-                  {draftComplete && (
+                  
+        {/* ── Draft Order Queue ── */}
+        {!draftComplete && owners.length > 0 && (
+          <div style={{marginBottom:16,background:"#080e1a",border:"1px solid #1e2d4a",borderRadius:10,padding:"12px 16px"}}>
+            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:2,color:"#6677aa",marginBottom:10}}>
+              Draft Order — Round {pickRound+1}
+            </div>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+              {[...owners].sort((a,b)=>a.num-b.num).map((owner)=>{
+                const isCurrent=currentPicker&&owner.id===currentPicker.id;
+                const isNext=!isCurrent&&currentPicker&&(
+                  isEvenRound?owner.num===currentPicker.num+1:owner.num===currentPicker.num-1
+                );
+                return (
+                  <div key={owner.id} style={{
+                    display:"flex",alignItems:"center",gap:6,
+                    padding:"6px 12px",borderRadius:8,
+                    background:isCurrent?(owner.color||"#d4af37")+"33":"#0d1528",
+                    border:"1px solid "+(isCurrent?(owner.color||"#d4af37"):isNext?"#334":"#1e2d4a"),
+                  }}>
+                    <span style={{
+                      width:20,height:20,borderRadius:"50%",
+                      background:isCurrent?(owner.color||"#d4af37"):"#1e2d4a",
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      fontSize:10,fontWeight:800,
+                      color:isCurrent?"#111":"#6677aa",flexShrink:0
+                    }}>{owner.num}</span>
+                    <span style={{
+                      fontSize:13,fontWeight:isCurrent?700:400,
+                      color:isCurrent?(owner.color||"#d4af37"):isNext?"#aab":"#556"
+                    }}>{owner.name}</span>
+                    {isCurrent&&<span style={{fontSize:10,color:owner.color||"#d4af37",fontWeight:800}}>ON THE CLOCK</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {draftComplete && (
                     <div style={{ textAlign:"center", padding:"32px", background:"linear-gradient(135deg,#1a2e10,#142010)",
                       border:"2px solid #2ecc71", borderRadius:14, marginBottom:20 }}>
                       <div style={{ fontSize:40, marginBottom:8 }}>🏆</div>
