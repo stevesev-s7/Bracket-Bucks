@@ -430,6 +430,181 @@ function DraftCountdownBanner({ secondsLeft }) {
 
 
 // ── Main App ─────────────────────────────────────────────────────────────────
+
+// ── 2026 Bracket Tab Component ─────────────────────────────────────────────
+function Bracket2026Tab({ owners }) {
+  const [games, setGames] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+  const [activeRegion, setActiveRegion] = React.useState("All");
+
+  const REGION_COLORS = { South:"#e74c3c", East:"#3498db", West:"#2ecc71", Midwest:"#f39c12" };
+
+  React.useEffect(() => {
+    fetch("https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=100&dates=20260317-20260407")
+      .then(r => r.json())
+      .then(d => {
+        const mapped = (d.events||[]).map(ev => {
+          const comp = ev.competitions[0];
+          const teams = comp.competitors.map(c => ({
+            name: c.team.displayName,
+            abbr: c.team.abbreviation,
+            seed: c.curatedRank?.current || null,
+            score: c.score,
+            winner: c.winner,
+            logo: c.team.logo,
+          }));
+          const note = comp.notes?.[0]?.headline || "";
+          // Parse region from note
+          let region = "Unknown";
+          ["South","East","West","Midwest"].forEach(r => { if(note.includes(r)) region=r; });
+          let round = "First Round";
+          if(note.includes("First Four")) round="First Four";
+          else if(note.includes("Second Round")) round="Second Round";
+          else if(note.includes("Sweet 16")) round="Sweet 16";
+          else if(note.includes("Elite Eight")||note.includes("Regional")) round="Elite Eight";
+          else if(note.includes("Final Four")) round="Final Four";
+          else if(note.includes("Championship")) round="Championship";
+          return {
+            id: ev.id,
+            name: ev.name,
+            date: ev.date,
+            status: comp.status?.type?.description || "Scheduled",
+            statusDetail: comp.status?.type?.detail || "",
+            completed: comp.status?.type?.completed || false,
+            venue: comp.venue?.fullName || "",
+            broadcast: comp.broadcasts?.[0]?.names?.[0] || "",
+            teams,
+            region,
+            round,
+            note,
+          };
+        });
+        setGames(mapped);
+        setLoading(false);
+      })
+      .catch(e => { setError("Failed to load bracket data"); setLoading(false); });
+  }, []);
+
+  const findOwner = (teamName) => {
+    if (!owners||!teamName) return null;
+    for (const o of owners) {
+      if ((o.teams||[]).some(t => (t.name||"").toLowerCase() === teamName.toLowerCase())) return o;
+    }
+    return null;
+  };
+
+  const regions = ["All","South","East","West","Midwest"];
+  const rounds = ["First Four","First Round","Second Round","Sweet 16","Elite Eight","Final Four","Championship"];
+
+  const filteredGames = activeRegion==="All" ? games : games.filter(g=>g.region===activeRegion);
+  const grouped = {};
+  rounds.forEach(r => {
+    const rg = filteredGames.filter(g=>g.round===r);
+    if(rg.length>0) grouped[r]=rg;
+  });
+
+  if(loading) return (
+    <div style={{textAlign:"center",padding:60,color:"#6677aa"}}>
+      <div style={{fontSize:32,marginBottom:12}}>🏀</div>
+      <div>Loading 2026 bracket data...</div>
+    </div>
+  );
+  if(error) return <div style={{color:"#e74c3c",padding:20}}>{error}</div>;
+
+  return (
+    <div>
+      <div style={{marginBottom:20}}>
+        <h2 style={{margin:"0 0 4px",fontFamily:"'Bebas Neue',sans-serif",fontSize:28,letterSpacing:1}}>2026 NCAA Tournament Bracket</h2>
+        <p style={{color:"#6677aa",fontSize:13,margin:0}}>Live data via ESPN · {games.length} games total</p>
+      </div>
+
+      {/* Region filter */}
+      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
+        {regions.map(r=>(
+          <button key={r} onClick={()=>setActiveRegion(r)}
+            style={{padding:"6px 16px",borderRadius:20,border:"1px solid "+(r==="All"?"#d4af37":REGION_COLORS[r]||"#445"),
+              background:activeRegion===r?(r==="All"?"#d4af37":REGION_COLORS[r]||"#445"):"transparent",
+              color:activeRegion===r?"#111":"#dce4f5",cursor:"pointer",fontSize:13,fontWeight:600}}>
+            {r}
+          </button>
+        ))}
+      </div>
+
+      {/* Games by round */}
+      {rounds.map(round => {
+        const rGames = grouped[round];
+        if (!rGames) return null;
+        return (
+          <div key={round} style={{marginBottom:28}}>
+            <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:2,
+              color:"#d4af37",marginBottom:10,paddingBottom:4,borderBottom:"1px solid #1e2d4a"}}>
+              {round}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {rGames.map(game => {
+                const [t1,t2]=game.teams;
+                const rc=REGION_COLORS[game.region]||"#445";
+                const dateStr=game.date?new Date(game.date).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}):"TBD";
+                return (
+                  <div key={game.id} style={{background:"#0d1528",border:"1px solid #1e2d4a",borderRadius:10,padding:"12px 16px",
+                    borderLeft:"3px solid "+rc}}>
+                    {/* Header row */}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                      <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                        <span style={{background:rc+"22",color:rc,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:10,border:"1px solid "+rc+"44"}}>
+                          {game.region!=="Unknown"?game.region:""}
+                        </span>
+                        {game.broadcast&&<span style={{color:"#6677aa",fontSize:11}}>📺 {game.broadcast}</span>}
+                      </div>
+                      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                        <span style={{color:game.completed?"#2ecc71":game.status==="In Progress"?"#f39c12":"#6677aa",fontSize:11}}>
+                          {game.completed?"Final":game.status==="In Progress"?"🔴 LIVE":dateStr}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Teams */}
+                    <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                      {[t1,t2].filter(Boolean).map((team,ti)=>{
+                        const owner=findOwner(team.name);
+                        return (
+                          <div key={ti} style={{display:"flex",alignItems:"center",gap:10,
+                            background:team.winner?"#0d2a1a":game.completed&&!team.winner?"#1a0d0d":"transparent",
+                            borderRadius:6,padding:"6px 8px",transition:"background 0.2s"}}>
+                            {team.seed&&<span style={{minWidth:22,height:22,borderRadius:5,background:"#1e2d4a",
+                              display:"flex",alignItems:"center",justifyContent:"center",
+                              fontSize:11,fontWeight:800,color:"#d4af37"}}>{team.seed}</span>}
+                            {team.logo&&<img src={team.logo} alt="" style={{width:22,height:22,objectFit:"contain"}}/>}
+                            <span style={{flex:1,fontSize:14,fontWeight:600,
+                              color:team.winner?"#2ecc71":game.completed&&!team.winner?"#556":"#dce4f5"}}>
+                              {team.name}
+                            </span>
+                            {owner&&<span style={{fontSize:11,color:owner.color||"#d4af37",
+                              background:(owner.color||"#d4af37")+"22",padding:"1px 8px",borderRadius:10,
+                              border:"1px solid "+(owner.color||"#d4af37")+"44"}}>
+                              {owner.name}
+                            </span>}
+                            {game.completed&&<span style={{fontSize:15,fontWeight:800,minWidth:24,textAlign:"right",
+                              color:team.winner?"#2ecc71":"#556"}}>
+                              {team.score}
+                            </span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Venue */}
+                    {game.venue&&<div style={{marginTop:6,fontSize:11,color:"#445"}}>📍 {game.venue}</div>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function App() {
   // League state
   const [leagueCode, setLeagueCode] = useState(null);
@@ -942,6 +1117,7 @@ export default function App() {
     {id:"roster",      icon:"👥", label:"Rosters"},
     {id:"payouts",     icon:"💰", label:"Payout Table"},
     {id:"bracket2025", icon:"🏆", label:"2025 Bracket"},
+    {id:"bracket2026", icon:"🗓️", label:"2026 Bracket"},
     {id:"draft",       icon:"🎯", label:"Draft"},
     {id:"profile",     icon:"👤", label:"My Profile"},
     {id:"admin",       icon:"⚙️",  label:"Admin"},
@@ -1753,7 +1929,13 @@ export default function App() {
           </div>
         )}
 
-        {/* LIVE BRACKET */}
+        
+{/* ── 2026 BRACKET TAB ── */}
+{tab==="bracket2026" && (
+  <Bracket2026Tab owners={owners} />
+)}
+
+{/* LIVE BRACKET */}
         {!loading && tab==="bracket2025" && (
           <div>
             <h2 style={{ margin:"0 0 4px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Live Bracket — 2025 NCAA Tournament</h2>
