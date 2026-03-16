@@ -1,4 +1,20 @@
-// v1773286522751
+
+
+  async function shuffleDraftOrder() {
+    if (!window.confirm("Randomly shuffle the draft order for all owners?")) return;
+    // Fisher-Yates shuffle
+    const shuffled = [...owners];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    // Update num field for each owner in Supabase
+    const updates = shuffled.map((owner, idx) =>
+      supabase.from("owners").update({ num: idx + 1 }).eq("id", owner.id)
+    );
+    await Promise.all(updates);
+    alert("Draft order shuffled!");
+  }// v1773286522751
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 const _APP_BUILD = "1773204216116";
@@ -1976,6 +1992,9 @@ export default function App() {
                   </div>
                 )}
                 <div style={{ display:"flex", gap:8 }}>
+                  {isAdmin && <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#d4af37"), border:"1px solid #d4af37", fontSize:13, padding:"8px 14px" }}>
+                    🔀 Shuffle Order
+                  </button>}
                   <button onClick={resetDraft} style={{ ...S.btn("#1a2440","#e74c3c"), border:"1px solid #e74c3c", fontSize:12 }}>
                     🔄 Reset Draft
                   </button>
