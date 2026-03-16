@@ -88,8 +88,135 @@ const NCAA_2026_TEAMS = [
   { seed:7,  name:"Kentucky",         region:"Midwest" }, // vs 10
   { seed:10, name:"Santa Clara",      region:"Midwest" },
   { seed:2,  name:"Iowa State",       region:"Midwest" }, // vs 15
-  { seed:15, name:"Tennessee State",  region:"Midwest" },
-]
+  { seed:15, name:"Tennessee State",  region:"Midwest" }
+
+// ── 2025 NCAA Tournament Bracket Data ───────────────────────────────────
+const BRACKET_2025 = {
+  regions: [
+    {
+      name: "South", seed1: "Auburn",
+      games: {
+        r64: [
+          {top:{seed:1,name:"Auburn",score:83},bot:{seed:16,name:"Alabama State",score:63},winner:"Auburn"},
+          {top:{seed:8,name:"Louisville",score:75},bot:{seed:9,name:"Creighton",score:89},winner:"Creighton"},
+          {top:{seed:5,name:"Michigan",score:68},bot:{seed:12,name:"UC San Diego",score:65},winner:"Michigan"},
+          {top:{seed:4,name:"Texas A&M",score:80},bot:{seed:13,name:"Yale",score:71},winner:"Texas A&M"},
+          {top:{seed:6,name:"Ole Miss",score:71},bot:{seed:11,name:"N Carolina",score:64},winner:"Ole Miss"},
+          {top:{seed:3,name:"Iowa State",score:82},bot:{seed:14,name:"Lipscomb",score:55},winner:"Iowa State"},
+          {top:{seed:7,name:"Marquette",score:66},bot:{seed:10,name:"New Mexico",score:75},winner:"New Mexico"},
+          {top:{seed:2,name:"Michigan St",score:87},bot:{seed:15,name:"Bryant",score:62},winner:"Michigan St"},
+        ],
+        r32: [
+          {top:{seed:1,name:"Auburn",score:82},bot:{seed:9,name:"Creighton",score:70},winner:"Auburn"},
+          {top:{seed:5,name:"Michigan",score:91},bot:{seed:4,name:"Texas A&M",score:79},winner:"Michigan"},
+          {top:{seed:6,name:"Ole Miss",score:91},bot:{seed:3,name:"Iowa State",score:78},winner:"Ole Miss"},
+          {top:{seed:10,name:"New Mexico",score:63},bot:{seed:2,name:"Michigan St",score:71},winner:"Michigan St"},
+        ],
+        s16: [
+          {top:{seed:1,name:"Auburn",score:78},bot:{seed:5,name:"Michigan",score:65},winner:"Auburn"},
+          {top:{seed:6,name:"Ole Miss",score:70},bot:{seed:2,name:"Michigan St",score:73},winner:"Michigan St"},
+        ],
+        e8: [
+          {top:{seed:1,name:"Auburn",score:70},bot:{seed:2,name:"Michigan St",score:64},winner:"Auburn"},
+        ],
+      }
+    },
+    {
+      name: "East", seed1: "Duke",
+      games: {
+        r64: [
+          {top:{seed:1,name:"Duke",score:93},bot:{seed:16,name:"Mount St Mary's",score:49},winner:"Duke"},
+          {top:{seed:8,name:"Mississippi St",score:72},bot:{seed:9,name:"Baylor",score:75},winner:"Baylor"},
+          {top:{seed:5,name:"Oregon",score:81},bot:{seed:12,name:"Liberty",score:52},winner:"Oregon"},
+          {top:{seed:4,name:"Arizona",score:93},bot:{seed:13,name:"Akron",score:65},winner:"Arizona"},
+          {top:{seed:6,name:"BYU",score:80},bot:{seed:11,name:"VCU",score:71},winner:"BYU"},
+          {top:{seed:3,name:"Wisconsin",score:85},bot:{seed:14,name:"Montana",score:66},winner:"Wisconsin"},
+          {top:{seed:7,name:"Saint Mary's",score:59},bot:{seed:10,name:"Vanderbilt",score:56},winner:"Saint Mary's"},
+          {top:{seed:2,name:"Alabama",score:90},bot:{seed:15,name:"Robert Morris",score:81},winner:"Alabama"},
+        ],
+        r32: [
+          {top:{seed:1,name:"Duke",score:89},bot:{seed:9,name:"Baylor",score:66},winner:"Duke"},
+          {top:{seed:5,name:"Oregon",score:83},bot:{seed:4,name:"Arizona",score:87},winner:"Arizona"},
+          {top:{seed:6,name:"BYU",score:91},bot:{seed:3,name:"Wisconsin",score:89},winner:"BYU"},
+          {top:{seed:7,name:"Saint Mary's",score:66},bot:{seed:2,name:"Alabama",score:80},winner:"Alabama"},
+        ],
+        s16: [
+          {top:{seed:1,name:"Duke",score:100},bot:{seed:4,name:"Arizona",score:93},winner:"Duke"},
+          {top:{seed:6,name:"BYU",score:88},bot:{seed:2,name:"Alabama",score:113},winner:"Alabama"},
+        ],
+        e8: [
+          {top:{seed:1,name:"Duke",score:85},bot:{seed:2,name:"Alabama",score:65},winner:"Duke"},
+        ],
+      }
+    },
+    {
+      name: "Midwest", seed1: "Houston",
+      games: {
+        r64: [
+          {top:{seed:1,name:"Houston",score:78},bot:{seed:16,name:"SIU Edwardsville",score:40},winner:"Houston"},
+          {top:{seed:8,name:"Gonzaga",score:89},bot:{seed:9,name:"Georgia",score:68},winner:"Gonzaga"},
+          {top:{seed:5,name:"Clemson",score:67},bot:{seed:12,name:"McNeese",score:69},winner:"McNeese"},
+          {top:{seed:4,name:"Purdue",score:75},bot:{seed:13,name:"High Point",score:63},winner:"Purdue"},
+          {top:{seed:6,name:"Illinois",score:86},bot:{seed:11,name:"Xavier",score:73},winner:"Illinois"},
+          {top:{seed:3,name:"Kentucky",score:76},bot:{seed:14,name:"Troy",score:57},winner:"Kentucky"},
+          {top:{seed:7,name:"UCLA",score:72},bot:{seed:10,name:"Utah St",score:47},winner:"UCLA"},
+          {top:{seed:2,name:"Tennessee",score:77},bot:{seed:15,name:"Wofford",score:62},winner:"Tennessee"},
+        ],
+        r32: [
+          {top:{seed:1,name:"Houston",score:81},bot:{seed:8,name:"Gonzaga",score:76},winner:"Houston"},
+          {top:{seed:12,name:"McNeese",score:62},bot:{seed:4,name:"Purdue",score:76},winner:"Purdue"},
+          {top:{seed:6,name:"Illinois",score:75},bot:{seed:3,name:"Kentucky",score:84},winner:"Kentucky"},
+          {top:{seed:7,name:"UCLA",score:58},bot:{seed:2,name:"Tennessee",score:67},winner:"Tennessee"},
+        ],
+        s16: [
+          {top:{seed:1,name:"Houston",score:62},bot:{seed:4,name:"Purdue",score:60},winner:"Houston"},
+          {top:{seed:3,name:"Kentucky",score:65},bot:{seed:2,name:"Tennessee",score:78},winner:"Tennessee"},
+        ],
+        e8: [
+          {top:{seed:1,name:"Houston",score:69},bot:{seed:2,name:"Tennessee",score:50},winner:"Houston"},
+        ],
+      }
+    },
+    {
+      name: "West", seed1: "Florida",
+      games: {
+        r64: [
+          {top:{seed:1,name:"Florida",score:95},bot:{seed:16,name:"Norfolk St",score:69},winner:"Florida"},
+          {top:{seed:8,name:"UConn",score:67},bot:{seed:9,name:"Oklahoma",score:59},winner:"UConn"},
+          {top:{seed:5,name:"Memphis",score:70},bot:{seed:12,name:"Colorado St",score:78},winner:"Colorado St"},
+          {top:{seed:4,name:"Maryland",score:81},bot:{seed:13,name:"Grand Canyon",score:49},winner:"Maryland"},
+          {top:{seed:6,name:"Missouri",score:57},bot:{seed:11,name:"Drake",score:67},winner:"Drake"},
+          {top:{seed:3,name:"Texas Tech",score:82},bot:{seed:14,name:"UNCW",score:72},winner:"Texas Tech"},
+          {top:{seed:7,name:"Kansas",score:72},bot:{seed:10,name:"Arkansas",score:79},winner:"Arkansas"},
+          {top:{seed:2,name:"St John's",score:83},bot:{seed:15,name:"Omaha",score:53},winner:"St John's"},
+        ],
+        r32: [
+          {top:{seed:1,name:"Florida",score:77},bot:{seed:8,name:"UConn",score:75},winner:"Florida"},
+          {top:{seed:12,name:"Colorado St",score:71},bot:{seed:4,name:"Maryland",score:72},winner:"Maryland"},
+          {top:{seed:11,name:"Drake",score:64},bot:{seed:3,name:"Texas Tech",score:77},winner:"Texas Tech"},
+          {top:{seed:10,name:"Arkansas",score:75},bot:{seed:2,name:"St John's",score:66},winner:"Arkansas"},
+        ],
+        s16: [
+          {top:{seed:1,name:"Florida",score:77},bot:{seed:4,name:"Maryland",score:62},winner:"Florida"},
+          {top:{seed:3,name:"Texas Tech",score:85},bot:{seed:10,name:"Arkansas",score:83},winner:"Texas Tech"},
+        ],
+        e8: [
+          {top:{seed:1,name:"Florida",score:84},bot:{seed:3,name:"Texas Tech",score:79},winner:"Florida"},
+        ],
+      }
+    },
+  ],
+  finalFour: [
+    {top:{seed:1,name:"Auburn",region:"South",score:67},bot:{seed:1,name:"Florida",region:"West",score:79},winner:"Florida"},
+    {top:{seed:1,name:"Houston",region:"Midwest",score:65},bot:{seed:1,name:"Duke",region:"East",score:64},winner:"Houston"},
+  ],
+  championship: {top:{seed:1,name:"Florida",score:65},bot:{seed:1,name:"Houston",score:63},winner:"Florida"},
+};
+
+const OWNER_COLORS = [
+  "#e05c3a","#3a9be0","#2ecc71","#f0c040",
+  "#9b59b6","#1abc9c","#e67e22","#e91e63"
+];
 
 const CHI2025_OWNERS = [
   { name:"Stephen Sevenich", color:"#e05c3a", num:2, teams:[
