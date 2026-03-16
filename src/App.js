@@ -720,7 +720,7 @@ export default function App() {
   // ── League ops ───────────────────────────────────────────────────────────
   async function autoAddUserAsOwner(code) {
     if (!authUser) return;
-    const userName = authUser.user_metadata?.name || authUser.email;
+    const userName = (authUser.user_metadata||{}).name || authUser.email;
     const { data: existingOwners } = await supabase
       .from("owners").select("name").eq("league_code", code);
     const alreadyOwner = existingOwners?.some(o =>
@@ -1119,11 +1119,11 @@ export default function App() {
                 <div style={{ width:36, height:36, borderRadius:"50%", background:"#f0c040",
                   display:"flex", alignItems:"center", justifyContent:"center",
                   fontSize:16, fontWeight:800, color:"#111", flexShrink:0 }}>
-                  {(authUser.user_metadata?.name || authUser.email).charAt(0).toUpperCase()}
+                  {((authUser.user_metadata||{}).name || authUser.email).charAt(0).toUpperCase()}
                 </div>
                 <div style={{ textAlign:"left" }}>
                   <div style={{ fontSize:13, fontWeight:700, color:"#dce4f5" }}>
-                    {authUser.user_metadata?.name || authUser.email}
+                    {(authUser.user_metadata||{}).name || authUser.email}
                   </div>
                   <div style={{ fontSize:11, color:"#6677aa" }}>View Profile</div>
                 </div>
@@ -1896,8 +1896,8 @@ export default function App() {
           // ── Draft a team ───────────────────────────────────────────────
           async function draftPick(team, fromAutoPick = false) {
             if (!currentPicker) return;
-            const isMyTurn = isAdmin || !authUser || authUser.email === currentPicker.name || (authUser.user_metadata?.name||"").toLowerCase() === currentPicker.name.toLowerCase();
-    if (!isMyTurn && !fromAutoPick) { alert("It\'s not your turn to pick!"); return; }
+            const isMyTurn = isAdmin || !authUser || authUser.email === currentPicker.name || ((authUser.user_metadata||{}).name||"").toLowerCase() === currentPicker.name.toLowerCase();
+    if (!isMyTurn && !fromAutoPick) { alert("Not your turn to pick!"); return; }
     if (!fromAutoPick && !adminUnlocked) { setModal("pin"); return; }
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
@@ -2134,7 +2134,7 @@ export default function App() {
                             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                               {regionTeams.map(team => (
                                 <button key={team.region+team.seed} onClick={()=>draftPick(team)}
-                                  disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftScheduled) || (!isAdmin && !!authUser && !!currentPicker && authUser.email !== currentPicker.name && (authUser.user_metadata?.name||"").toLowerCase() !== currentPicker.name.toLowerCase())}
+                                  disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftScheduled) || (!isAdmin && !!authUser && !!currentPicker && authUser.email !== currentPicker.name && ((authUser.user_metadata||{}).name||"").toLowerCase() !== currentPicker.name.toLowerCase())}
                                   style={{ display:"flex", alignItems:"center", gap:8,
                                     background:"#0f1625",
                                     border:`1px solid ${regionColors[region]}44`,
