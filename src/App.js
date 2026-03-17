@@ -920,11 +920,13 @@ export default function App() {
 
   // ── Draft pick timer + auto-pick ────────────────────────────────────
   useEffect(() => {
+    return; // auto-pick disabled
     const t = setInterval(() => setTick(n => (n+1) % 1000), 1000);
     return () => clearInterval(t);
   }, []);
 
   useEffect(() => {
+    return; // auto-pick disabled
     // Only run after admin clicks Start Draft
     return; // auto-draft disabled
     if (!league?.pick_timer_start || !leagueCode) return;
