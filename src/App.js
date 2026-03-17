@@ -605,6 +605,78 @@ function Bracket2026Tab({ owners }) {
   );
 }
 
+
+// ── Payment Approvals Component ─────────────────────────────────────────────
+function PaymentApprovals({ supabase }) {
+  const [payments, setPayments] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  const load = React.useCallback(async () => {
+    const { data } = await supabase.from("payments").select("*").order("created_at", { ascending: false });
+    setPayments(data || []);
+    setLoading(false);
+  }, [supabase]);
+
+  React.useEffect(() => { load(); }, [load]);
+
+  const approve = async (id, email) => {
+    await supabase.from("payments").update({ status: "approved", approved_at: new Date().toISOString() }).eq("id", id);
+    setPayments(prev => prev.map(p => p.id === id ? { ...p, status: "approved" } : p));
+    alert("Approved! " + email + " can now create a league.");
+  };
+
+  const deny = async (id) => {
+    await supabase.from("payments").delete().eq("id", id);
+    setPayments(prev => prev.filter(p => p.id !== id));
+  };
+
+  const pending = payments.filter(p => p.status === "pending");
+  const approved = payments.filter(p => p.status === "approved");
+
+  return (
+    <div style={{background:"#0d1528",border:"1px solid #1e2d4a",borderRadius:10,padding:"20px 24px",marginBottom:20}}>
+      <div style={{color:"#d4af37",fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:1,marginBottom:12}}>
+        💳 PAYMENT APPROVALS
+        <span style={{fontSize:12,fontWeight:400,color:"#6677aa",marginLeft:10,fontFamily:"inherit",letterSpacing:0}}>
+          Venmo @bracket-bucks-app
+        </span>
+      </div>
+      {loading ? <div style={{color:"#445",fontSize:13}}>Loading...</div> : (
+        <>
+          {pending.length === 0 && <div style={{color:"#445",fontSize:13,marginBottom:8}}>No pending payments.</div>}
+          {pending.map(p => (
+            <div key={p.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"#131929",borderRadius:8,padding:"10px 14px",marginBottom:8,border:"1px solid #f39c1244"}}>
+              <div>
+                <div style={{color:"#f39c12",fontWeight:600,fontSize:14}}>{p.email}</div>
+                <div style={{color:"#445",fontSize:11,marginTop:2}}>{new Date(p.created_at).toLocaleString()}</div>
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>approve(p.id,p.email)} style={{background:"#27ae60",color:"#fff",border:"none",borderRadius:6,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                  ✓ Approve
+                </button>
+                <button onClick={()=>deny(p.id)} style={{background:"#c0392b",color:"#fff",border:"none",borderRadius:6,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                  ✗ Deny
+                </button>
+              </div>
+            </div>
+          ))}
+          {approved.length > 0 && (
+            <div style={{marginTop:12}}>
+              <div style={{fontSize:11,color:"#445",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Recently Approved</div>
+              {approved.slice(0,5).map(p => (
+                <div key={p.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"#0a2a14",borderRadius:8,padding:"8px 14px",marginBottom:6,border:"1px solid #27ae6033"}}>
+                  <div style={{color:"#2ecc71",fontSize:13}}>{p.email}</div>
+                  <div style={{color:"#27ae60",fontSize:11}}>✓ Approved</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   // League state
   const [leagueCode, setLeagueCode] = useState(null);
@@ -1472,29 +1544,26 @@ export default function App() {
                     onClick={async () => {
                       setPaymentStep('verifying');
                       setVenmoVerifyError('');
-                      try {
-                        const { data: { session } } = await supabase.auth.getSession();
-                        const res = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/verify-payment`, {
-                          method: 'POST',
-                          headers: {
-                            'Authorization': `Bearer ${session.access_token}`,
-                            'Content-Type': 'application/json'
-                          },
-                          body: JSON.stringify({ email: session.user.email })
-                        });
-                        const result = await res.json();
-                        if (result.verified) {
-                          setPaymentConfirmed(true);
-                          setPaymentStep('instructions');
-                          setVenmoVerifyError('');
-                        } else {
-                          setPaymentStep('error');
-                          setVenmoVerifyError(result.message || 'Payment not found — make sure your email in the Venmo note matches your account email.');
-                        }
-                      } catch(e) {
-                        setPaymentStep('error');
-                        setVenmoVerifyError('Something went wrong. Please try again.');
-                      }
+              try {
+                const email = authUser ? authUser.email : (session&&session.user?session.user.email:"");
+                if (!email) { setPaymentStep("error"); setVenmoVerifyError("Could not detect your email. Please sign in again."); return; }
+                // Check if already approved
+                const {data:existing} = await supabase.from("payments").select("id,status").eq("email",email).maybeSingle();
+                if (existing && existing.status === "approved") {
+                  setPaymentConfirmed(true); setPaymentStep("instructions"); setVenmoVerifyError("");
+                } else if (existing) {
+                  // Already submitted, still pending
+                  setPaymentStep("pending");
+                } else {
+                  // Submit new payment request
+                  const {error:insErr} = await supabase.from("payments").insert({email, status:"pending"});
+                  if (insErr) throw insErr;
+                  setPaymentStep("pending");
+                }
+              } catch(e) {
+                setPaymentStep("error");
+                setVenmoVerifyError("Something went wrong: "+e.message);
+              }
                     }}
                     disabled={paymentStep === 'verifying'}
                     style={{
@@ -1562,29 +1631,27 @@ export default function App() {
             onClick={async () => {
               setPaymentStep("verifying");
               setVenmoVerifyError("");
-              try {
-                const res = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/verify-payment`, {
-                  method: "POST",
-                  headers: {"Authorization": `Bearer ${session.access_token}`, "Content-Type": "application/json"},
-                  body: JSON.stringify({ email: session.user.email })
-                });
-                const result = await res.json();
-                if (result.verified) {
-                  setPaymentConfirmed(true);
-                  setPaymentStep("instructions");
-                  setVenmoVerifyError("");
-                } else {
-                  setPaymentStep("error");
-                  setVenmoVerifyError(result.message || "Payment not found — make sure your email in the Venmo note matches your account email.");
-                }
-              } catch(e) {
-                setPaymentStep("error");
-                setVenmoVerifyError("Something went wrong. Please try again.");
+            try {
+              const email = authUser ? authUser.email : (session&&session.user?session.user.email:"");
+              if (!email) { setPaymentStep("error"); setVenmoVerifyError("Could not detect your email. Please sign in again."); return; }
+              const {data:existing} = await supabase.from("payments").select("id,status").eq("email",email).maybeSingle();
+              if (existing && existing.status === "approved") {
+                setPaymentConfirmed(true); setPaymentStep("instructions"); setVenmoVerifyError("");
+              } else if (existing) {
+                setPaymentStep("pending");
+              } else {
+                const {error:insErr} = await supabase.from("payments").insert({email, status:"pending"});
+                if (insErr) throw insErr;
+                setPaymentStep("pending");
               }
+            } catch(e) {
+              setPaymentStep("error");
+              setVenmoVerifyError("Something went wrong: "+e.message);
+            }
             }}
             disabled={paymentStep === "verifying"}
             style={{width:"100%",background:paymentStep==="verifying"?"#333":"#f7b731",color:"#1a1a2e",border:"none",borderRadius:8,padding:"13px",fontSize:15,fontWeight:700,cursor:paymentStep==="verifying"?"not-allowed":"pointer",opacity:paymentStep==="verifying"?0.7:1}}>
-            {paymentStep === "verifying" ? "⏳ Checking payment..." : "✅ I sent it — Verify Payment"}
+            {paymentStep === "verifying" ? "⏳ Checking..." : paymentStep === "pending" ? "✅ Request submitted!" : "✅ I sent it — Verify Payment"}
           </button>
           <p style={{fontSize:11,color:"#445",textAlign:"center",marginTop:8}}>Include your email ({authUser?.email}) in the Venmo note.</p>
         </div>
@@ -2764,6 +2831,12 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                 </a>
               </div>
 
+
+        
+        {/* Payment Approvals */}
+        {isAdmin && (
+          <PaymentApprovals supabase={supabase} />
+        )}
 
         {/* League Management */}
         <div style={{background:"#0d1528",border:"1px solid #1e2d4a",borderRadius:10,padding:"20px 24px",marginBottom:20}}>
