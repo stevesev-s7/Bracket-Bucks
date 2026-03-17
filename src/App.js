@@ -2241,7 +2241,7 @@ export default function App() {
           async function draftPick(team, fromAutoPick = false) {
             if (!currentPicker) return;
             if (!fromAutoPick && !authUser) { alert("Please sign in to draft a team."); return; }
-            if(!isAdmin&&currentPicker){var m=owners.find(function(o){return o.user_id&&(o.user_id===authUser.id||authUser.id.startsWith(o.user_id)||o.user_id.startsWith(authUser.id));});if(!m||m.num!==currentPicker.num){alert("It's not your turn!");return;}}
+            if(!isAdmin&&currentPicker){var m=owners.find(function(o){return o.user_id===authUser.id;});if(!m||m.num!==currentPicker.num){alert("It's not your turn!");return;}}
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
             // Restrict to current picker or admin
