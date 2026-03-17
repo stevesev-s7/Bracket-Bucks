@@ -1344,7 +1344,7 @@ export default function App() {
             <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
               <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>TABS GUIDE</div>
               <p style={{margin:"0 0 6px"}}><strong style={{color:"#dce4f5"}}>Leaderboard</strong> - live net standings, auto-updated from ESPN within 60 seconds of each game ending.</p>
-              <p style={{margin:"0 0 6px"}}><strong style={{color:"#dce4f5"}}>Rosters</strong> - each owner's 8 teams. Eliminated teams show with strikethrough and a red OUT badge.</p>
+              <p style={{margin:"0 0 6px"}}><strong style={{color:"#dce4f5"}}>Rosters</strong> - each owner 8 teams. Eliminated teams show with strikethrough and a red OUT badge.</p>
               <p style={{margin:0}}><strong style={{color:"#dce4f5"}}>Win Tracker</strong> - detailed log of all wins and dollar amounts owed.</p>
             </div>
             <div style={{background:"#0a1a2e",border:"1px solid #1e3a5a",borderRadius:10,padding:"14px 16px"}}>
