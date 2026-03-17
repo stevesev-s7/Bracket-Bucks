@@ -1560,6 +1560,15 @@ export default function App() {
                   // Submit new payment request
                   const {error:insErr} = await supabase.from("payments").insert({email, status:"pending", venmo_username: venmoUsername.trim()});
                   if (insErr) throw insErr;
+                  // Notify admin via email
+                  fetch("https://formsubmit.co/ajax/stephen.sevenich@gmail.com",{
+                    method:"POST",
+                    headers:{"Content-Type":"application/json","Accept":"application/json"},
+                    body:JSON.stringify({
+                      subject:"[Bracket Bucks] New Payment Request",
+                      message:"Payment request from: "+email+"\nVenmo username: "+(venmoUsername.trim()||"(not provided)")+"\n\nLog in as admin to approve: https://bracket-bucks.com"
+                    })
+                  }).catch(()=>{}); // fire and forget
                   setPaymentStep("pending");
                 }
               } catch(e) {
