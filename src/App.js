@@ -2219,7 +2219,7 @@ export default function App() {
           // ── Draft a team ───────────────────────────────────────────────
           async function draftPick(team, fromAutoPick = false) {
             if (!currentPicker) return;
-            if (!fromAutoPick && !adminUnlocked) { setModal("pin"); return; }
+            if (!fromAutoPick && !authUser) { alert("Please sign in to draft a team."); return; }
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
             if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
@@ -2332,8 +2332,8 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
           // ── Pick timer logic ───────────────────────────────────────────
           // We derive time remaining from league.pick_timer_start (stored in Supabase)
           const pickTimerStart = league?.pick_timer_start ? new Date(league.pick_timer_start) : null;
-          const secondsElapsed = pickTimerStart ? Math.floor((now - pickTimerStart) / 1000) : 0;
-          const pickSecondsLeft = draftHasStarted && !draftComplete ? Math.max(0, 30 - secondsElapsed) : 15;
+          const secondsElapsed = pickTimerStart ? Math.max(0, Math.floor((now - pickTimerStart) / 1000)) : 0;
+          const pickSecondsLeft = draftHasStarted && !draftComplete && league?.pick_timer_start ? Math.max(0, 30 - secondsElapsed) : 30;
           const timerPct = (pickSecondsLeft / 30) * 100;
           const timerColor = pickSecondsLeft > 15 ? "#2ecc71" : pickSecondsLeft > 8 ? "#f0c040" : "#e74c3c";
 
