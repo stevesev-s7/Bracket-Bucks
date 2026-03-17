@@ -648,6 +648,7 @@ function PaymentApprovals({ supabase }) {
             <div key={p.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"#131929",borderRadius:8,padding:"10px 14px",marginBottom:8,border:"1px solid #f39c1244"}}>
               <div>
                 <div style={{color:"#f39c12",fontWeight:600,fontSize:14}}>{p.email}</div>
+                <div style={{color:"#3498db",fontSize:12,marginTop:1}}>Venmo: {p.venmo_username||"(not provided)"}</div>
                 <div style={{color:"#445",fontSize:11,marginTop:2}}>{new Date(p.created_at).toLocaleString()}</div>
               </div>
               <div style={{display:"flex",gap:8}}>
@@ -696,6 +697,7 @@ export default function App() {
   const [venmoLoading, setVenmoLoading]         = useState(false);
   const [paymentStep, setPaymentStep] = useState('instructions');
   const [venmoVerifyError, setVenmoVerifyError] = useState('');
+  const [venmoUsername, setVenmoUsername] = useState('');
   const [joinCode, setJoinCode]           = useState("");
   const [joinErr, setJoinErr]             = useState("");
   const [newOwnerName, setNewOwnerName]   = useState("");
@@ -1556,7 +1558,7 @@ export default function App() {
                   setPaymentStep("pending");
                 } else {
                   // Submit new payment request
-                  const {error:insErr} = await supabase.from("payments").insert({email, status:"pending"});
+                  const {error:insErr} = await supabase.from("payments").insert({email, status:"pending", venmo_username: venmoUsername.trim()});
                   if (insErr) throw insErr;
                   setPaymentStep("pending");
                 }
@@ -1623,6 +1625,12 @@ export default function App() {
             <div style={{marginTop:4}}>2. Include your email <strong style={{color:"#fff"}}>({authUser?.email})</strong> in the Venmo note</div>
             <div style={{marginTop:4}}>3. Click the button below to verify</div>
           </div>
+          <div style={{marginBottom:10}}>
+            <label style={{fontSize:12,color:"#6677aa",display:"block",marginBottom:4}}>Your Venmo Username (so we can confirm)</label>
+            <input value={venmoUsername} onChange={e=>setVenmoUsername(e.target.value)}
+              placeholder="e.g. john-smith-42"
+              style={{width:"100%",background:"#0d1528",border:"1px solid #1e2d4a",borderRadius:6,padding:"8px 12px",color:"#dce4f5",fontSize:13,boxSizing:"border-box"}}/>
+          </div>
           <a href="https://venmo.com/u/bracket-bucks-app" target="_blank" rel="noreferrer"
             style={{display:"block",textAlign:"center",background:"#3d95ce",color:"#fff",borderRadius:8,padding:"12px",marginBottom:10,fontWeight:700,fontSize:14,textDecoration:"none"}}>
             💳 Send $10 on Venmo
@@ -1640,7 +1648,7 @@ export default function App() {
               } else if (existing) {
                 setPaymentStep("pending");
               } else {
-                const {error:insErr} = await supabase.from("payments").insert({email, status:"pending"});
+                const {error:insErr} = await supabase.from("payments").insert({email, status:"pending", venmo_username: venmoUsername.trim()});
                 if (insErr) throw insErr;
                 setPaymentStep("pending");
               }
