@@ -2235,7 +2235,7 @@ export default function App() {
           const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
           const now = new Date(); void tick; // tick forces re-render every second
           const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
-          const draftHasStarted = draftStart ? now >= draftStart : false;
+          const draftHasStarted = true;
 
           // ── Draft a team ───────────────────────────────────────────────
           async function draftPick(team, fromAutoPick = false) {
