@@ -2199,7 +2199,7 @@ export default function App() {
           // ── Draft a team ───────────────────────────────────────────────
           async function draftPick(team) {
             if (!currentPicker) return;
-            if (!fromAutoPick && !authUser) { alert("Please sign in to draft a team."); return; }
+            if (!authUser) { alert("Please sign in to draft a team."); return; }
             const updatedTeams = [...currentPicker.teams];
             if(!isAdmin&&currentPicker){var m=owners.find(function(o){return o.user_id===authUser.id;});if(!m||m.num!==currentPicker.num){alert("It's not your turn!");return;}}
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
@@ -2258,7 +2258,7 @@ export default function App() {
           }
 
           // ── Save draft start time ──────────────────────────────────────
-          async function saveDraftStart() { /* draft start - no auto-pick */ }
+          async function saveDraftStart() { /* no auto-pick */ }
 
           
   // ── Timezone-aware date formatting ─────────────────────────────────────
