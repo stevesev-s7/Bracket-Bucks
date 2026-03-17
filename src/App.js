@@ -1,6 +1,5 @@
 // v1773286522751
-i  const [now, setNow] = useState(Date.now());
-mport React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 const _APP_BUILD = "1773204216116";
 
@@ -917,13 +916,12 @@ export default function App() {
   }, []);
 
 
-  // ── 1-second clock to re-render and flip draftHasStarted on time
+  // ── 1s clock so draftHasStarted flips automatically ──────────────────
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-
-    // ── Draft pick timer + auto-pick ────────────────────────────────────────
+  // ── Draft pick timer + auto-pick ────────────────────────────────────────
   useEffect(() => {
     if (!league?.draft_start || !leagueCode) return;
     const draftStart = new Date(draftScheduled);
@@ -3199,3 +3197,4 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
   );
 }
 // build: 1773441631501
+  const [now, setNow] = useState(Date.now()); // live clock
