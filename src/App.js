@@ -2178,48 +2178,83 @@ export default function App() {
           const pickRound = Math.floor(totalPicks / Math.max(numOwners,1));
           const posInRound = totalPicks % Math.max(numOwners,1);
           const isEvenRound = pickRound % 2 === 0;
-  const sortedOwners = [...owners].sort((a,b) => a.num - b.num);
-  const currentPickerIdx = isEvenRound ? posInRound : (numOwners - 1 - posInRound);
-  const currentPicker = sortedOwners[currentPickerIdx] || null;
-  const draftComplete = totalPicks >= numOwners * 8 && numOwners > 0;
+          const sortedOwners = [...owners].sort((a,b) => a.num - b.num);
+          const currentPickerIdx = isEvenRound ? posInRound : (numOwners - 1 - posInRound);
+          const currentPicker = sortedOwners[currentPickerIdx] || null;
+          const draftComplete = totalPicks >= numOwners * 8 && numOwners > 0;
 
-  // ── Draft scheduled time ───────────────────────────────────────
-  const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
-  const now = new Date();
-  const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
-  const draftHasStarted = draftStart ? now >= draftStart : false;
+          // ── Draft scheduled time ───────────────────────────────────────
+          const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
+          const now = new Date();
+          const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
+          const draftHasStarted = draftStart ? now >= draftStart : false;
 
-  // ── Draft a team ───────────────────────────────────────────────
-  async function draftPick(team) {
-    if (!currentPicker) return;
-    const updatedTeams = [...currentPicker.teams];
-    const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
-    if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
-    updatedTeams[emptyIdx] = { seed: team.seed, name: team.name };
-    const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
-    if (error) { alert("Failed to save pick."); return; }
-    setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
-    else alert("Drafted: "+currentPicker.name+" picked "+team.name+"!");
+          // ── Draft a team ───────────────────────────────────────────────
+          async function draftPick(team) {
+            if (!currentPicker) return;
+            const updatedTeams = [...currentPicker.teams];
+            const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
+            if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
+            updatedTeams[emptyIdx] = { seed: team.seed, name: team.name };
+            const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
+            if (error) { alert("Failed to save pick."); return; }
+            setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
+            else alert("Drafted: "+currentPicker.name+" picked "+team.name+"!");
+          }
+
+
+  // ── Start Draft ───────────────────────────────────────────────
+
+
+  async function resetDraft() {
+            if (!adminUnlocked) { setModal("pin"); return; }
+            const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
+            for (const o of owners) {
+              await supabase.from("owners").update({ teams: blank }).eq("id", o.id);
+            }
+            setOwners(prev => prev.map(o => ({ ...o, teams: blank })));
+            alert("Draft reset! All picks cleared.");
+          }
+
+          // ── Save draft start time ──────────────────────────────────────
+          async function saveDraftStart() {
+            if (!draftStartInput) { alert("Please select a date and time first."); return; }
+            // Treat the input as CST (America/Chicago)
+        const cstDate = new Date(draftStartInput + ":00");
+        // Get the UTC offset for America/Chicago at that moment
+        const cstFormatter = new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Chicago", hour: "numeric", timeZoneName: "short"
+        });
+        const parts = cstFormatter.formatToParts(cstDate);
+        const tzName = (parts.find(p=>p.type==="timeZoneName")||{}).value||"CST";
+        const offset = tzName.includes("CDT") ? "-05:00" : "-06:00";
+        const pd = new Date(draftStartInput + ":00" + offset);
+            if (isNaN(pd.getTime())) { alert("Invalid date/time."); return; }
+            supabase.from("leagues").update({ draft_start: pd.toISOString() }).eq("code", leagueCode)
+              .then(({ error }) => {
+                if (error) { alert("Save error: " + error.message); return; }
+                setDraftStartInput(pd.toISOString());
+                setDraftScheduled(pd.toISOString());
+                alert("Draft time saved!");
+              }).catch(e => alert("Error: " + e.message));
+          }
+
+          
+  // ── Timezone-aware date formatting ─────────────────────────────────────
+  const userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const TZ_LABELS = {
+    "America/Chicago":"CST", "America/New_York":"EST", "America/Los_Angeles":"PST",
+    "America/Denver":"MT", "America/Phoenix":"MT", "America/Anchorage":"AKT",
+    "Pacific/Honolulu":"HST"
+  };
+  const tzLabel = TZ_LABELS[userTZ] || new Date().toLocaleTimeString("en-US",{timeZoneName:"short"}).split(" ").pop();
+  function fmtDraftTime(date) {
+    if (!date) return "";
+    return date.toLocaleString("en-US",{
+      weekday:"short", month:"short", day:"numeric",
+      hour:"numeric", minute:"2-digit", timeZone:userTZ
+    }) + " " + tzLabel;
   }
-
-
-
-
-          // ── Reset draft ────────────────────────────────────────────────
-  async function shuffleDraftOrder() {
-    if (!window.confirm("Randomly shuffle the draft order for all owners?")) return;
-    const shuffled = [...owners];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    await Promise.all(shuffled.map((o, idx) =>
-      supabase.from("owners").update({ num: idx + 1 }).eq("id", o.id)
-    ));
-    setOwners(shuffled.map((o, i) => ({ ...o, num: i + 1 })));
-    alert("Draft order shuffled! New order: " + shuffled.map(o=>o.name).join(", "));
-  }
-
   function fmtDraftTimeShort(date) {
     if (!date) return "";
     return date.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:userTZ}) + " " + tzLabel;
@@ -2320,22 +2355,6 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               {/* ── Live Draft UI ── */}
                 <>
             {/* ── Start Draft Banner ── */}
-            {!league?.pick_timer_start && (
-              <div style={{ textAlign:"center", padding:"20px 24px", background:"#0f1420",
-                border:"2px solid #d4af37", borderRadius:12, marginBottom:16 }}>
-                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, letterSpacing:3,
-                  color:"#d4af37", marginBottom:10 }}>🏀 DRAFT TIME — SELECT YOUR TEAMS BELOW</div>
-                {authUser ? (
-                  <button onClick={startDraft} style={{
-                    background:"#d4af37", color:"#1a1a2e", border:"none", borderRadius:8,
-                    padding:"12px 40px", fontSize:16, fontWeight:900, cursor:"pointer",
-                    fontFamily:"'Bebas Neue',sans-serif", letterSpacing:2
-                  }}>🚀 START DRAFT — BEGIN 30s TIMER</button>
-                ) : (
-                  <div style={{ color:"#f0c040", fontSize:13 }}>Sign in to start the draft.</div>
-                )}
-              </div>
-            )}
 
                   )}
 
@@ -3099,4 +3118,5 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
       <style>{`select option{background:#131929;} *{box-sizing:border-box;}`}</style>
     </div>
   );
+}
 // build: 1773441631501
