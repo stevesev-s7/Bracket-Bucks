@@ -768,8 +768,6 @@ export default function App() {
   const [bracketStatus, setBracketStatus] = useState("idle");
 
   // Draft state
-  const [draftScheduled, setDraftScheduled] = useState(null); // ISO string from league.draft_start
-  const [draftStartInput, setDraftStartInput] = useState("");
   const [draftCountdown, setDraftCountdown] = useState(null); // seconds until draft starts
   const [pickTimer, setPickTimer]         = useState(15);    // seconds left for current pick
   const [draftLive, setDraftLive]         = useState(false);
@@ -861,7 +859,6 @@ export default function App() {
         .from("wins").select("*").eq("league_code", code);
 
       setLeague(lg);
-      if (lg && lg.draft_start) setDraftScheduled(lg.draft_start);
       setOwners(ownersData || []);
       setWins(winsData || []);
       setLeagueCode(code);
@@ -923,7 +920,6 @@ export default function App() {
     const code = genCode();
     setLoading(true);
 
-    const { error } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim(), draft_start: null });
     if (error) { alert("Failed to create league."); setLoading(false); return; }
 
     const ok = await loadLeague(code);
@@ -2150,7 +2146,6 @@ export default function App() {
           const draftComplete = totalPicks >= numOwners * 8 && numOwners > 0;
 
           // ── Draft scheduled time ───────────────────────────────────────
-          const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
           const now = new Date();
           const draftHasStarted = true;
 
@@ -2169,11 +2164,7 @@ export default function App() {
             alert(` ${currentPicker.name} drafted ${team.name}!`);
           }
 
-          async function clearDraftStart() {
     if (!window.confirm("Clear the scheduled draft time?")) return;
-    await supabase.from("leagues").update({ draft_start: null }).eq("code", leagueCode);
-    setDraftScheduled(null);
-    setDraftStartInput("");
     alert("Draft time cleared.");
   }
 
@@ -2247,12 +2238,10 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                       `Round ${pickRound + 1} · Pick ${posInRound + 1} of ${numOwners} · ${available.length} teams remaining`}
                   </p>
                 </div>
-                {draftScheduled && (
                   <div style={{background:"rgba(212,175,55,0.12)",border:"1px solid rgba(212,175,55,0.4)",borderRadius:8,padding:"10px 18px",marginTop:10,display:"flex",alignItems:"center",gap:10}}>
                     <span style={{fontSize:18}}></span>
                     <div>
                       <div style={{color:"#d4af37",fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Draft Scheduled</div>
-                      <div style={{color:"#fff",fontSize:15,fontWeight:600,marginTop:2}}>{fmtDraftTime(new Date(draftScheduled))}</div>
                     </div>
                   </div>
                 )}
@@ -2273,16 +2262,12 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                 <div style={{ display:"flex", gap:12, alignItems:"flex-end", flexWrap:"wrap" }}>
                   <div style={{ flex:1, minWidth:220 }}>
                     <label style={S.label}>Draft Start Date & Time</label>
-                    <input type="datetime-local" value={draftStartInput}
                       disabled={draftLive && !adminUnlocked}
-                      onChange={e => setDraftStartInput(e.target.value)}
                       style={{ ...S.input, fontFamily:"'DM Mono',monospace" }} />
                   </div>
                   <button onClick={saveDraftStart} style={{opacity:(draftLive&&!adminUnlocked)?0.4:1,cursor:(draftLive&&!adminUnlocked)?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
                      Set Draft Time
                   </button>
-                {draftScheduled && isAdmin && (
-                  <button onClick={clearDraftStart} style={{...S.btn("#1a2440","#e74c3c"),padding:"10px 16px",fontSize:13}}>
                      Clear Time
                   </button>
                 )}
