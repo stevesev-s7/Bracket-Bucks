@@ -953,7 +953,7 @@ export default function App() {
         const picker = sorted[pickerIdx];
         if (!picker) return;
 
-        const best = [...avail][0];
+        const best = [...avail].sort((a,b)=>(a.seed||99)-(b.seed||99))[0];
         const updatedTeams = [...picker.teams];
         const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
         if (emptyIdx === -1) return;
@@ -2241,7 +2241,7 @@ export default function App() {
           // ── Auto-pick (highest available seed = lowest seed number) ───
           async function autoPick() {
             if (!available.length || !currentPicker) return;
-            const best = [...available][0];
+            const best = [...available].sort((a,b)=>(a.seed||99)-(b.seed||99))[0];
             await draftPick(best, true);
           }
 
