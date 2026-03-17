@@ -2226,10 +2226,10 @@ export default function App() {
   async function startDraft() {
     if (!leagueCode) return;
     const ts = new Date().toISOString();
-    const { error } = await supabase.from("leagues").update({ pick_timer_start: ts }).eq("code", leagueCode);
+    const { error } = // pick_timer_start update removed from saveDraftStart
     if (error) { alert("Failed to start draft: " + error.message); return; }
     // Also update local state immediately in case realtime is slow
-    setLeague(prev => prev ? { ...prev, pick_timer_start: ts } : prev);
+    // setLeague pick_timer_start update removed
   }
 
     // ── Auto-pick (highest available seed = lowest seed number) ───
