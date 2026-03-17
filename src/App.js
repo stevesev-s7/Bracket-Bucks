@@ -915,6 +915,25 @@ export default function App() {
   }, []);
 
 
+  // ── Draft pick timer + auto-pick ────────────────────────────────────
+
+  useEffect(() => {
+
+
+  // ── Real-time subscription ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!leagueCode) return;
+    const channel = supabase.channel(`league_${leagueCode}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "wins", filter: `league_code=eq.${leagueCode}` },
+        () => supabase.from("wins").select("*").eq("league_code", leagueCode).then(({ data }) => data && setWins(data)))
+      .on("postgres_changes", { event: "*", schema: "public", table: "owners", filter: `league_code=eq.${leagueCode}` },
+        () => supabase.from("owners").select("*").eq("league_code", leagueCode).order("num").then(({ data }) => data && setOwners(data)))
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "leagues", filter: `code=eq.${leagueCode}` },
+        ({ new: updated }) => updated && setLeague(updated))
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [leagueCode]);
+
   // ── League ops ───────────────────────────────────────────────────────────
   async function autoAddUserAsOwner(code) {
     if (!authUser) return;
@@ -2167,14 +2186,13 @@ export default function App() {
 
           // ── Draft scheduled time ───────────────────────────────────────
           const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
-          const now = new Date(); void tick; // tick forces re-render every second
+          const now = new Date();
           const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
           const draftHasStarted = draftStart ? now >= draftStart : false;
 
           // ── Draft a team ───────────────────────────────────────────────
-          async function draftPick(team, fromAutoPick = false) {
+          async function draftPick(team) {
             if (!currentPicker) return;
-            if (!fromAutoPick && !authUser) { alert("Please sign in to draft a team."); return; }
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
             if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
@@ -2182,169 +2200,17 @@ export default function App() {
             const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
             if (error) { alert("Failed to save pick."); return; }
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
-            // Reset pick timer in league
-            await supabase.from("leagues").update({ pick_timer_start: new Date().toISOString() }).eq("code", leagueCode);
-            if (fromAutoPick) alert(`⏱ Auto-picked ${team.name} for ${currentPicker.name}`);
-            else alert(`✓ ${currentPicker.name} drafted ${team.name}!`);
+            alert("Drafted: "+currentPicker.name+" picked "+team.name+"!");
           }
 
+    if (!window.confirm("Clear the scheduled draft time?")) return;
+    await supabase.from("leagues").update({ draft_start: null }).eq("code", leagueCode);
+    setDraftScheduled(null);
+    setDraftStartInput("");
+    alert("Draft time cleared.");
+  }
 
   // ── Start Draft ───────────────────────────────────────────────
-
-    // ── Auto-pick (highest available seed = lowest seed number) ───
-
-  async function resetDraft() {
-            if (!adminUnlocked) { setModal("pin"); return; }
-            const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
-            for (const o of owners) {
-              await supabase.from("owners").update({ teams: blank }).eq("id", o.id);
-            }
-            setOwners(prev => prev.map(o => ({ ...o, teams: blank })));
-            alert("Draft reset! All picks cleared.");
-          }
-
-          // ── Save draft start time ──────────────────────────────────────
-          async function saveDraftStart() {
-            if (!draftStartInput) { alert("Please select a date and time first."); return; }
-            // Treat the input as CST (America/Chicago)
-        const cstDate = new Date(draftStartInput + ":00");
-        // Get the UTC offset for America/Chicago at that moment
-        const cstFormatter = new Intl.DateTimeFormat("en-US", {
-          timeZone: "America/Chicago", hour: "numeric", timeZoneName: "short"
-        });
-        const parts = cstFormatter.formatToParts(cstDate);
-        const tzName = (parts.find(p=>p.type==="timeZoneName")||{}).value||"CST";
-        const offset = tzName.includes("CDT") ? "-05:00" : "-06:00";
-        const pd = new Date(draftStartInput + ":00" + offset);
-            if (isNaN(pd.getTime())) { alert("Invalid date/time."); return; }
-            supabase.from("leagues").update({ draft_start: pd.toISOString() }).eq("code", leagueCode)
-              .then(({ error }) => {
-                if (error) { alert("Save error: " + error.message); return; }
-                setDraftStartInput(pd.toISOString());
-                setDraftScheduled(pd.toISOString());
-                alert("Draft time saved!");
-              }).catch(e => alert("Error: " + e.message));
-          }
-
-          
-  // ── Timezone-aware date formatting ─────────────────────────────────────
-  const userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const TZ_LABELS = {
-    "America/Chicago":"CST", "America/New_York":"EST", "America/Los_Angeles":"PST",
-    "America/Denver":"MT", "America/Phoenix":"MT", "America/Anchorage":"AKT",
-    "Pacific/Honolulu":"HST"
-  };
-  const tzLabel = TZ_LABELS[userTZ] || new Date().toLocaleTimeString("en-US",{timeZoneName:"short"}).split(" ").pop();
-  function fmtDraftTime(date) {
-    if (!date) return "";
-    return date.toLocaleString("en-US",{
-      weekday:"short", month:"short", day:"numeric",
-      hour:"numeric", minute:"2-digit", timeZone:userTZ
-    }) + " " + tzLabel;
-  }
-  function fmtDraftTimeShort(date) {
-    if (!date) return "";
-    return date.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:userTZ}) + " " + tzLabel;
-  }
-
-const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:"#9b59b6" };
-
-
-          return (
-            <div>
-              {/* Header */}
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20, flexWrap:"wrap", gap:12 }}>
-                <div>
-                  <h2 style={{ margin:"0 0 4px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>🎯 Snake Draft</h2>
-                  <p style={{ margin:0, color:"#6677aa", fontSize:13 }}>
-                    {draftComplete ? "✅ Draft complete! All teams assigned." :
-                      numOwners === 0 ? "Add owners in Admin tab first." :
-                      !draftHasStarted && draftStart ? `⏳ Draft starts ${fmtDraftTime(draftStart)}` :
-                      `Round ${pickRound + 1} · Pick ${posInRound + 1} of ${numOwners} · ${available.length} teams remaining`}
-                  </p>
-                </div>
-                {draftScheduled && (
-                  <div style={{background:"rgba(212,175,55,0.12)",border:"1px solid rgba(212,175,55,0.4)",borderRadius:8,padding:"10px 18px",marginTop:10,display:"flex",alignItems:"center",gap:10}}>
-                    <span style={{fontSize:18}}>📅</span>
-                    <div>
-                      <div style={{color:"#d4af37",fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Draft Scheduled</div>
-                      <div style={{color:"#fff",fontSize:15,fontWeight:600,marginTop:2}}>{fmtDraftTime(new Date(draftScheduled))}</div>
-                    </div>
-                  </div>
-                )}
-                <div style={{ display:"flex", gap:8 }}>
-                  {isAdmin && <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#d4af37"), border:"1px solid #d4af37", fontSize:13, padding:"8px 16px" }}>🔀 Shuffle Order</button>}
-          <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#f7b731"), border:"1px solid #f7b731", fontSize:12 }}>🔀 Shuffle Order</button>
-                  <button onClick={resetDraft} style={{ ...S.btn("#1a2440","#e74c3c"), border:"1px solid #e74c3c", fontSize:12 }}>
-                    🔄 Reset Draft
-                  </button>
-                </div>
-              </div>
-
-              {/* ── Schedule Section ── */}
-              <div style={{ ...S.card, marginBottom:20, background:"#0f1420" }}>
-                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:2, color:"#f0c040", marginBottom:12 }}>
-                  📅 Draft Schedule
-                </div>
-                <div style={{ display:"flex", gap:12, alignItems:"flex-end", flexWrap:"wrap" }}>
-                  <div style={{ flex:1, minWidth:220 }}>
-                    <label style={S.label}>Draft Start Date & Time</label>
-                    <input type="datetime-local" value={draftStartInput}
-                      disabled={draftLive && !adminUnlocked}
-                      onChange={e => setDraftStartInput(e.target.value)}
-                      style={{ ...S.input, fontFamily:"'DM Mono',monospace" }} />
-                  </div>
-                  <button onClick={saveDraftStart} style={{opacity:(draftLive&&!adminUnlocked)?0.4:1,cursor:(draftLive&&!adminUnlocked)?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
-                    💾 Set Draft Time
-                  </button>
-                {draftScheduled && isAdmin && (
-                  <button onClick={clearDraftStart} style={{...S.btn("#1a2440","#e74c3c"),padding:"10px 16px",fontSize:13}}>
-                    ✕ Clear Time
-                  </button>
-                )}
-                </div>
-                {draftStart && (
-                  <div style={{ marginTop:12, display:"flex", gap:16, flexWrap:"wrap", alignItems:"center" }}>
-                    <div style={{ fontSize:13 }}>
-                      <span style={{ color:"#6677aa" }}>Scheduled: </span>
-                      <span style={{ color:"#dce4f5", fontWeight:600, fontFamily:"'DM Mono',monospace" }}>
-                        {draftStart.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric",timeZone:userTZ})}
-                        {" at "}
-                        {fmtDraftTimeShort(draftStart)}
-                      </span>
-                    </div>
-                    {!draftHasStarted && secondsUntilDraft !== null && (
-                      <DraftCountdownBanner secondsLeft={secondsUntilDraft} />
-                    )}
-                    {draftHasStarted && !draftComplete && (
-                      <span style={{ fontSize:12, background:"#0a2a14", color:"#2ecc71",
-                        border:"1px solid #27ae60", borderRadius:6, padding:"4px 10px", fontWeight:700 }}>
-                        🟢 DRAFT LIVE
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* ── Countdown / Not started yet ── */}
-              {!draftHasStarted && (
-                <div style={{ textAlign:"center", padding:"40px 24px", background:"#0f1420",
-                  border:"1px solid #1a2440", borderRadius:14, marginBottom:20 }}>
-                  <div style={{ fontSize:44, marginBottom:8 }}>⏳</div>
-                  <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:3, color:"#f0c040", marginBottom:4 }}>
-                    Draft Hasn't Started Yet
-                  </div>
-                  <div style={{ color:"#6677aa", fontSize:14 }}>
-                    {draftStart ? "Come back at " + fmtDraftTime(draftStart) : "Set a draft time below to get started."}
-                  </div>
-                </div>
-              )}
-
-              {/* ── Live Draft UI ── */}
-                <>
-            {/* ── Start Draft Banner ── */}
-
-                  )}
 
                   {/* Current Pick Banner */}
                   {!draftComplete && currentPicker && (
@@ -2437,14 +2303,14 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                             </div>
                             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                               {regionTeams.map(team => (
-                                <button key={team.region+team.seed} onClick={()=>{ if(!league?.pick_timer_start){alert("The admin hasn't started the draft yet!");return;} draftPick(team); }}
+                                <button key={team.region+team.seed} onClick={()=>{ if(false){} draftPick(team); }}
                                   disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftStart)}
                                   style={{ display:"flex", alignItems:"center", gap:8,
                                     background:"#0f1625",
                                     border:`1px solid ${regionColors[region]}44`,
                                     borderRadius:8, padding:"8px 10px", cursor:"pointer",
                                     fontFamily:"inherit", textAlign:"left",
-                                    opacity: (draftComplete || !league?.pick_timer_start) ? 0.45 : 1, cursor: !league?.pick_timer_start ? "not-allowed" : "pointer" }}
+                                    opacity: draftComplete ? 0.45 : 1 }}
                                   onMouseEnter={e => { e.currentTarget.style.background="#1a2e1a"; e.currentTarget.style.borderColor=regionColors[region]; }}
                                   onMouseLeave={e => { e.currentTarget.style.background="#0f1625"; e.currentTarget.style.borderColor=regionColors[region]+"44"; }}>
                                   <SeedBadge seed={team.seed} />
