@@ -2277,6 +2277,7 @@ export default function App() {
 
     // ── Auto-pick (highest available seed = lowest seed number) ───
           async function autoPick() {
+          return; // auto-pick disabled
             if (!available.length || !currentPicker) return;
             const best = [...available].sort((a,b)=>(a.seed||99)-(b.seed||99))[0];
             await draftPick(best, true);
