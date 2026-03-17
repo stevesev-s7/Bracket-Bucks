@@ -804,7 +804,6 @@ export default function App() {
 
   // Draft state
   const [draftScheduled, setDraftScheduled] = useState(null); // ISO string from league.draft_start
-  const [tick, setTick] = useState(0);
   const [draftStartInput, setDraftStartInput] = useState("");
   const [draftCountdown, setDraftCountdown] = useState(null); // seconds until draft starts
   const [pickTimer, setPickTimer]         = useState(15);    // seconds left for current pick
@@ -917,10 +916,6 @@ export default function App() {
   }, []);
 
 
-  useEffect(() => {
-    const t = null; // disabled: setInterval(() => setTick(n => (n+1) % 1000), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   
 
@@ -2191,7 +2186,7 @@ export default function App() {
 
           // ── Draft scheduled time ───────────────────────────────────────
           const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
-          const now = new Date(); void tick; // tick forces re-render every second
+          const now = new Date();
           const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
           const draftHasStarted = true;
 
@@ -2240,7 +2235,6 @@ export default function App() {
   }
 
   async function resetDraft() {
-    await supabase.from("leagues").update({pick_timer_start:null}).eq("code",leagueCode);
             if (!adminUnlocked) { setModal("pin"); return; }
             const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
             for (const o of owners) {
