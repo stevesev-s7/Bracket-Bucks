@@ -916,11 +916,6 @@ export default function App() {
   }, []);
 
 
-  // ── 1s clock so draftHasStarted flips automatically ──────────────────
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
   // ── Draft pick timer + auto-pick ────────────────────────────────────────
   useEffect(() => {
     if (!league?.draft_start || !leagueCode) return;
@@ -1004,7 +999,7 @@ export default function App() {
     const code = genCode();
     setLoading(true);
 
-    const { error } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim() });
+    const { error } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim(), draft_start: null });
     if (error) { alert("Failed to create league."); setLoading(false); return; }
 
     const ok = await loadLeague(code);
@@ -2217,9 +2212,9 @@ export default function App() {
 
           // ── Draft scheduled time ───────────────────────────────────────
           const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
-          const nowDate = new Date(now);
-          const secondsUntilDraft = draftStart ? Math.ceil((draftStart - nowDate) / 1000) : null;
-          const draftHasStarted = draftStart ? nowDate >= draftStart : false;
+          const now = new Date();
+          const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
+          const draftHasStarted = draftStart ? now >= draftStart : false;
 
           // ── Draft a team ───────────────────────────────────────────────
           async function draftPick(team, fromAutoPick = false) {
@@ -2238,7 +2233,15 @@ export default function App() {
             else alert(`✓ ${currentPicker.name} drafted ${team.name}!`);
           }
 
-          // ── Auto-pick (highest available seed = lowest seed number) ───
+          async function clearDraftStart() {
+    if (!window.confirm("Clear the scheduled draft time?")) return;
+    await supabase.from("leagues").update({ draft_start: null }).eq("code", leagueCode);
+    setDraftScheduled(null);
+    setDraftStartInput("");
+    alert("Draft time cleared.");
+  }
+
+    // ── Auto-pick (highest available seed = lowest seed number) ───
           async function autoPick() {
             if (!available.length || !currentPicker) return;
             const best = [...available].sort((a,b)=>(a.seed||99)-(b.seed||99))[0];
@@ -2370,6 +2373,11 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                   <button onClick={saveDraftStart} style={{opacity:(draftLive&&!adminUnlocked)?0.4:1,cursor:(draftLive&&!adminUnlocked)?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
                     💾 Set Draft Time
                   </button>
+                {draftScheduled && isAdmin && (
+                  <button onClick={clearDraftStart} style={{...S.btn("#1a2440","#e74c3c"),padding:"10px 16px",fontSize:13}}>
+                    ✕ Clear Time
+                  </button>
+                )}
                 </div>
                 {draftStart && (
                   <div style={{ marginTop:12, display:"flex", gap:16, flexWrap:"wrap", alignItems:"center" }}>
@@ -3197,4 +3205,3 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
   );
 }
 // build: 1773441631501
-  const [now, setNow] = useState(Date.now()); // live clock
