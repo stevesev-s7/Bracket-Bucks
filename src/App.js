@@ -1,5 +1,4 @@
 // v1773286522751
-  const [, setTick] = useState(0); // local clock for re-renders
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 const _APP_BUILD = "1773204216116";
@@ -917,24 +916,7 @@ export default function App() {
   }, []);
 
 
-  // ── Local clock — forces re-render every second so draftHasStarted flips on time
-  useEffect(() => {
-    const t = setInterval(() => setTick(n => n + 1), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-    // ── Initialize pick timer when draft goes live ──────────────────────────
-  useEffect(() => {
-    if (!league?.draft_start || !leagueCode) return;
-    const draftStart = new Date(league.draft_start);
-    const now = new Date();
-    if (now < draftStart) return; // not started yet
-    if (!league.pick_timer_start) {
-      supabase.from("leagues").update({ pick_timer_start: now.toISOString() }).eq("code", leagueCode);
-    }
-  }, [league?.draft_start, league?.pick_timer_start, leagueCode]);
-
-    // ── Draft pick timer + auto-pick ────────────────────────────────────────
+  // ── Draft pick timer + auto-pick ────────────────────────────────────────
   useEffect(() => {
     if (!league?.draft_start || !leagueCode) return;
     const draftStart = new Date(draftScheduled);
@@ -1017,7 +999,7 @@ export default function App() {
     const code = genCode();
     setLoading(true);
 
-    const { error } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim(), draft_start: null });
+    const { error } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim() });
     if (error) { alert("Failed to create league."); setLoading(false); return; }
 
     const ok = await loadLeague(code);
@@ -2251,15 +2233,7 @@ export default function App() {
             else alert(`✓ ${currentPicker.name} drafted ${team.name}!`);
           }
 
-          async function clearDraftStart() {
-    if (!window.confirm("Clear the scheduled draft time?")) return;
-    await supabase.from("leagues").update({ draft_start: null }).eq("code", leagueCode);
-    setDraftScheduled(null);
-    setDraftStartInput("");
-    alert("Draft time cleared.");
-  }
-
-    // ── Auto-pick (highest available seed = lowest seed number) ───
+          // ── Auto-pick (highest available seed = lowest seed number) ───
           async function autoPick() {
             if (!available.length || !currentPicker) return;
             const best = [...available][0];
@@ -2391,11 +2365,6 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                   <button onClick={saveDraftStart} style={{opacity:(draftLive&&!adminUnlocked)?0.4:1,cursor:(draftLive&&!adminUnlocked)?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
                     💾 Set Draft Time
                   </button>
-                {draftScheduled && isAdmin && (
-                  <button onClick={clearDraftStart} style={{...S.btn("#1a2440","#e74c3c"),padding:"10px 16px",fontSize:13}}>
-                    ✕ Clear Time
-                  </button>
-                )}
                 </div>
                 {draftStart && (
                   <div style={{ marginTop:12, display:"flex", gap:16, flexWrap:"wrap", alignItems:"center" }}>
