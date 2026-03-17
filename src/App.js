@@ -2181,7 +2181,7 @@ export default function App() {
             const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
             if (error) { alert("Failed to save pick."); return; }
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
-            else alert(`✓ ${currentPicker.name} drafted ${team.name}!`);
+                        alert(`Drafted: ${currentPicker.name} picked ${team.name}!`);
           }
 
 
