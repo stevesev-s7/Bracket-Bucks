@@ -2144,9 +2144,6 @@ export default function App() {
           const currentPicker = sortedOwners[currentPickerIdx] || null;
           const draftComplete = totalPicks >= numOwners * 8 && numOwners > 0;
 
-          // ── Draft scheduled time ───────────────────────────────────────
-          const now = new Date();
-          const draftHasStarted = true;
 
           // ── Draft a team ───────────────────────────────────────────────
           async function draftPick(team) {
@@ -2192,26 +2189,6 @@ export default function App() {
           // ── Save draft start time ──────────────────────────────────────
 
           
-  // ── Timezone-aware date formatting ─────────────────────────────────────
-  const userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const TZ_LABELS = {
-    "America/Chicago":"CST", "America/New_York":"EST", "America/Los_Angeles":"PST",
-    "America/Denver":"MT", "America/Phoenix":"MT", "America/Anchorage":"AKT",
-    "Pacific/Honolulu":"HST"
-  };
-  const tzLabel = TZ_LABELS[userTZ] || new Date().toLocaleTimeString("en-US",{timeZoneName:"short"}).split(" ").pop();
-  function fmtDraftTime(date) {
-    if (!date) return "";
-    return date.toLocaleString("en-US",{
-      weekday:"short", month:"short", day:"numeric",
-      hour:"numeric", minute:"2-digit", timeZone:userTZ
-    }) + " " + tzLabel;
-  }
-  function fmtDraftTimeShort(date) {
-    if (!date) return "";
-    return date.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:userTZ}) + " " + tzLabel;
-  }
-
 const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:"#9b59b6" };
 
 
@@ -2224,7 +2201,6 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                   <p style={{ margin:0, color:"#6677aa", fontSize:13 }}>
                     {draftComplete ? " Draft complete! All teams assigned." :
                       numOwners === 0 ? "Add owners in Admin tab first." :
-                      !draftHasStarted && draftStart ? `⏳ Draft starts ${fmtDraftTime(draftStart)}` :
                       `Round ${pickRound + 1} · Pick ${posInRound + 1} of ${numOwners} · ${available.length} teams remaining`}
                   </p>
                 </div>
@@ -2336,7 +2312,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                               {regionTeams.map(team => (
                                 <button key={team.region+team.seed} onClick={()=>draftPick(team)}
-                                  disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftStart)}
+                                  disabled={draftComplete || !currentPicker}
                                   style={{ display:"flex", alignItems:"center", gap:8,
                                     background:"#0f1625",
                                     border:`1px solid ${regionColors[region]}44`,
