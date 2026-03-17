@@ -2211,6 +2211,7 @@ export default function App() {
 
           // ── Draft scheduled time ───────────────────────────────────────
           const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
+          const now = new Date();
           const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
           const draftHasStarted = draftStart ? now >= draftStart : false;
 
@@ -2327,8 +2328,9 @@ export default function App() {
 
 const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:"#9b59b6" };
 
-          // ── Pick timer logic ───────────────────────────────────────────
-          // We derive time remaining from league.pick_timer_start (stored in Supabase)            <div>
+
+          return (
+            <div>
               {/* Header */}
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20, flexWrap:"wrap", gap:12 }}>
                 <div>
@@ -2437,6 +2439,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               </div>
             )}
 
+                  )}
 
                   {/* Current Pick Banner */}
                   {!draftComplete && currentPicker && (
