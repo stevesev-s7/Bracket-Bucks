@@ -2393,6 +2393,23 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                 <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:2, color:"#f0c040", marginBottom:12 }}>
                   📅 Draft Schedule
                 </div>
+                <div style={{ display:"flex", gap:12, alignItems:"flex-end", flexWrap:"wrap" }}>
+                  <div style={{ flex:1, minWidth:220 }}>
+                    <label style={S.label}>Draft Start Date & Time</label>
+                    <input type="datetime-local" value={draftStartInput}
+                      disabled={draftLive && !adminUnlocked}
+                      onChange={e => setDraftStartInput(e.target.value)}
+                      style={{ ...S.input, fontFamily:"'DM Mono',monospace" }} />
+                  </div>
+                  <button onClick={saveDraftStart} style={{opacity:(draftLive&&!adminUnlocked)?0.4:1,cursor:(draftLive&&!adminUnlocked)?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
+                    💾 Set Draft Time
+                  </button>
+                {draftScheduled && isAdmin && (
+                  <button onClick={()=>{}} style={{display:"none"}} style={{...S.btn("#1a2440","#e74c3c"),padding:"10px 16px",fontSize:13}}>
+                    ✕ Clear Time
+                  </button>
+                )}
+                </div>
                 {draftStart && (
                   <div style={{ marginTop:12, display:"flex", gap:16, flexWrap:"wrap", alignItems:"center" }}>
                     <div style={{ fontSize:13 }}>
