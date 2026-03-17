@@ -2430,34 +2430,27 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                 </div>
               )}
 
-        {/* ── Ready to Start ── */}
-        {draftHasStarted && !league?.pick_timer_start && (
-          <div style={{ textAlign:"center", padding:"48px 24px", background:"#0f1420",
-            border:"2px solid #d4af37", borderRadius:14, marginBottom:20 }}>
-            <div style={{ fontSize:52, marginBottom:12 }}>🏀</div>
-            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, letterSpacing:3,
-              color:"#d4af37", marginBottom:8 }}>DRAFT TIME!</div>
-            <div style={{ color:"#6677aa", fontSize:14, marginBottom:24 }}>
-              All owners are ready. Click below to begin the snake draft.
-            </div>
-            {isAdmin && (
-              <button onClick={startDraft} style={{
-                background:"#d4af37", color:"#1a1a2e", border:"none", borderRadius:10,
-                padding:"16px 48px", fontSize:18, fontWeight:900, cursor:"pointer",
-                fontFamily:"'Bebas Neue',sans-serif", letterSpacing:2
-              }}>
-                🚀 START DRAFT
-              </button>
-            )}
-            {!isAdmin && (
-              <div style={{ color:"#f0c040", fontSize:14 }}>Waiting for the league admin to start the draft...</div>
-            )}
-          </div>
-        )}
-
               {/* ── Live Draft UI ── */}
-              {draftHasStarted && league?.pick_timer_start && (
+              {draftHasStarted && (
                 <>
+            {/* ── Start Draft Banner ── */}
+            {!league?.pick_timer_start && (
+              <div style={{ textAlign:"center", padding:"20px 24px", background:"#0f1420",
+                border:"2px solid #d4af37", borderRadius:12, marginBottom:16 }}>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, letterSpacing:3,
+                  color:"#d4af37", marginBottom:10 }}>🏀 DRAFT TIME — SELECT YOUR TEAMS BELOW</div>
+                {isAdmin ? (
+                  <button onClick={startDraft} style={{
+                    background:"#d4af37", color:"#1a1a2e", border:"none", borderRadius:8,
+                    padding:"12px 40px", fontSize:16, fontWeight:900, cursor:"pointer",
+                    fontFamily:"'Bebas Neue',sans-serif", letterSpacing:2
+                  }}>🚀 START DRAFT — BEGIN 30s TIMER</button>
+                ) : (
+                  <div style={{ color:"#f0c040", fontSize:13 }}>Waiting for admin to start the draft...</div>
+                )}
+              </div>
+            )}
+
                   {/* Pick Timer Bar */}
                   {draftHasStarted && !draftComplete && currentPicker && (
                     <div style={{ marginBottom:16 }}>
@@ -2571,14 +2564,14 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                             </div>
                             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                               {regionTeams.map(team => (
-                                <button key={team.region+team.seed} onClick={()=>draftPick(team)}
+                                <button key={team.region+team.seed} onClick={()=>{ if(!league?.pick_timer_start){alert("The admin hasn't started the draft yet!");return;} draftPick(team); }}
                                   disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftStart)}
                                   style={{ display:"flex", alignItems:"center", gap:8,
                                     background:"#0f1625",
                                     border:`1px solid ${regionColors[region]}44`,
                                     borderRadius:8, padding:"8px 10px", cursor:"pointer",
                                     fontFamily:"inherit", textAlign:"left",
-                                    opacity: draftComplete || (!draftHasStarted && !!draftStart) ? 0.4 : 1 }}
+                                    opacity: (draftComplete || !league?.pick_timer_start) ? 0.45 : 1, cursor: !league?.pick_timer_start ? "not-allowed" : "pointer" }}
                                   onMouseEnter={e => { e.currentTarget.style.background="#1a2e1a"; e.currentTarget.style.borderColor=regionColors[region]; }}
                                   onMouseLeave={e => { e.currentTarget.style.background="#0f1625"; e.currentTarget.style.borderColor=regionColors[region]+"44"; }}>
                                   <SeedBadge seed={team.seed} />
