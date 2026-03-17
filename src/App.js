@@ -2241,21 +2241,9 @@ export default function App() {
 
   // ── Start Draft ───────────────────────────────────────────────
 
-    // ── Auto-pick (highest available seed = lowest seed number) ───
 
           // ── Reset draft ────────────────────────────────────────────────
           async function shuffleDraftOrder() {
-    if (!window.confirm("Randomly shuffle the draft order for all owners?")) return;
-    const shuffled = [...owners];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    await Promise.all(shuffled.map((o, idx) =>
-      supabase.from("owners").update({ num: idx + 1 }).eq("id", o.id)
-    ));
-    setOwners(shuffled.map((o, i) => ({ ...o, num: i + 1 })));
-    alert("Draft order shuffled! New order: " + shuffled.map(o=>o.name).join(", "));
   }
 
   async function resetDraft() {
