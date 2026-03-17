@@ -933,8 +933,8 @@ export default function App() {
       const now = new Date();
       if (now < draftStart) return; // draft hasn't started
 
-      const pickTimerStart = league?.pick_timer_start ? new Date(league.pick_timer_start) : draftStart;
-      const elapsed = Math.floor((now - pickTimerStart) / 1000);
+      const pickTimerStart = league?.pick_timer_start ? new Date(league.pick_timer_start) : null;
+      const elapsed = pickTimerStart ? Math.floor((now - pickTimerStart) / 1000) : 0;
       const timeLeft = 30 - elapsed;
 
       if (timeLeft <= 0) {
