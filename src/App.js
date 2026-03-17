@@ -2163,15 +2163,6 @@ export default function App() {
             alert(` ${currentPicker.name} drafted ${team.name}!`);
           }
 
-    if (!window.confirm("Clear the scheduled draft time?")) return;
-    alert("Draft time cleared.");
-  }
-
-  // ── Start Draft ───────────────────────────────────────────────
-  async function startDraft() {
-    if (!leagueCode) return;
-  }
-
 
           // ── Reset draft ────────────────────────────────────────────────
           async function shuffleDraftOrder() {
