@@ -1,4 +1,5 @@
 // v1773286522751
+  const [, setTick] = useState(0); // local clock for re-renders
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 const _APP_BUILD = "1773204216116";
@@ -916,7 +917,13 @@ export default function App() {
   }, []);
 
 
-  // ── Draft pick timer + auto-pick ────────────────────────────────────────
+  // ── Local clock — forces re-render every second so draftHasStarted flips on time
+  useEffect(() => {
+    const t = setInterval(() => setTick(n => n + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+    // ── Draft pick timer + auto-pick ────────────────────────────────────────
   useEffect(() => {
     if (!league?.draft_start || !leagueCode) return;
     const draftStart = new Date(draftScheduled);
