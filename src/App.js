@@ -768,7 +768,6 @@ export default function App() {
   const [bracketStatus, setBracketStatus] = useState("idle");
 
   // Draft state
-  const [draftCountdown, setDraftCountdown] = useState(null); // seconds until draft starts
   const [pickTimer, setPickTimer]         = useState(15);    // seconds left for current pick
   const [draftLive, setDraftLive]         = useState(false);
 
