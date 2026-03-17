@@ -2206,7 +2206,7 @@ export default function App() {
 
 
           // ── Reset draft ────────────────────────────────────────────────
-          async function shuffleDraftOrder() {
+  async function shuffleDraftOrder() {
     if (!window.confirm("Randomly shuffle the draft order for all owners?")) return;
     const shuffled = [...owners];
     for (let i = shuffled.length - 1; i > 0; i--) {
