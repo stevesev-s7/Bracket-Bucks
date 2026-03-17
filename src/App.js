@@ -2560,7 +2560,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                             </div>
                             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                               {regionTeams.map(team => (
-                                <button key={team.region+team.seed} onClick={()=>{ if(!league?.pick_timer_start){alert("The admin hasn't started the draft yet!");return;} draftPick(team); }}
+                                <button key={team.region+team.seed} onClick={()=>draftPick(team)} draftPick(team); }}
                                   disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftStart)}
                                   style={{ display:"flex", alignItems:"center", gap:8,
                                     background:"#0f1625",
