@@ -2206,6 +2206,14 @@ export default function App() {
           const pickedNames = owners.flatMap(o => o.teams.map(t => (t.name||"").toLowerCase().trim()));
           const available = NCAA_2026_TEAMS.filter(t => !pickedNames.includes(t.name.toLowerCase().trim()));
           const totalPicks = owners.reduce((sum, o) => sum + o.teams.filter(t => t.name && t.name.trim()).length, 0);
+          // Play-in game opponent lookup
+          const PLAY_IN_OPPONENTS = {
+            "UMBC": "Howard",
+            "Texas": "NC State",
+            "Prairie View A&M": "Lehigh",
+            "SMU": "Miami (OH)",
+          };
+
           const numOwners = owners.length;
           const pickRound = Math.floor(totalPicks / Math.max(numOwners,1));
           const posInRound = totalPicks % Math.max(numOwners,1);
@@ -2549,7 +2557,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                                   onMouseEnter={e => { e.currentTarget.style.background="#1a2e1a"; e.currentTarget.style.borderColor=regionColors[region]; }}
                                   onMouseLeave={e => { e.currentTarget.style.background="#0f1625"; e.currentTarget.style.borderColor=regionColors[region]+"44"; }}>
                                   <SeedBadge seed={team.seed} />
-                                  <span style={{ fontSize:12, fontWeight:600, color:"#dce4f5", flex:1 }}>{team.name}</span>
+                <span style={{ fontSize:12, fontWeight:600, color:"#dce4f5", flex:1 }}>{PLAY_IN_OPPONENTS[team.name] ? `${team.name} / ${team.seed} ${PLAY_IN_OPPONENTS[team.name]}` : team.name}</span>
                                 </button>
                               ))}
                             </div>
