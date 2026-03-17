@@ -1,5 +1,4 @@
-                <>
-// v1773761975366
+// v1773286522751
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 const _APP_BUILD = "1773204216116";
@@ -404,7 +403,6 @@ function DraftCountdownBanner({ secondsLeft }) {
     setSecs(secondsLeft);
     if (secondsLeft <= 0) return;
     const t = setInterval(() => setSecs(s => Math.max(0, s - 1)), 1000);
-    return () => clearInterval(t);
   }, [secondsLeft]);
 
   const d = Math.floor(secs / 86400);
@@ -917,8 +915,45 @@ export default function App() {
 
 
   // ── Draft pick timer + auto-pick ────────────────────────────────────
+  useEffect(() => {
+  }, []);
 
   useEffect(() => {
+
+    const tick = setInterval(async () => {
+      const now = new Date();
+      const elapsed = Math.floor((now - pickTimerStart) / 1000);
+      const timeLeft = 30 - elapsed;
+
+      if (timeLeft <= 0) {
+        // Auto-pick: fetch fresh data to avoid stale closure
+        const { data: latestOwners } = await supabase.from("owners").select("*").eq("league_code", leagueCode).order("num");
+        const ownersArr = latestOwners || [];
+        const picked = ownersArr.flatMap(o => o.teams.map(t => t.name?.toLowerCase().trim()).filter(Boolean));
+        const avail = NCAA_2026_TEAMS.filter(t => !picked.includes(t.name.toLowerCase().trim()));
+        if (!avail.length) { clearInterval(tick); return; }
+
+        const totalPks = ownersArr.reduce((sum, o) => sum + o.teams.filter(t => t.name && t.name.trim()).length, 0);
+        const nOwners = ownersArr.length;
+        if (totalPks >= nOwners * 8) { clearInterval(tick); return; }
+
+        const rd = Math.floor(totalPks / Math.max(nOwners, 1));
+        const pos = totalPks % Math.max(nOwners, 1);
+        const sorted = [...ownersArr].sort((a, b) => a.num - b.num);
+        const pickerIdx = rd % 2 === 0 ? pos : (nOwners - 1 - pos);
+        const picker = sorted[pickerIdx];
+        if (!picker) return;
+
+        const best = [...avail].sort((a, b) => (a.seed || 99) - (b.seed || 99))[0];
+        const updatedTeams = [...picker.teams];
+        const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
+        if (emptyIdx === -1) return;
+        updatedTeams[emptyIdx] = { seed: best.seed, name: best.name };
+        await supabase.from("owners").update({ teams: updatedTeams }).eq("id", picker.id);
+      }
+    }, 1000);
+
+    return () => clearInterval(tick);
 
 
   // ── Real-time subscription ───────────────────────────────────────────────
@@ -2192,7 +2227,6 @@ export default function App() {
           const draftHasStarted = draftStart ? now >= draftStart : false;
 
           // ── Draft a team ───────────────────────────────────────────────
-          async function draftPick(team) {
             if (!currentPicker) return;
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
@@ -2201,11 +2235,179 @@ export default function App() {
             const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
             if (error) { alert("Failed to save pick."); return; }
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
-            alert("Drafted: "+currentPicker.name+" picked "+team.name+"!");
+            else alert("Drafted: " + currentPicker.name + " picked " + team.name + "!");
           }
 
 
   // ── Start Draft ───────────────────────────────────────────────
+
+    // ── Auto-pick (highest available seed = lowest seed number) ───
+
+          // ── Reset draft ────────────────────────────────────────────────
+          async function shuffleDraftOrder() {
+    if (!window.confirm("Randomly shuffle the draft order for all owners?")) return;
+    const shuffled = [...owners];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    await Promise.all(shuffled.map((o, idx) =>
+      supabase.from("owners").update({ num: idx + 1 }).eq("id", o.id)
+    ));
+    setOwners(shuffled.map((o, i) => ({ ...o, num: i + 1 })));
+    alert("Draft order shuffled! New order: " + shuffled.map(o=>o.name).join(", "));
+  }
+
+  async function resetDraft() {
+            if (!adminUnlocked) { setModal("pin"); return; }
+            const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
+            for (const o of owners) {
+              await supabase.from("owners").update({ teams: blank }).eq("id", o.id);
+            }
+            setOwners(prev => prev.map(o => ({ ...o, teams: blank })));
+            alert("Draft reset! All picks cleared.");
+          }
+
+          // ── Save draft start time ──────────────────────────────────────
+          async function saveDraftStart() {
+            if (!draftStartInput) { alert("Please select a date and time first."); return; }
+            // Treat the input as CST (America/Chicago)
+        const cstDate = new Date(draftStartInput + ":00");
+        // Get the UTC offset for America/Chicago at that moment
+        const cstFormatter = new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Chicago", hour: "numeric", timeZoneName: "short"
+        });
+        const parts = cstFormatter.formatToParts(cstDate);
+        const tzName = (parts.find(p=>p.type==="timeZoneName")||{}).value||"CST";
+        const offset = tzName.includes("CDT") ? "-05:00" : "-06:00";
+        const pd = new Date(draftStartInput + ":00" + offset);
+            if (isNaN(pd.getTime())) { alert("Invalid date/time."); return; }
+            supabase.from("leagues").update({ draft_start: pd.toISOString() }).eq("code", leagueCode)
+              .then(({ error }) => {
+                if (error) { alert("Save error: " + error.message); return; }
+                setDraftStartInput(pd.toISOString());
+                setDraftScheduled(pd.toISOString());
+                alert("Draft time saved!");
+              }).catch(e => alert("Error: " + e.message));
+          }
+
+          
+  // ── Timezone-aware date formatting ─────────────────────────────────────
+  const userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const TZ_LABELS = {
+    "America/Chicago":"CST", "America/New_York":"EST", "America/Los_Angeles":"PST",
+    "America/Denver":"MT", "America/Phoenix":"MT", "America/Anchorage":"AKT",
+    "Pacific/Honolulu":"HST"
+  };
+  const tzLabel = TZ_LABELS[userTZ] || new Date().toLocaleTimeString("en-US",{timeZoneName:"short"}).split(" ").pop();
+  function fmtDraftTime(date) {
+    if (!date) return "";
+    return date.toLocaleString("en-US",{
+      weekday:"short", month:"short", day:"numeric",
+      hour:"numeric", minute:"2-digit", timeZone:userTZ
+    }) + " " + tzLabel;
+  }
+  function fmtDraftTimeShort(date) {
+    if (!date) return "";
+    return date.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:userTZ}) + " " + tzLabel;
+  }
+
+const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:"#9b59b6" };
+
+
+          return (
+            <div>
+              {/* Header */}
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20, flexWrap:"wrap", gap:12 }}>
+                <div>
+                  <h2 style={{ margin:"0 0 4px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>🎯 Snake Draft</h2>
+                  <p style={{ margin:0, color:"#6677aa", fontSize:13 }}>
+                    {draftComplete ? "✅ Draft complete! All teams assigned." :
+                      numOwners === 0 ? "Add owners in Admin tab first." :
+                      !draftHasStarted && draftStart ? `⏳ Draft starts ${fmtDraftTime(draftStart)}` :
+                      `Round ${pickRound + 1} · Pick ${posInRound + 1} of ${numOwners} · ${available.length} teams remaining`}
+                  </p>
+                </div>
+                {draftScheduled && (
+                  <div style={{background:"rgba(212,175,55,0.12)",border:"1px solid rgba(212,175,55,0.4)",borderRadius:8,padding:"10px 18px",marginTop:10,display:"flex",alignItems:"center",gap:10}}>
+                    <span style={{fontSize:18}}>📅</span>
+                    <div>
+                      <div style={{color:"#d4af37",fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Draft Scheduled</div>
+                      <div style={{color:"#fff",fontSize:15,fontWeight:600,marginTop:2}}>{fmtDraftTime(new Date(draftScheduled))}</div>
+                    </div>
+                  </div>
+                )}
+                <div style={{ display:"flex", gap:8 }}>
+                  {isAdmin && <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#d4af37"), border:"1px solid #d4af37", fontSize:13, padding:"8px 16px" }}>🔀 Shuffle Order</button>}
+          <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#f7b731"), border:"1px solid #f7b731", fontSize:12 }}>🔀 Shuffle Order</button>
+                  <button onClick={resetDraft} style={{ ...S.btn("#1a2440","#e74c3c"), border:"1px solid #e74c3c", fontSize:12 }}>
+                    🔄 Reset Draft
+                  </button>
+                </div>
+              </div>
+
+              {/* ── Schedule Section ── */}
+              <div style={{ ...S.card, marginBottom:20, background:"#0f1420" }}>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:2, color:"#f0c040", marginBottom:12 }}>
+                  📅 Draft Schedule
+                </div>
+                <div style={{ display:"flex", gap:12, alignItems:"flex-end", flexWrap:"wrap" }}>
+                  <div style={{ flex:1, minWidth:220 }}>
+                    <label style={S.label}>Draft Start Date & Time</label>
+                    <input type="datetime-local" value={draftStartInput}
+                      disabled={draftLive && !adminUnlocked}
+                      onChange={e => setDraftStartInput(e.target.value)}
+                      style={{ ...S.input, fontFamily:"'DM Mono',monospace" }} />
+                  </div>
+                  <button onClick={saveDraftStart} style={{opacity:(draftLive&&!adminUnlocked)?0.4:1,cursor:(draftLive&&!adminUnlocked)?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
+                    💾 Set Draft Time
+                  </button>
+                {draftScheduled && isAdmin && (
+                    ✕ Clear Time
+                  </button>
+                )}
+                </div>
+                {draftStart && (
+                  <div style={{ marginTop:12, display:"flex", gap:16, flexWrap:"wrap", alignItems:"center" }}>
+                    <div style={{ fontSize:13 }}>
+                      <span style={{ color:"#6677aa" }}>Scheduled: </span>
+                      <span style={{ color:"#dce4f5", fontWeight:600, fontFamily:"'DM Mono',monospace" }}>
+                        {draftStart.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric",timeZone:userTZ})}
+                        {" at "}
+                        {fmtDraftTimeShort(draftStart)}
+                      </span>
+                    </div>
+                    {!draftHasStarted && secondsUntilDraft !== null && (
+                      <DraftCountdownBanner secondsLeft={secondsUntilDraft} />
+                    )}
+                    {draftHasStarted && !draftComplete && (
+                      <span style={{ fontSize:12, background:"#0a2a14", color:"#2ecc71",
+                        border:"1px solid #27ae60", borderRadius:6, padding:"4px 10px", fontWeight:700 }}>
+                        🟢 DRAFT LIVE
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* ── Countdown / Not started yet ── */}
+              {!draftHasStarted && (
+                <div style={{ textAlign:"center", padding:"40px 24px", background:"#0f1420",
+                  border:"1px solid #1a2440", borderRadius:14, marginBottom:20 }}>
+                  <div style={{ fontSize:44, marginBottom:8 }}>⏳</div>
+                  <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:3, color:"#f0c040", marginBottom:4 }}>
+                    Draft Hasn't Started Yet
+                  </div>
+                  <div style={{ color:"#6677aa", fontSize:14 }}>
+                    {draftStart ? "Come back at " + fmtDraftTime(draftStart) : "Set a draft time below to get started."}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Live Draft UI ── */}
+                <>
+
+                  )}
 
                   {/* Current Pick Banner */}
                   {!draftComplete && currentPicker && (
@@ -2298,7 +2500,6 @@ export default function App() {
                             </div>
                             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                               {regionTeams.map(team => (
-                                <button key={team.region+team.seed} onClick={()=>{ if(false){} draftPick(team); }}
                                   disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftStart)}
                                   style={{ display:"flex", alignItems:"center", gap:8,
                                     background:"#0f1625",
@@ -2409,6 +2610,7 @@ export default function App() {
                       </div>
                     </div>
                   </div>
+                </>
             </div>
           );
         })()}
@@ -2969,4 +3171,3 @@ export default function App() {
   );
 }
 // build: 1773441631501
-                </>
