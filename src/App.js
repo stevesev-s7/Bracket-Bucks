@@ -804,7 +804,6 @@ export default function App() {
 
   // Draft state
   const [draftScheduled, setDraftScheduled] = useState(null); // ISO string from league.draft_start
-  const [clockMs, setClockMs] = useState(Date.now()); // 1s tick for draftHasStarted
   const [draftStartInput, setDraftStartInput] = useState("");
   const [draftCountdown, setDraftCountdown] = useState(null); // seconds until draft starts
   const [pickTimer, setPickTimer]         = useState(15);    // seconds left for current pick
@@ -2212,7 +2211,6 @@ export default function App() {
 
           // ── Draft scheduled time ───────────────────────────────────────
           const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
-          const now = new Date(clockMs);
           const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
           const draftHasStarted = draftStart ? now >= draftStart : false;
 
@@ -2330,15 +2328,7 @@ export default function App() {
 const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:"#9b59b6" };
 
           // ── Pick timer logic ───────────────────────────────────────────
-          // We derive time remaining from league.pick_timer_start (stored in Supabase)
-          const pickTimerStart = league?.pick_timer_start ? new Date(league.pick_timer_start) : null;
-          const secondsElapsed = pickTimerStart ? Math.max(0, Math.floor((now - pickTimerStart) / 1000)) : 0;
-          const pickSecondsLeft = draftHasStarted && !draftComplete && league?.pick_timer_start ? Math.max(0, 30 - secondsElapsed) : 30;
-          const timerPct = (pickSecondsLeft / 30) * 100;
-          const timerColor = pickSecondsLeft > 15 ? "#2ecc71" : pickSecondsLeft > 8 ? "#f0c040" : "#e74c3c";
-
-          return (
-            <div>
+          // We derive time remaining from league.pick_timer_start (stored in Supabase)            <div>
               {/* Header */}
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20, flexWrap:"wrap", gap:12 }}>
                 <div>
@@ -2447,27 +2437,6 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               </div>
             )}
 
-                  {/* Pick Timer Bar */}
-                  {draftHasStarted && !draftComplete && currentPicker && (
-                    <div style={{ marginBottom:16 }}>
-                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6, fontSize:12 }}>
-                        <span style={{ color:"#6677aa" }}>⏱ Pick Timer</span>
-                        <span style={{ fontFamily:"'DM Mono',monospace", fontWeight:800, color:timerColor, fontSize:16 }}>
-                          {pickSecondsLeft}s
-                        </span>
-                      </div>
-                      <div style={{ height:8, background:"#1a2440", borderRadius:99, overflow:"hidden" }}>
-                        <div style={{ height:"100%", width:`${timerPct}%`, background:timerColor,
-                          borderRadius:99, transition:"width 1s linear",
-                          boxShadow: pickSecondsLeft <= 8 ? `0 0 10px ${timerColor}` : "none" }} />
-                      </div>
-                      {pickSecondsLeft === 0 && (
-                        <div style={{ fontSize:12, color:"#e74c3c", marginTop:6, fontWeight:700 }}>
-                          ⚡ Time up! Auto-picking best available team…
-                        </div>
-                      )}
-                    </div>
-                  )}
 
                   {/* Current Pick Banner */}
                   {!draftComplete && currentPicker && (
