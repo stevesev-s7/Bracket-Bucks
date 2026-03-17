@@ -926,6 +926,7 @@ export default function App() {
 
   useEffect(() => {
     if (!league?.draft_start || !leagueCode) return;
+    if (!league?.pick_timer_start) return; // wait for manual Start Draft
     const draftStart = new Date(draftScheduled);
 
     const tick = setInterval(async () => {
@@ -2248,6 +2249,12 @@ export default function App() {
     alert("Draft time cleared.");
   }
 
+  // ── Start Draft ───────────────────────────────────────────────
+  async function startDraft() {
+    if (!leagueCode) return;
+    await supabase.from("leagues").update({ pick_timer_start: new Date().toISOString() }).eq("code", leagueCode);
+  }
+
     // ── Auto-pick (highest available seed = lowest seed number) ───
           async function autoPick() {
             if (!available.length || !currentPicker) return;
@@ -2423,8 +2430,33 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                 </div>
               )}
 
+        {/* ── Ready to Start ── */}
+        {draftHasStarted && !league?.pick_timer_start && (
+          <div style={{ textAlign:"center", padding:"48px 24px", background:"#0f1420",
+            border:"2px solid #d4af37", borderRadius:14, marginBottom:20 }}>
+            <div style={{ fontSize:52, marginBottom:12 }}>🏀</div>
+            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, letterSpacing:3,
+              color:"#d4af37", marginBottom:8 }}>DRAFT TIME!</div>
+            <div style={{ color:"#6677aa", fontSize:14, marginBottom:24 }}>
+              All owners are ready. Click below to begin the snake draft.
+            </div>
+            {isAdmin && (
+              <button onClick={startDraft} style={{
+                background:"#d4af37", color:"#1a1a2e", border:"none", borderRadius:10,
+                padding:"16px 48px", fontSize:18, fontWeight:900, cursor:"pointer",
+                fontFamily:"'Bebas Neue',sans-serif", letterSpacing:2
+              }}>
+                🚀 START DRAFT
+              </button>
+            )}
+            {!isAdmin && (
+              <div style={{ color:"#f0c040", fontSize:14 }}>Waiting for the league admin to start the draft...</div>
+            )}
+          </div>
+        )}
+
               {/* ── Live Draft UI ── */}
-              {draftHasStarted && (
+              {draftHasStarted && league?.pick_timer_start && (
                 <>
                   {/* Pick Timer Bar */}
                   {draftHasStarted && !draftComplete && currentPicker && (
