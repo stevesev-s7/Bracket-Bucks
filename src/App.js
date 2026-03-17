@@ -2244,10 +2244,6 @@ export default function App() {
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
             // Restrict to current picker or admin
-            if (!isAdmin) {
-              var myRec=owners.find(function(o){return (o.name||"").toLowerCase()===(authUser.email||"").toLowerCase();});
-              if (!myRec || myRec.num !== currentPicker.num) { alert("Wait for your turn!"); return; }
-            }
             if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
             updatedTeams[emptyIdx] = { seed: team.seed, name: team.name };
             const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
