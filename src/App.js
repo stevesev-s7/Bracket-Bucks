@@ -2237,85 +2237,12 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                 )}
                 <div style={{ display:"flex", gap:8 }}>
                   {isAdmin && <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#d4af37"), border:"1px solid #d4af37", fontSize:13, padding:"8px 16px" }}> Shuffle Order</button>}
-          <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#f7b731"), border:"1px solid #f7b731", fontSize:12 }}> Shuffle Order</button>
                   <button onClick={resetDraft} style={{ ...S.btn("#1a2440","#e74c3c"), border:"1px solid #e74c3c", fontSize:12 }}>
                      Reset Draft
                   </button>
                 </div>
               </div>
 
-              {/* ── Schedule Section ── */}
-              <div style={{ ...S.card, marginBottom:20, background:"#0f1420" }}>
-                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:2, color:"#f0c040", marginBottom:12 }}>
-                   Draft Schedule
-                </div>
-                <div style={{ display:"flex", gap:12, alignItems:"flex-end", flexWrap:"wrap" }}>
-                  <div style={{ flex:1, minWidth:220 }}>
-                    <label style={S.label}>Draft Start Date & Time</label>
-                      disabled={draftLive && !adminUnlocked}
-                      style={{ ...S.input, fontFamily:"'DM Mono',monospace" }} />
-                  </div>
-                  <button onClick={saveDraftStart} style={{opacity:(draftLive&&!adminUnlocked)?0.4:1,cursor:(draftLive&&!adminUnlocked)?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
-                     Set Draft Time
-                  </button>
-                     Clear Time
-                  </button>
-                )}
-                </div>
-                {draftStart && (
-                  <div style={{ marginTop:12, display:"flex", gap:16, flexWrap:"wrap", alignItems:"center" }}>
-                    <div style={{ fontSize:13 }}>
-                      <span style={{ color:"#6677aa" }}>Scheduled: </span>
-                      <span style={{ color:"#dce4f5", fontWeight:600, fontFamily:"'DM Mono',monospace" }}>
-                        {draftStart.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric",timeZone:userTZ})}
-                        {" at "}
-                        {fmtDraftTimeShort(draftStart)}
-                      </span>
-                    </div>
-                    )}
-                    {draftHasStarted && !draftComplete && (
-                      <span style={{ fontSize:12, background:"#0a2a14", color:"#2ecc71",
-                        border:"1px solid #27ae60", borderRadius:6, padding:"4px 10px", fontWeight:700 }}>
-                         DRAFT LIVE
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* ── Countdown / Not started yet ── */}
-              {!draftHasStarted && (
-                <div style={{ textAlign:"center", padding:"40px 24px", background:"#0f1420",
-                  border:"1px solid #1a2440", borderRadius:14, marginBottom:20 }}>
-                  <div style={{ fontSize:44, marginBottom:8 }}>⏳</div>
-                  <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:3, color:"#f0c040", marginBottom:4 }}>
-                    Draft Hasn't Started Yet
-                  </div>
-                  <div style={{ color:"#6677aa", fontSize:14 }}>
-                    {draftStart ? "Come back at " + fmtDraftTime(draftStart) : "Set a draft time below to get started."}
-                  </div>
-                </div>
-              )}
-
-              {/* ── Live Draft UI ── */}
-                <>
-            {false && (
-              <div style={{ textAlign:"center", padding:"20px 24px", background:"#0f1420",
-                border:"2px solid #d4af37", borderRadius:12, marginBottom:16 }}>
-                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, letterSpacing:3,
-                  color:"#d4af37", marginBottom:10 }}> DRAFT TIME — SELECT YOUR TEAMS BELOW</div>
-                {authUser ? (
-                    background:"#d4af37", color:"#1a1a2e", border:"none", borderRadius:8,
-                    padding:"12px 40px", fontSize:16, fontWeight:900, cursor:"pointer",
-                    fontFamily:"'Bebas Neue',sans-serif", letterSpacing:2
-                  }}> START DRAFT — BEGIN 30s TIMER</button>
-                ) : (
-                  <div style={{ color:"#f0c040", fontSize:13 }}>Sign in to start the draft.</div>
-                )}
-              </div>
-            )}
-
-                  )}
 
                   {/* Current Pick Banner */}
                   {!draftComplete && currentPicker && (
