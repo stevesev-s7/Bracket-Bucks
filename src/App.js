@@ -926,7 +926,44 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    return; // auto-pick completely disabled
+    return; // auto-pick disabled
+    // Only run after admin clicks Start Draft
+    return; // auto-draft disabled
+    if (!league?.pick_timer_start || !leagueCode) return;
+    const pickTimerStart = new Date(league.pick_timer_start);
+
+    const tick = setInterval(async () => { return; /* auto-pick disabled */
+      const now = new Date();
+      const elapsed = Math.floor((now - pickTimerStart) / 1000);
+      const timeLeft = 30 - elapsed;
+
+      if (timeLeft <= 0) {
+        // Auto-pick: fetch fresh data to avoid stale closure
+        const { data: latestOwners } = await supabase.from("owners").select("*").eq("league_code", leagueCode).order("num");
+        const ownersArr = latestOwners || [];
+        const picked = ownersArr.flatMap(o => o.teams.map(t => t.name?.toLowerCase().trim()).filter(Boolean));
+        const avail = NCAA_2026_TEAMS.filter(t => !picked.includes(t.name.toLowerCase().trim()));
+        if (!avail.length) { clearInterval(tick); return; }
+
+        const totalPks = ownersArr.reduce((sum, o) => sum + o.teams.filter(t => t.name && t.name.trim()).length, 0);
+        const nOwners = ownersArr.length;
+        if (totalPks >= nOwners * 8) { clearInterval(tick); return; }
+
+        const rd = Math.floor(totalPks / Math.max(nOwners, 1));
+        const pos = totalPks % Math.max(nOwners, 1);
+        const sorted = [...ownersArr].sort((a, b) => a.num - b.num);
+        const pickerIdx = rd % 2 === 0 ? pos : (nOwners - 1 - pos);
+        const picker = sorted[pickerIdx];
+        if (!picker) return;
+
+        const best = [...avail].sort((a, b) => (a.seed || 99) - (b.seed || 99))[0];
+        const updatedTeams = [...picker.teams];
+        const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
+        if (emptyIdx === -1) return;
+        updatedTeams[emptyIdx] = { seed: best.seed, name: best.name };
+        await supabase.from("owners").update({ teams: updatedTeams }).eq("id", picker.id);
+        await Promise.resolve() // pick_timer_start disabled.eq("code", leagueCode);
+      }
     }, 1000);
 
     return () => clearInterval(tick);
