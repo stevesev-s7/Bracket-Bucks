@@ -3219,6 +3219,9 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
         </div>
         <button onClick={saveTeams} style={{ ...S.btn(), width:"100%" }}>💾 Save Teams</button>
       </Modal>
+
+
+
         {/* How to Play modal - main app */}
         <Modal open={modal==="howToPlay"} onClose={()=>setModal(null)} title="How to Play">
           <div style={{fontSize:13,color:"#aab",lineHeight:1.8,maxHeight:"72vh",overflowY:"auto",paddingRight:4}}>
@@ -3268,8 +3271,6 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
             </div>
           </div>
         </Modal>
-
-
       <style>{`select option{background:#131929;} *{box-sizing:border-box;}`}</style>
     </div>
   );
