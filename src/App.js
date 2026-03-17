@@ -1718,7 +1718,7 @@ export default function App() {
             Code: <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040", fontWeight:700 }}>{leagueCode}</span>
           </div>
           <button onClick={()=>setTab("profile")} style={{ ...S.btn("#1a2440","#dce4f5"), border:"1px solid #2a3560", fontSize:12 }}>👤 Profile</button>
-          <button onClick={()=>setModal("howToPlay")} style={{...S.btn("#1a2440","#6677aa"),border:"1px solid #2a3560",fontSize:12}}>{"❓"} How to Play</button>
+          <button onClick={()=>setModal("howToPlay")} style={{...S.btn("#1a2440","#6677aa"),border:"1px solid #2a3560",fontSize:12}}>? How to Play</button>
           <button onClick={()=>setModal("howToPlay")} style={{...S.btn("#1a2440","#6677aa"),border:"1px solid #2a3560",fontSize:12}}>{"❓"} How to Play</button>
           <button onClick={()=>{setLeagueCode(null);setLeague(null);setOwners([]);setWins([]);}}
             style={S.btn("#1e2840","#dce4f5")}>⬅ Switch League</button>
