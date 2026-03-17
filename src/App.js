@@ -400,7 +400,6 @@ function DraftCountdownBanner({ secondsLeft }) {
   // Handle Venmo redirect back after payment
 
   React.useEffect(() => {
-    return; // auto-pick timer disabled
     setSecs(secondsLeft);
     if (secondsLeft <= 0) return;
     const t = setInterval(() => setSecs(s => Math.max(0, s - 1)), 1000);
@@ -920,19 +919,17 @@ export default function App() {
 
   // ── Draft pick timer + auto-pick ────────────────────────────────────
   useEffect(() => {
-    return; // auto-pick disabled
-    const t = setInterval(() => setTick(n => (n+1) % 1000), 1000);
+    const t = null; // disabled: setInterval(() => setTick(n => (n+1) % 1000), 1000);
     return () => clearInterval(t);
   }, []);
 
   useEffect(() => {
-    return; // auto-pick disabled
+    return; // auto-pick timer disabled
     // Only run after admin clicks Start Draft
-    return; // auto-draft disabled
     if (!league?.pick_timer_start || !leagueCode) return;
     const pickTimerStart = new Date(league.pick_timer_start);
 
-    const tick = setInterval(async () => { return; /* auto-pick disabled */
+    const tick = setInterval(async () => {
       const now = new Date();
       const elapsed = Math.floor((now - pickTimerStart) / 1000);
       const timeLeft = 30 - elapsed;
@@ -962,7 +959,7 @@ export default function App() {
         if (emptyIdx === -1) return;
         updatedTeams[emptyIdx] = { seed: best.seed, name: best.name };
         await supabase.from("owners").update({ teams: updatedTeams }).eq("id", picker.id);
-        await Promise.resolve() // pick_timer_start disabled.eq("code", leagueCode);
+        await supabase.from("leagues").update({ pick_timer_start: new Date().toISOString() }).eq("code", leagueCode);
       }
     }, 1000);
 
@@ -2242,13 +2239,11 @@ export default function App() {
 
           // ── Draft a team ───────────────────────────────────────────────
           async function draftPick(team, fromAutoPick = false) {
-            if (arguments[1] === true) return; // auto-pick disabled
             if (!currentPicker) return;
             if (!fromAutoPick && !authUser) { alert("Please sign in to draft a team."); return; }
-            if(!isAdmin&&currentPicker){var m=owners.find(function(o){return o.user_id===authUser.id;});if(!m||m.num!==currentPicker.num){alert("It's not your turn!");return;}}
             const updatedTeams = [...currentPicker.teams];
+            if(!isAdmin&&currentPicker){var m=owners.find(function(o){return o.user_id===authUser.id;});if(!m||m.num!==currentPicker.num){alert("It's not your turn!");return;}}
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
-            // Restrict to current picker or admin
             if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
             updatedTeams[emptyIdx] = { seed: team.seed, name: team.name };
             const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
@@ -2270,7 +2265,6 @@ export default function App() {
 
   // ── Start Draft ───────────────────────────────────────────────
   async function startDraft() {
-    return; // auto-draft disabled
     if (!leagueCode) return;
     const ts = new Date().toISOString();
     const { error } = await supabase.from("leagues").update({ pick_timer_start: ts }).eq("code", leagueCode);
@@ -2281,10 +2275,9 @@ export default function App() {
 
     // ── Auto-pick (highest available seed = lowest seed number) ───
           async function autoPick() {
-          return; // auto-pick disabled
             if (!available.length || !currentPicker) return;
             const best = [...available].sort((a,b)=>(a.seed||99)-(b.seed||99))[0];
-            // auto-pick disabled
+            await draftPick(best, true);
           }
 
           // ── Reset draft ────────────────────────────────────────────────
@@ -2407,7 +2400,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                     💾 Set Draft Time
                   </button>
                 {draftScheduled && isAdmin && (
-                  <button onClick={()=>{}} style={{display:"none"}} style={{...S.btn("#1a2440","#e74c3c"),padding:"10px 16px",fontSize:13}}>
+                  <button onClick={clearDraftStart} style={{...S.btn("#1a2440","#e74c3c"),padding:"10px 16px",fontSize:13}}>
                     ✕ Clear Time
                   </button>
                 )}
