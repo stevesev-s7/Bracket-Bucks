@@ -2201,6 +2201,7 @@ export default function App() {
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
             else { alert("Drafted: " + currentPicker.name + " picked " + team.name + "!"); }
           }
+  }
 
 
   // ── Start Draft ───────────────────────────────────────────────
