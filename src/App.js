@@ -915,6 +915,7 @@ export default function App() {
   }, []);
 
 
+  // ── League ops ───────────────────────────────────────────────────────────
   async function autoAddUserAsOwner(code) {
     if (!authUser) return;
     const userName = authUser.user_metadata?.name || authUser.email;
@@ -2171,9 +2172,9 @@ export default function App() {
           const draftHasStarted = draftStart ? now >= draftStart : false;
 
           // ── Draft a team ───────────────────────────────────────────────
-          async function draftPick(team) {
+          async function draftPick(team, fromAutoPick = false) {
             if (!currentPicker) return;
-            if (!authUser) { alert("Please sign in to draft a team."); return; }
+            if (!fromAutoPick && !authUser) { alert("Please sign in to draft a team."); return; }
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
             if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
@@ -2181,7 +2182,10 @@ export default function App() {
             const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
             if (error) { alert("Failed to save pick."); return; }
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
-                        alert(`Drafted: ${currentPicker.name} picked ${team.name}!`);
+            // Reset pick timer in league
+            await supabase.from("leagues").update({ pick_timer_start: new Date().toISOString() }).eq("code", leagueCode);
+            if (fromAutoPick) alert(`⏱ Auto-picked ${team.name} for ${currentPicker.name}`);
+            else alert(`✓ ${currentPicker.name} drafted ${team.name}!`);
           }
 
 
@@ -2337,8 +2341,8 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               )}
 
               {/* ── Live Draft UI ── */}
-              </div>
-            )}
+                <>
+            {/* ── Start Draft Banner ── */}
 
                   )}
 
@@ -2544,6 +2548,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                       </div>
                     </div>
                   </div>
+                </>
             </div>
           );
         })()}
