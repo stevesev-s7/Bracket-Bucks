@@ -2178,32 +2178,31 @@ export default function App() {
           const pickRound = Math.floor(totalPicks / Math.max(numOwners,1));
           const posInRound = totalPicks % Math.max(numOwners,1);
           const isEvenRound = pickRound % 2 === 0;
-          const sortedOwners = [...owners].sort((a,b) => a.num - b.num);
-          const currentPickerIdx = isEvenRound ? posInRound : (numOwners - 1 - posInRound);
-          const currentPicker = sortedOwners[currentPickerIdx] || null;
-          const draftComplete = totalPicks >= numOwners * 8 && numOwners > 0;
+  const sortedOwners = [...owners].sort((a,b) => a.num - b.num);
+  const currentPickerIdx = isEvenRound ? posInRound : (numOwners - 1 - posInRound);
+  const currentPicker = sortedOwners[currentPickerIdx] || null;
+  const draftComplete = totalPicks >= numOwners * 8 && numOwners > 0;
 
-          // ── Draft scheduled time ───────────────────────────────────────
-          const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
-          const now = new Date();
-          const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
-          const draftHasStarted = draftStart ? now >= draftStart : false;
+  // ── Draft scheduled time ───────────────────────────────────────
+  const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
+  const now = new Date();
+  const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
+  const draftHasStarted = draftStart ? now >= draftStart : false;
 
-          // ── Draft a team ───────────────────────────────────────────────
-          async function draftPick(team) {
-            if (!currentPicker) return;
-            const updatedTeams = [...currentPicker.teams];
-            const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
-            if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
-            updatedTeams[emptyIdx] = { seed: team.seed, name: team.name };
-            const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
-            if (error) { alert("Failed to save pick."); return; }
-            setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
-            else alert("Drafted: "+currentPicker.name+" picked "+team.name+"!");
-          }
+  // ── Draft a team ───────────────────────────────────────────────
+  async function draftPick(team) {
+    if (!currentPicker) return;
+    const updatedTeams = [...currentPicker.teams];
+    const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
+    if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
+    updatedTeams[emptyIdx] = { seed: team.seed, name: team.name };
+    const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
+    if (error) { alert("Failed to save pick."); return; }
+    setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
+    else alert("Drafted: "+currentPicker.name+" picked "+team.name+"!");
+  }
 
 
-  // ── Start Draft ───────────────────────────────────────────────
 
 
           // ── Reset draft ────────────────────────────────────────────────
