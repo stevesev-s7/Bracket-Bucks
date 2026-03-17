@@ -2244,7 +2244,11 @@ export default function App() {
   // ── Start Draft ───────────────────────────────────────────────
   async function startDraft() {
     if (!leagueCode) return;
-    await supabase.from("leagues").update({ pick_timer_start: new Date().toISOString() }).eq("code", leagueCode);
+    const ts = new Date().toISOString();
+    const { error } = await supabase.from("leagues").update({ pick_timer_start: ts }).eq("code", leagueCode);
+    if (error) { alert("Failed to start draft: " + error.message); return; }
+    // Also update local state immediately in case realtime is slow
+    setLeague(prev => prev ? { ...prev, pick_timer_start: ts } : prev);
   }
 
     // ── Auto-pick (highest available seed = lowest seed number) ───
