@@ -2203,7 +2203,6 @@ export default function App() {
             alert("Drafted: "+currentPicker.name+" picked "+team.name+"!");
           }
 
-  }
 
   // ── Start Draft ───────────────────────────────────────────────
 
