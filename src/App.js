@@ -2204,13 +2204,6 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                       `Round ${pickRound + 1} · Pick ${posInRound + 1} of ${numOwners} · ${available.length} teams remaining`}
                   </p>
                 </div>
-                  <div style={{background:"rgba(212,175,55,0.12)",border:"1px solid rgba(212,175,55,0.4)",borderRadius:8,padding:"10px 18px",marginTop:10,display:"flex",alignItems:"center",gap:10}}>
-                    <span style={{fontSize:18}}></span>
-                    <div>
-                      <div style={{color:"#d4af37",fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Draft Scheduled</div>
-                    </div>
-                  </div>
-                )}
                 <div style={{ display:"flex", gap:8 }}>
                   {isAdmin && <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#d4af37"), border:"1px solid #d4af37", fontSize:13, padding:"8px 16px" }}> Shuffle Order</button>}
                   <button onClick={resetDraft} style={{ ...S.btn("#1a2440","#e74c3c"), border:"1px solid #e74c3c", fontSize:12 }}>
