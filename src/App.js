@@ -547,7 +547,7 @@ function Bracket2026Tab({ owners }) {
                 const [t1,t2]=game.teams;
                 const rc=REGION_COLORS[game.region]||"#445";
                 const isTBD=game.statusDetail&&game.statusDetail.includes("TBD");
-                const dateStr=isTBD?"TBD - "+new Date(game.date).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}):game.date?new Date(game.date).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"TBD";
+                const dateStr=isTBD?"TBD":game.date?new Date(game.date).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"TBD";
                 return (
                   <div key={game.id} style={{background:"#0d1528",border:"1px solid #1e2d4a",borderRadius:10,padding:"12px 16px",
                     borderLeft:"3px solid "+rc}}>
