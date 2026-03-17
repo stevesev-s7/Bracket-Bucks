@@ -1760,6 +1760,7 @@ export default function App() {
             Code: <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040", fontWeight:700 }}>{leagueCode}</span>
           </div>
           <button onClick={()=>setTab("profile")} style={{ ...S.btn("#1a2440","#dce4f5"), border:"1px solid #2a3560", fontSize:12 }}>👤 Profile</button>
+          <button onClick={()=>setModal("howToPlay")} style={{...S.btn("#1a2440","#6677aa"),border:"1px solid #2a3560",fontSize:12}}>❓ How to Play</button>
           <button onClick={()=>{setLeagueCode(null);setLeague(null);setOwners([]);setWins([]);}}
             style={S.btn("#1e2840","#dce4f5")}>⬅ Switch League</button>
           {league && <button onClick={()=>setModal("addWin")} style={S.btn()}>＋ Record Win</button>}
@@ -3261,3 +3262,82 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
   );
 }
 // build: 1773441631501
+        {/* How to Play modal */}
+        <Modal open={modal==="howToPlay"} onClose={()=>setModal(null)} title="❓ How to Play — Bracket Bucks">
+          <div style={{fontSize:13,color:"#aab",lineHeight:1.8,maxHeight:"70vh",overflowY:"auto",paddingRight:4}}>
+
+            <p style={{margin:"0 0 16px",color:"#dce4f5",fontSize:15,fontWeight:600}}>
+              Welcome to Bracket Bucks — the March Madness Upset Pool! 🏀
+            </p>
+
+            {/* Overview */}
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:14}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>📖 Overview</div>
+              <p style={{margin:"0 0 8px"}}>Bracket Bucks is a <strong style={{color:"#fff"}}>snake draft pool</strong> where each player drafts <strong style={{color:"#f0c040"}}>8 NCAA tournament teams</strong> before the tournament starts. Instead of picking a bracket, you own teams — and every time your team wins a game, the other players pay you based on the seed and round.</p>
+              <p style={{margin:0}}>The higher the seed number (bigger the upset), the more money you collect. A 16-seed Cinderella run is worth a fortune!</p>
+            </div>
+
+            {/* How the Draft Works */}
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:14}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>🎯 How the Draft Works</div>
+              <p style={{margin:"0 0 8px"}}>The league admin sets a draft time. When it arrives, the <strong style={{color:"#fff"}}>snake draft</strong> begins:</p>
+              <div style={{paddingLeft:12,borderLeft:"2px solid #2a3560"}}>
+                <p style={{margin:"0 0 6px"}}>• <strong style={{color:"#dce4f5"}}>Snake order</strong> means owner 1 picks first in Round 1, owner 8 picks last — then owner 8 picks first in Round 2, owner 1 picks last (the order reverses each round).</p>
+                <p style={{margin:"0 0 6px"}}>• Each owner picks <strong style={{color:"#f0c040"}}>8 teams</strong> across 8 rounds.</p>
+                <p style={{margin:"0 0 6px"}}>• You have <strong style={{color:"#f0c040"}}>30 seconds</strong> to make each pick. If time runs out, the best available team is auto-selected for you.</p>
+                <p style={{margin:0}}>• The draft order can be shuffled randomly by the admin before drafting begins.</p>
+              </div>
+            </div>
+
+            {/* Play-In Games */}
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:14}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>🗓️ Play-In (First Four) Games</div>
+              <p style={{margin:"0 0 8px"}}>Four teams in the draft are involved in <strong style={{color:"#fff"}}>First Four play-in games</strong> before the main tournament. These teams appear as a pair in the draft list (e.g. <em style={{color:"#f0c040"}}>SMU / 11 Miami (OH)</em>) until a winner is decided.</p>
+              <p style={{margin:0,color:"#8899cc",fontSize:12}}>If you draft one of these teams and they win the play-in game, they advance and you continue earning from their tournament wins.</p>
+            </div>
+
+            {/* Payout System */}
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:14}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>💰 How Payouts Work</div>
+              <p style={{margin:"0 0 10px"}}>Each time your team wins a game, <strong style={{color:"#fff"}}>every other owner pays you:</strong></p>
+              <div style={{fontFamily:"'DM Mono',monospace",background:"#131929",borderRadius:8,padding:"10px 14px",fontSize:13,color:"#2ecc71",marginBottom:10}}>
+                Seed # × Round Multiplier = $ per player
+              </div>
+              <p style={{margin:"0 0 10px",color:"#8899cc",fontSize:12}}>So a <strong style={{color:"#fff"}}>#12 seed</strong> winning in the Sweet 16 pays more than a <strong style={{color:"#fff"}}>#1 seed</strong> winning in Round 1 — upsets are rewarded!</p>
+              <div style={{fontWeight:700,color:"#dce4f5",marginBottom:6,fontSize:12}}>Round Multipliers:</div>
+              {DEFAULT_ROUNDS.map(r=>(
+                <div key={r.id} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #1a2440",fontSize:13}}>
+                  <span style={{color:"#dce4f5"}}>{r.label}</span>
+                  <span style={{fontFamily:"'DM Mono',monospace",color:"#f0c040"}}>${r.dmg.toFixed(2)} × seed</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Example */}
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:14}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>📊 Example Payout</div>
+              <p style={{margin:"0 0 6px"}}>Your team: <strong style={{color:"#fff"}}>#10 seed Gonzaga</strong> wins in the Sweet 16</p>
+              <p style={{margin:"0 0 6px"}}>Formula: <strong style={{color:"#2ecc71"}}>10 × $1.50 = $15.00 per other owner</strong></p>
+              <p style={{margin:"0 0 6px",color:"#8899cc",fontSize:12}}>With 8 owners in the league, you collect <strong style={{color:"#2ecc71"}}>$105.00 total</strong> (7 other owners × $15)</p>
+              <p style={{margin:0,color:"#8899cc",fontSize:12}}>Each other owner owes you $15 — paid out however your group settles up (Venmo, cash, etc.)</p>
+            </div>
+
+            {/* Leaderboard */}
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:14}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>🏆 Leaderboard & Tracking</div>
+              <p style={{margin:"0 0 8px"}}>The <strong style={{color:"#dce4f5"}}>Leaderboard</strong> tab tracks everyone's net position in real time — showing who is up money and who is down. Wins are automatically recorded as ESPN updates game results.</p>
+              <p style={{margin:"0 0 8px"}}>The <strong style={{color:"#dce4f5"}}>Rosters</strong> tab shows each owner's 8 teams. Teams that have been eliminated appear with a strikethrough and red "OUT" badge.</p>
+              <p style={{margin:0}}>The <strong style={{color:"#dce4f5"}}>Win Tracker</strong> tab shows a detailed log of all recorded wins and the dollar amounts owed.</p>
+            </div>
+
+            {/* Tips */}
+            <div style={{background:"#0a1a2e",border:"1px solid #1e3a5a",borderRadius:10,padding:"14px 16px",marginBottom:4}}>
+              <div style={{fontWeight:700,color:"#3498db",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>💡 Strategy Tips</div>
+              <p style={{margin:"0 0 6px"}}>• <strong style={{color:"#dce4f5"}}>High seeds = more money</strong> but less likely to win deep. Balance your roster.</p>
+              <p style={{margin:"0 0 6px"}}>• <strong style={{color:"#dce4f5"}}>Pick a mix</strong> of strong low seeds (1s, 2s) who go deep + high seeds (10s-12s) who can pull off upsets.</p>
+              <p style={{margin:"0 0 6px"}}>• <strong style={{color:"#dce4f5"}}>The Championship</strong> multiplier is 3× — a #5 seed winning it all pays $15/owner per round win!</p>
+              <p style={{margin:0}}>• <strong style={{color:"#dce4f5"}}>Watch the bracket</strong> — check the 2026 Bracket tab for live scores and updated game times.</p>
+            </div>
+
+          </div>
+        </Modal>
