@@ -2232,12 +2232,7 @@ export default function App() {
     // setLeague pick_timer_start update removed
   }
 
-    // ── Auto-pick (highest available seed = lowest seed number) ───
-          async function autoPick() {
-            if (!available.length || !currentPicker) return;
-            const best = [...available].sort((a,b)=>(a.seed||99)-(b.seed||99))[0];
-            await draftPick(best, true);
-          }
+    
 
           // ── Reset draft ────────────────────────────────────────────────
           async function shuffleDraftOrder() {
@@ -2502,7 +2497,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                                     border:`1px solid ${regionColors[region]}44`,
                                     borderRadius:8, padding:"8px 10px", cursor:"pointer",
                                     fontFamily:"inherit", textAlign:"left",
-                                    opacity: (draftComplete || !league?.pick_timer_start) ? 0.45 : 1, cursor: !league?.pick_timer_start ? "not-allowed" : "pointer" }}
+                                    opacity: (draftComplete || !league?.pick_timer_start) ? 0.45 : 1, cursor: "pointer" }}
                                   onMouseEnter={e => { e.currentTarget.style.background="#1a2e1a"; e.currentTarget.style.borderColor=regionColors[region]; }}
                                   onMouseLeave={e => { e.currentTarget.style.background="#0f1625"; e.currentTarget.style.borderColor=regionColors[region]+"44"; }}>
                                   <SeedBadge seed={team.seed} />
