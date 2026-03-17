@@ -1,3 +1,4 @@
+                <>
 // v1773761975366
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
@@ -2968,3 +2969,4 @@ export default function App() {
   );
 }
 // build: 1773441631501
+                </>
