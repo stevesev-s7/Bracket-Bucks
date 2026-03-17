@@ -804,8 +804,10 @@ export default function App() {
 
   // Draft state
   const [draftScheduled, setDraftScheduled] = useState(null); // ISO string from league.draft_start
+  const [tick, setTick] = useState(0);
   const [draftStartInput, setDraftStartInput] = useState("");
   const [draftCountdown, setDraftCountdown] = useState(null); // seconds until draft starts
+  const [pickTimer, setPickTimer]         = useState(15);    // seconds left for current pick
   const [draftLive, setDraftLive]         = useState(false);
 
   function alert(msg, type="success") {
@@ -916,7 +918,53 @@ export default function App() {
 
 
   // ── Draft pick timer + auto-pick ────────────────────────────────────
+  useEffect(() => {
+    const t = setInterval(() => setTick(n => (n+1) % 1000), 1000);
+    return () => clearInterval(t);
+  }, []);
 
+  useEffect(() => {
+    // Only run after admin clicks Start Draft
+    return; // auto-draft disabled
+    if (!league?.pick_timer_start || !leagueCode) return;
+    const pickTimerStart = new Date(league.pick_timer_start);
+
+    const tick = setInterval(async () => {
+      const now = new Date();
+      const elapsed = Math.floor((now - pickTimerStart) / 1000);
+      const timeLeft = 30 - elapsed;
+
+      if (timeLeft <= 0) {
+        // Auto-pick: fetch fresh data to avoid stale closure
+        const { data: latestOwners } = await supabase.from("owners").select("*").eq("league_code", leagueCode).order("num");
+        const ownersArr = latestOwners || [];
+        const picked = ownersArr.flatMap(o => o.teams.map(t => t.name?.toLowerCase().trim()).filter(Boolean));
+        const avail = NCAA_2026_TEAMS.filter(t => !picked.includes(t.name.toLowerCase().trim()));
+        if (!avail.length) { clearInterval(tick); return; }
+
+        const totalPks = ownersArr.reduce((sum, o) => sum + o.teams.filter(t => t.name && t.name.trim()).length, 0);
+        const nOwners = ownersArr.length;
+        if (totalPks >= nOwners * 8) { clearInterval(tick); return; }
+
+        const rd = Math.floor(totalPks / Math.max(nOwners, 1));
+        const pos = totalPks % Math.max(nOwners, 1);
+        const sorted = [...ownersArr].sort((a, b) => a.num - b.num);
+        const pickerIdx = rd % 2 === 0 ? pos : (nOwners - 1 - pos);
+        const picker = sorted[pickerIdx];
+        if (!picker) return;
+
+        const best = [...avail].sort((a, b) => (a.seed || 99) - (b.seed || 99))[0];
+        const updatedTeams = [...picker.teams];
+        const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
+        if (emptyIdx === -1) return;
+        updatedTeams[emptyIdx] = { seed: best.seed, name: best.name };
+        await supabase.from("owners").update({ teams: updatedTeams }).eq("id", picker.id);
+        await supabase.from("leagues").update({ pick_timer_start: new Date().toISOString() }).eq("code", leagueCode);
+      }
+    }, 1000);
+
+    return () => clearInterval(tick);
+  }, [league?.pick_timer_start, leagueCode]);
 
 
   // ── Real-time subscription ───────────────────────────────────────────────
@@ -2185,13 +2233,14 @@ export default function App() {
 
           // ── Draft scheduled time ───────────────────────────────────────
           const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
-          const now = new Date();
+          const now = new Date(); void tick; // tick forces re-render every second
           const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
           const draftHasStarted = draftStart ? now >= draftStart : false;
 
           // ── Draft a team ───────────────────────────────────────────────
-          async function draftPick(team) {
+          async function draftPick(team, fromAutoPick = false) {
             if (!currentPicker) return;
+            if (!fromAutoPick && !authUser) { alert("Please sign in to draft a team."); return; }
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
             if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
@@ -2199,44 +2248,84 @@ export default function App() {
             const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
             if (error) { alert("Failed to save pick."); return; }
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
-            else alert("Drafted: "+currentPicker.name+" picked "+team.name+"!");
+            // Reset pick timer in league
+            await supabase.from("leagues").update({ pick_timer_start: new Date().toISOString() }).eq("code", leagueCode);
+            if (fromAutoPick) alert(`⏱ Auto-picked ${team.name} for ${currentPicker.name}`);
+            else alert(`✓ ${currentPicker.name} drafted ${team.name}!`);
           }
 
+          async function clearDraftStart() {
+    if (!window.confirm("Clear the scheduled draft time?")) return;
+    await supabase.from("leagues").update({ draft_start: null }).eq("code", leagueCode);
+    setDraftScheduled(null);
+    setDraftStartInput("");
+    alert("Draft time cleared.");
+  }
 
+  // ── Start Draft ───────────────────────────────────────────────
+  async function startDraft() {
+    if (!leagueCode) return;
+    const ts = new Date().toISOString();
+    const { error } = await supabase.from("leagues").update({ pick_timer_start: ts }).eq("code", leagueCode);
+    if (error) { alert("Failed to start draft: " + error.message); return; }
+    // Also update local state immediately in case realtime is slow
+    setLeague(prev => prev ? { ...prev, pick_timer_start: ts } : prev);
+  }
 
+    // ── Auto-pick (highest available seed = lowest seed number) ───
+          async function autoPick() {
+            if (!available.length || !currentPicker) return;
+            const best = [...available].sort((a,b)=>(a.seed||99)-(b.seed||99))[0];
+            await draftPick(best, true);
+          }
+
+          // ── Reset draft ────────────────────────────────────────────────
+          async function shuffleDraftOrder() {
+    if (!window.confirm("Randomly shuffle the draft order for all owners?")) return;
+    const shuffled = [...owners];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    await Promise.all(shuffled.map((o, idx) =>
+      supabase.from("owners").update({ num: idx + 1 }).eq("id", o.id)
+    ));
+    setOwners(shuffled.map((o, i) => ({ ...o, num: i + 1 })));
+    alert("Draft order shuffled! New order: " + shuffled.map(o=>o.name).join(", "));
+  }
 
   async function resetDraft() {
-    if (!adminUnlocked) { setModal("pin"); return; }
-    const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
-    for (const o of owners) {
-      await supabase.from("owners").update({ teams: blank }).eq("id", o.id);
-    }
-    setOwners(prev => prev.map(o => ({ ...o, teams: blank })));
-    alert("Draft reset! All picks cleared.");
-  }
+            if (!adminUnlocked) { setModal("pin"); return; }
+            const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
+            for (const o of owners) {
+              await supabase.from("owners").update({ teams: blank }).eq("id", o.id);
+            }
+            setOwners(prev => prev.map(o => ({ ...o, teams: blank })));
+            alert("Draft reset! All picks cleared.");
+          }
 
           // ── Save draft start time ──────────────────────────────────────
-  async function saveDraftStart() {
-    if (!draftStartInput) { alert("Please select a date and time first."); return; }
-    // Treat the input as CST (America/Chicago)
-const cstDate = new Date(draftStartInput + ":00");
-// Get the UTC offset for America/Chicago at that moment
-const cstFormatter = new Intl.DateTimeFormat("en-US", {
-  timeZone: "America/Chicago", hour: "numeric", timeZoneName: "short"
-});
-const parts = cstFormatter.formatToParts(cstDate);
-const tzName = (parts.find(p=>p.type==="timeZoneName")||{}).value||"CST";
-const offset = tzName.includes("CDT") ? "-05:00" : "-06:00";
-const pd = new Date(draftStartInput + ":00" + offset);
-    if (isNaN(pd.getTime())) { alert("Invalid date/time."); return; }
-    supabase.from("leagues").update({ draft_start: pd.toISOString() }).eq("code", leagueCode)
-      .then(({ error }) => {
-        if (error) { alert("Save error: " + error.message); return; }
-        setDraftStartInput(pd.toISOString());
-        setDraftScheduled(pd.toISOString());
-        alert("Draft time saved!");
-      }).catch(e => alert("Error: " + e.message));
-  }
+          async function saveDraftStart() {
+            if (!draftStartInput) { alert("Please select a date and time first."); return; }
+            // Treat the input as CST (America/Chicago)
+        const cstDate = new Date(draftStartInput + ":00");
+        // Get the UTC offset for America/Chicago at that moment
+        const cstFormatter = new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Chicago", hour: "numeric", timeZoneName: "short"
+        });
+        const parts = cstFormatter.formatToParts(cstDate);
+        const tzName = (parts.find(p=>p.type==="timeZoneName")||{}).value||"CST";
+        const offset = tzName.includes("CDT") ? "-05:00" : "-06:00";
+        const pd = new Date(draftStartInput + ":00" + offset);
+            if (isNaN(pd.getTime())) { alert("Invalid date/time."); return; }
+            supabase.from("leagues").update({ draft_start: pd.toISOString() }).eq("code", leagueCode)
+              .then(({ error }) => {
+                if (error) { alert("Save error: " + error.message); return; }
+                setDraftStartInput(pd.toISOString());
+                setDraftScheduled(pd.toISOString());
+                alert("Draft time saved!");
+              }).catch(e => alert("Error: " + e.message));
+          }
 
           
   // ── Timezone-aware date formatting ─────────────────────────────────────
@@ -2310,6 +2399,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                     💾 Set Draft Time
                   </button>
                 {draftScheduled && isAdmin && (
+                  <button onClick={()=>{}} style={{display:"none"}} style={{...S.btn("#1a2440","#e74c3c"),padding:"10px 16px",fontSize:13}}>
                     ✕ Clear Time
                   </button>
                 )}
@@ -2354,6 +2444,22 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               {/* ── Live Draft UI ── */}
                 <>
             {/* ── Start Draft Banner ── */}
+            {false && (
+              <div style={{ textAlign:"center", padding:"20px 24px", background:"#0f1420",
+                border:"2px solid #d4af37", borderRadius:12, marginBottom:16 }}>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, letterSpacing:3,
+                  color:"#d4af37", marginBottom:10 }}>🏀 DRAFT TIME — SELECT YOUR TEAMS BELOW</div>
+                {authUser ? (
+                  <button onClick={startDraft} style={{
+                    background:"#d4af37", color:"#1a1a2e", border:"none", borderRadius:8,
+                    padding:"12px 40px", fontSize:16, fontWeight:900, cursor:"pointer",
+                    fontFamily:"'Bebas Neue',sans-serif", letterSpacing:2
+                  }}>🚀 START DRAFT — BEGIN 30s TIMER</button>
+                ) : (
+                  <div style={{ color:"#f0c040", fontSize:13 }}>Sign in to start the draft.</div>
+                )}
+              </div>
+            )}
 
                   )}
 
@@ -2448,13 +2554,14 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                             </div>
                             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                               {regionTeams.map(team => (
+                                <button key={team.region+team.seed} onClick={()=>{ if(!league?.pick_timer_start){alert("The admin hasn't started the draft yet!");return;} draftPick(team); }}
                                   disabled={draftComplete || !currentPicker || (!draftHasStarted && !!draftStart)}
                                   style={{ display:"flex", alignItems:"center", gap:8,
                                     background:"#0f1625",
                                     border:`1px solid ${regionColors[region]}44`,
                                     borderRadius:8, padding:"8px 10px", cursor:"pointer",
                                     fontFamily:"inherit", textAlign:"left",
-                                    opacity: draftComplete ? 0.45 : 1 }}
+                                    opacity: (draftComplete || !league?.pick_timer_start) ? 0.45 : 1, cursor: !league?.pick_timer_start ? "not-allowed" : "pointer" }}
                                   onMouseEnter={e => { e.currentTarget.style.background="#1a2e1a"; e.currentTarget.style.borderColor=regionColors[region]; }}
                                   onMouseLeave={e => { e.currentTarget.style.background="#0f1625"; e.currentTarget.style.borderColor=regionColors[region]+"44"; }}>
                                   <SeedBadge seed={team.seed} />
