@@ -917,31 +917,22 @@ export default function App() {
   }, []);
 
 
-  // ── Draft pick timer + auto-pick ────────────────────────────────────────
-  // ── 1s clock ─────────────────────────────────────────────────────
+  // ── Draft pick timer + auto-pick ────────────────────────────────────
   useEffect(() => {
-    const t = setInterval(() => setClockMs(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  useEffect(() => {
-    if (!league?.draft_start || !leagueCode) return;
-    if (!league?.pick_timer_start) return; // wait for manual Start Draft
-    const draftStart = new Date(draftScheduled);
+    // Only run after admin clicks Start Draft
+    if (!league?.pick_timer_start || !leagueCode) return;
+    const pickTimerStart = new Date(league.pick_timer_start);
 
     const tick = setInterval(async () => {
       const now = new Date();
-      if (now < draftStart) return; // draft hasn't started
-
-      const pickTimerStart = league?.pick_timer_start ? new Date(league.pick_timer_start) : null;
-      const elapsed = pickTimerStart ? Math.floor((now - pickTimerStart) / 1000) : 0;
+      const elapsed = Math.floor((now - pickTimerStart) / 1000);
       const timeLeft = 30 - elapsed;
 
       if (timeLeft <= 0) {
-        // Auto-pick: find current picker and best available team
-        const latestOwners = await supabase.from("owners").select("*").eq("league_code", leagueCode).order("num");
-        const ownersArr = latestOwners.data || [];
-        const picked = ownersArr.flatMap(o => o.teams.map(t => (t.name||"").toLowerCase().trim()));
+        // Auto-pick: fetch fresh data to avoid stale closure
+        const { data: latestOwners } = await supabase.from("owners").select("*").eq("league_code", leagueCode).order("num");
+        const ownersArr = latestOwners || [];
+        const picked = ownersArr.flatMap(o => o.teams.map(t => t.name?.toLowerCase().trim()).filter(Boolean));
         const avail = NCAA_2026_TEAMS.filter(t => !picked.includes(t.name.toLowerCase().trim()));
         if (!avail.length) { clearInterval(tick); return; }
 
@@ -949,14 +940,14 @@ export default function App() {
         const nOwners = ownersArr.length;
         if (totalPks >= nOwners * 8) { clearInterval(tick); return; }
 
-        const rd = Math.floor(totalPks / Math.max(nOwners,1));
-        const pos = totalPks % Math.max(nOwners,1);
-        const sorted = [...ownersArr].sort((a,b) => a.num - b.num);
+        const rd = Math.floor(totalPks / Math.max(nOwners, 1));
+        const pos = totalPks % Math.max(nOwners, 1);
+        const sorted = [...ownersArr].sort((a, b) => a.num - b.num);
         const pickerIdx = rd % 2 === 0 ? pos : (nOwners - 1 - pos);
         const picker = sorted[pickerIdx];
         if (!picker) return;
 
-        const best = [...avail].sort((a,b)=>(a.seed||99)-(b.seed||99))[0];
+        const best = [...avail].sort((a, b) => (a.seed || 99) - (b.seed || 99))[0];
         const updatedTeams = [...picker.teams];
         const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
         if (emptyIdx === -1) return;
@@ -967,7 +958,8 @@ export default function App() {
     }, 1000);
 
     return () => clearInterval(tick);
-  }, [league?.draft_start, league?.pick_timer_start, leagueCode]);
+  }, [league?.pick_timer_start, leagueCode]);
+
 
   // ── Real-time subscription ───────────────────────────────────────────────
   useEffect(() => {
