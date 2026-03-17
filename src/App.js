@@ -2280,7 +2280,7 @@ export default function App() {
           return; // auto-pick disabled
             if (!available.length || !currentPicker) return;
             const best = [...available].sort((a,b)=>(a.seed||99)-(b.seed||99))[0];
-            await draftPick(best, true);
+            // auto-pick disabled
           }
 
           // ── Reset draft ────────────────────────────────────────────────
