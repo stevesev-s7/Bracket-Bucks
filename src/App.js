@@ -1,5 +1,6 @@
 // v1773286522751
-import React, { useState, useEffect, useCallback } from "react";
+i  const [now, setNow] = useState(Date.now());
+mport React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 const _APP_BUILD = "1773204216116";
 
@@ -916,7 +917,13 @@ export default function App() {
   }, []);
 
 
-  // ── Draft pick timer + auto-pick ────────────────────────────────────────
+  // ── 1-second clock to re-render and flip draftHasStarted on time
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+    // ── Draft pick timer + auto-pick ────────────────────────────────────────
   useEffect(() => {
     if (!league?.draft_start || !leagueCode) return;
     const draftStart = new Date(draftScheduled);
@@ -2212,9 +2219,9 @@ export default function App() {
 
           // ── Draft scheduled time ───────────────────────────────────────
           const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
-          const now = new Date();
-          const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
-          const draftHasStarted = draftStart ? now >= draftStart : false;
+          const nowDate = new Date(now);
+          const secondsUntilDraft = draftStart ? Math.ceil((draftStart - nowDate) / 1000) : null;
+          const draftHasStarted = draftStart ? nowDate >= draftStart : false;
 
           // ── Draft a team ───────────────────────────────────────────────
           async function draftPick(team, fromAutoPick = false) {
