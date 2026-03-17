@@ -436,11 +436,12 @@ function Bracket2026Tab({ owners }) {
   const [games, setGames] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
+  const [lastUpdated, setLastUpdated] = React.useState(null);
   const [activeRegion, setActiveRegion] = React.useState("All");
 
   const REGION_COLORS = { South:"#e74c3c", East:"#3498db", West:"#2ecc71", Midwest:"#f39c12" };
 
-  React.useEffect(() => {
+  const load = React.useCallback(() => {
     fetch("https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=100&dates=20260317-20260407")
       .then(r => r.json())
       .then(d => {
@@ -483,8 +484,16 @@ function Bracket2026Tab({ owners }) {
         });
         setGames(mapped);
         setLoading(false);
+        setLastUpdated(new Date());
       })
       .catch(e => { setError("Failed to load bracket data"); setLoading(false); });
+  };
+
+  React.useEffect(() => {
+    load();
+    // Re-fetch every 60 seconds during tournament so times/scores update automatically
+    const interval = setInterval(load, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   const findOwner = (teamName) => {
@@ -517,7 +526,7 @@ function Bracket2026Tab({ owners }) {
     <div>
       <div style={{marginBottom:20}}>
         <h2 style={{margin:"0 0 4px",fontFamily:"'Bebas Neue',sans-serif",fontSize:28,letterSpacing:1}}>2026 NCAA Tournament Bracket</h2>
-        <p style={{color:"#6677aa",fontSize:13,margin:0}}>Live data via ESPN · {games.length} games total</p>
+        <p style={{color:"#6677aa",fontSize:13,margin:0}}>Live data via ESPN · {games.length} games · {lastUpdated?"Updated "+lastUpdated.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}):"Loading..."} 🔄</p>
       </div>
 
       {/* Region filter */}
