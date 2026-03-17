@@ -2205,12 +2205,6 @@ export default function App() {
 
   // ── Start Draft ───────────────────────────────────────────────
 
-    // ── Auto-pick (highest available seed = lowest seed number) ───
-          async function autoPick() {
-            if (!available.length || !currentPicker) return;
-            const best = [...available].sort((a,b)=>(a.seed||99)-(b.seed||99))[0];
-            await draftPick(best, true);
-          }
 
           // ── Reset draft ────────────────────────────────────────────────
           async function shuffleDraftOrder() {
