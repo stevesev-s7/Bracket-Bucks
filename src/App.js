@@ -3219,6 +3219,56 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
         </div>
         <button onClick={saveTeams} style={{ ...S.btn(), width:"100%" }}>💾 Save Teams</button>
       </Modal>
+        {/* How to Play modal - main app */}
+        <Modal open={modal==="howToPlay"} onClose={()=>setModal(null)} title="How to Play">
+          <div style={{fontSize:13,color:"#aab",lineHeight:1.8,maxHeight:"72vh",overflowY:"auto",paddingRight:4}}>
+            <p style={{margin:"0 0 14px",color:"#dce4f5",fontSize:15,fontWeight:600}}>Welcome to Bracket Bucks - the March Madness Upset Pool!</p>
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>OVERVIEW</div>
+              <p style={{margin:"0 0 8px"}}>Bracket Bucks is a <strong style={{color:"#fff"}}>snake draft pool</strong> where each player drafts <strong style={{color:"#f0c040"}}>8 NCAA tournament teams</strong>. Every time your team wins, the other owners pay you based on the seed and round.</p>
+              <p style={{margin:0}}>Higher seed = bigger upset = more money. A 16-seed Cinderella run is worth a fortune!</p>
+            </div>
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>HOW THE DRAFT WORKS</div>
+              <p style={{margin:"0 0 8px"}}>The admin sets a draft time. When it arrives, the <strong style={{color:"#fff"}}>snake draft</strong> begins. Owner 1 picks first in Round 1, then the order reverses each round.</p>
+              <p style={{margin:"0 0 6px"}}>Each owner picks <strong style={{color:"#f0c040"}}>8 teams</strong> total. You have <strong style={{color:"#f0c040"}}>30 seconds</strong> per pick. Time up means the best available team is auto-selected.</p>
+              <p style={{margin:0}}>The admin can shuffle the draft order randomly before the draft begins.</p>
+            </div>
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>FIRST FOUR PLAY-IN GAMES</div>
+              <p style={{margin:0}}>Four teams play in the <strong style={{color:"#fff"}}>First Four</strong> before the main bracket. They appear as a pair in the draft list (e.g. SMU / 11 Miami OH) until a winner is decided. If your team wins, they advance and keep earning wins.</p>
+            </div>
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>HOW PAYOUTS WORK</div>
+              <p style={{margin:"0 0 10px"}}>Each time your team wins, every other owner pays you: <strong style={{color:"#2ecc71"}}>Seed # x Round Multiplier = $ per player</strong></p>
+              {DEFAULT_ROUNDS.map(function(rnd){return (
+                <div key={rnd.id} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #1a2440",fontSize:13}}>
+                  <span style={{color:"#dce4f5"}}>{rnd.label}</span>
+                  <span style={{color:"#f0c040"}}>${rnd.dmg.toFixed(2)} x seed</span>
+                </div>
+              );})}
+            </div>
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>EXAMPLE PAYOUT</div>
+              <p style={{margin:"0 0 6px"}}>#10 seed Gonzaga wins in the Sweet 16 with 8 owners:</p>
+              <p style={{margin:"0 0 4px",color:"#2ecc71",fontWeight:700}}>10 x $1.50 = $15.00 per owner = $105.00 total collected</p>
+              <p style={{margin:0,color:"#8899cc",fontSize:12}}>Each other owner owes you $15, settled however your group prefers.</p>
+            </div>
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>TABS GUIDE</div>
+              <p style={{margin:"0 0 6px"}}><strong style={{color:"#dce4f5"}}>Leaderboard</strong> - live net standings, auto-updated from ESPN within 60 seconds of each game ending.</p>
+              <p style={{margin:"0 0 6px"}}><strong style={{color:"#dce4f5"}}>Rosters</strong> - each owner's 8 teams. Eliminated teams show with strikethrough and a red OUT badge.</p>
+              <p style={{margin:0}}><strong style={{color:"#dce4f5"}}>Win Tracker</strong> - detailed log of all wins and dollar amounts owed.</p>
+            </div>
+            <div style={{background:"#0a1a2e",border:"1px solid #1e3a5a",borderRadius:10,padding:"14px 16px"}}>
+              <div style={{fontWeight:700,color:"#3498db",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>STRATEGY TIPS</div>
+              <p style={{margin:"0 0 6px"}}><strong style={{color:"#dce4f5"}}>High seeds earn more</strong> but go out earlier. Balance your 8 picks.</p>
+              <p style={{margin:"0 0 6px"}}><strong style={{color:"#dce4f5"}}>Mix strong low seeds</strong> (1s and 2s) with high seeds (10s-12s) who can upset.</p>
+              <p style={{margin:0}}><strong style={{color:"#dce4f5"}}>Championship pays 3x</strong> - a 5-seed winning it all pays $15 per owner per win!</p>
+            </div>
+          </div>
+        </Modal>
+
 
       <style>{`select option{background:#131929;} *{box-sizing:border-box;}`}</style>
     </div>
