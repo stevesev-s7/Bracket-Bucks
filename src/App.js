@@ -2439,14 +2439,14 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                 border:"2px solid #d4af37", borderRadius:12, marginBottom:16 }}>
                 <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, letterSpacing:3,
                   color:"#d4af37", marginBottom:10 }}>🏀 DRAFT TIME — SELECT YOUR TEAMS BELOW</div>
-                {isAdmin ? (
+                {authUser ? (
                   <button onClick={startDraft} style={{
                     background:"#d4af37", color:"#1a1a2e", border:"none", borderRadius:8,
                     padding:"12px 40px", fontSize:16, fontWeight:900, cursor:"pointer",
                     fontFamily:"'Bebas Neue',sans-serif", letterSpacing:2
                   }}>🚀 START DRAFT — BEGIN 30s TIMER</button>
                 ) : (
-                  <div style={{ color:"#f0c040", fontSize:13 }}>Waiting for admin to start the draft...</div>
+                  <div style={{ color:"#f0c040", fontSize:13 }}>Sign in to start the draft.</div>
                 )}
               </div>
             )}
