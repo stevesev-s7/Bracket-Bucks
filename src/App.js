@@ -2425,7 +2425,6 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               )}
 
               {/* ── Live Draft UI ── */}
-              {draftHasStarted && (
                 <>
             {/* ── Start Draft Banner ── */}
             {!league?.pick_timer_start && (
@@ -2650,7 +2649,6 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                     </div>
                   </div>
                 </>
-              )}
             </div>
           );
         })()}
