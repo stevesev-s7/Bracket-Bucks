@@ -2239,6 +2239,7 @@ export default function App() {
 
           // ── Draft a team ───────────────────────────────────────────────
           async function draftPick(team, fromAutoPick = false) {
+            if (arguments[1] === true) return; // auto-pick disabled
             if (!currentPicker) return;
             if (!fromAutoPick && !authUser) { alert("Please sign in to draft a team."); return; }
             if(!isAdmin&&currentPicker){var m=owners.find(function(o){return o.user_id===authUser.id;});if(!m||m.num!==currentPicker.num){alert("It's not your turn!");return;}}
