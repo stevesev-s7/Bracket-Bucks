@@ -914,9 +914,6 @@ export default function App() {
   }, []);
 
 
-  // ── Draft pick timer + auto-pick ────────────────────────────────────
-  useEffect(() => {
-  }, []);
 
   useEffect(() => {
 
