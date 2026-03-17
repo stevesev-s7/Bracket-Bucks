@@ -400,6 +400,7 @@ function DraftCountdownBanner({ secondsLeft }) {
   // Handle Venmo redirect back after payment
 
   React.useEffect(() => {
+    return; // auto-pick timer disabled
     setSecs(secondsLeft);
     if (secondsLeft <= 0) return;
     const t = setInterval(() => setSecs(s => Math.max(0, s - 1)), 1000);
