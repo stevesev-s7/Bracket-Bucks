@@ -18,6 +18,17 @@ const DEFAULT_ROUNDS = [
   { id: 5, label: "Championship", short: "NCG", dmg: 3.00 },
 ];
 
+// ── ESPN round name → round_id mapping ─────────────────────────────────────
+const ESPN_ROUND_MAP = {
+  "1st Round":           0,
+  "2nd Round":           1,
+  "Sweet 16":            2,
+  "Elite 8":             3,
+  "Final Four":          4,
+  "National Championship": 5,
+};
+
+
 
 // ── 2026 NCAA Tournament Teams (editable each Selection Sunday) ──────────
 const NCAA_2026_TEAMS = [
@@ -803,6 +814,7 @@ export default function App() {
   const [bracketStatus, setBracketStatus] = useState("idle");
 
   // Draft state
+  const [espnEliminated, setEspnEliminated] = useState(new Set());
   const [draftScheduled, setDraftScheduled] = useState(null); // ISO string from league.draft_start
   const [tick, setTick] = useState(0);
   const [draftStartInput, setDraftStartInput] = useState("");
@@ -979,6 +991,45 @@ export default function App() {
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [leagueCode]);
+
+  // ── Auto-sync wins from ESPN API ────────────────────────────────────────────
+  useEffect(() => {
+    if (!leagueCode || !owners.length) return;
+    const syncWins = async () => {
+      try {
+        const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=100&dates=20260317-20260407");
+        const d = await r.json();
+        const completed = (d.events||[]).filter(ev => ev.competitions[0].status?.type?.completed);
+        for (const ev of completed) {
+          const comp = ev.competitions[0];
+          const note = comp.notes?.[0]?.headline || "";
+          const roundKey = Object.keys(ESPN_ROUND_MAP).find(k => note.includes(k));
+          if (roundKey === undefined) continue;
+          const roundId = ESPN_ROUND_MAP[roundKey];
+          const winner = comp.competitors.find(c => c.winner);
+          if (!winner) continue;
+          const winnerName = winner.team.displayName;
+          // Find which owner has this team
+          for (const owner of owners) {
+            const teamIdx = owner.teams.findIndex(t => t.name && t.name.trim().toLowerCase() === winnerName.trim().toLowerCase());
+            if (teamIdx === -1) continue;
+            // Check if win already recorded
+            const alreadyRecorded = wins.some(w => w.owner_id === owner.id && w.team_index === teamIdx && w.round_id === roundId);
+            if (alreadyRecorded) continue;
+            // Record the win
+            await supabase.from("wins").insert({ league_code: leagueCode, owner_id: owner.id, round_id: roundId, team_index: teamIdx });
+          }
+        }
+        // Refresh wins
+        const { data: freshWins } = await supabase.from("wins").select("*").eq("league_code", leagueCode);
+        if (freshWins) setWins(freshWins);
+      } catch(e) { /* silent fail */ }
+    };
+    syncWins();
+    const interval = setInterval(syncWins, 60000);
+    return () => clearInterval(interval);
+  }, [leagueCode, owners.length]);
+
 
   // ── League ops ───────────────────────────────────────────────────────────
   async function autoAddUserAsOwner(code) {
@@ -1905,13 +1956,14 @@ export default function App() {
                       <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
                         {owner.teams.map((team,i)=>{
                           const hasWin = wins.some(w=>w.owner_id===owner.id&&w.team_index===i);
+                  const hasLoss = espnEliminated.has((team.name||"").trim().toLowerCase());
                           return (
                             <div key={i} style={{ display:"flex", alignItems:"center", gap:8,
-                              background:hasWin?"#1a2e1a":"#0f1625",
+                              background:hasWin?"#1a2e1a":hasLoss?"#2a0a0a":"#0f1625",
                               border:`1px solid ${hasWin?"#27ae60":"#1a2440"}`,
                               borderRadius:7, padding:"6px 10px" }}>
                               <SeedBadge seed={team.seed} />
-                              <span style={{ fontSize:13, flex:1 }}>{team.name}</span>
+                <span style={{ fontSize:13, flex:1, textDecoration:hasLoss?"line-through":"none", color:hasLoss?"#666":"#dce4f5", opacity:hasLoss?0.6:1 }}>{team.name}{hasLoss&&<span style={{fontSize:10,color:"#e74c3c",marginLeft:6,fontWeight:700}}>OUT</span>}</span>
                               {hasWin&&<span style={{ fontSize:10, color:"#2ecc71" }}>✓</span>}
                             </div>
                           );
@@ -3218,3 +3270,12 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
   );
 }
 // build: 1773441631501
+        // Track eliminated teams (lost their game)
+        const eliminated = new Set();
+        for (const ev of completed) {
+          const comp = ev.competitions[0];
+          const loser = comp.competitors.find(c => !c.winner);
+          if (loser) eliminated.add(loser.team.displayName.trim().toLowerCase());
+        }
+        setEspnEliminated(eliminated);
+
