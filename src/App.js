@@ -2190,6 +2190,7 @@ export default function App() {
           const draftHasStarted = draftStart ? now >= draftStart : false;
 
           // ── Draft a team ───────────────────────────────────────────────
+          async function draftPick(team) {
             if (!currentPicker) return;
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
