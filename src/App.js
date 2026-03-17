@@ -2190,7 +2190,6 @@ export default function App() {
           const draftHasStarted = draftStart ? now >= draftStart : false;
 
           // ── Draft a team ───────────────────────────────────────────────
-          async function draftPick(team) {
             if (!currentPicker) return;
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
@@ -2199,9 +2198,8 @@ export default function App() {
             const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
             if (error) { alert("Failed to save pick."); return; }
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
-            else { alert("Drafted: " + currentPicker.name + " picked " + team.name + "!"); }
+            else alert("Drafted: " + currentPicker.name + " picked " + team.name + "!");
           }
-  }
 
 
   // ── Start Draft ───────────────────────────────────────────────
@@ -2371,6 +2369,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
 
               {/* ── Live Draft UI ── */}
                 <>
+            {/* ── Start Draft Banner ── */}
 
                   )}
 
