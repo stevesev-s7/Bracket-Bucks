@@ -356,7 +356,7 @@ function Modal({ open, onClose, title, children }) {
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:22 }}>
           <h3 style={{ margin:0, fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:2, color:"#f0c040" }}>{title}</h3>
-          <button onClick={onClose} style={{ background:"none", border:"none", color:"#667", fontSize:22, cursor:"pointer" }}>✕</button>
+          <button onClick={onClose} style={{ background:"none", border:"none", color:"#667", fontSize:22, cursor:"pointer" }}></button>
         </div>
         {children}
       </div>
@@ -368,7 +368,7 @@ function Empty({ text }) {
     <div style={{ textAlign:"center", padding:"48px 24px",
       background:"#111827", border:"1px dashed #1a2440",
       borderRadius:14, color:"#334" }}>
-      <div style={{ fontSize:30, marginBottom:10 }}>🏀</div>
+      <div style={{ fontSize:30, marginBottom:10 }}></div>
       <p style={{ margin:0, fontSize:14 }}>{text}</p>
     </div>
   );
@@ -514,7 +514,7 @@ function Bracket2026Tab({ owners }) {
 
   if(loading) return (
     <div style={{textAlign:"center",padding:60,color:"#6677aa"}}>
-      <div style={{fontSize:32,marginBottom:12}}>🏀</div>
+      <div style={{fontSize:32,marginBottom:12}}></div>
       <div>Loading 2026 bracket data...</div>
     </div>
   );
@@ -524,7 +524,7 @@ function Bracket2026Tab({ owners }) {
     <div>
       <div style={{marginBottom:20}}>
         <h2 style={{margin:"0 0 4px",fontFamily:"'Bebas Neue',sans-serif",fontSize:28,letterSpacing:1}}>2026 NCAA Tournament Bracket</h2>
-        <p style={{color:"#6677aa",fontSize:13,margin:0}}>Live data via ESPN · {games.length} games{lastUpdated?" · Updated "+lastUpdated.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})+" 🔄":""}</p>
+        <p style={{color:"#6677aa",fontSize:13,margin:0}}>Live data via ESPN · {games.length} games{lastUpdated?" · Updated "+lastUpdated.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})+" ":""}</p>
       </div>
 
       {/* Region filter */}
@@ -564,11 +564,11 @@ function Bracket2026Tab({ owners }) {
                         <span style={{background:rc+"22",color:rc,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:10,border:"1px solid "+rc+"44"}}>
                           {game.region!=="Unknown"?game.region:""}
                         </span>
-                        {game.broadcast&&<span style={{color:"#6677aa",fontSize:11}}>📺 {game.broadcast}</span>}
+                        {game.broadcast&&<span style={{color:"#6677aa",fontSize:11}}> {game.broadcast}</span>}
                       </div>
                       <div style={{display:"flex",gap:8,alignItems:"center"}}>
                         <span style={{color:game.completed?"#2ecc71":game.status==="In Progress"?"#f39c12":"#6677aa",fontSize:11}}>
-                          {game.completed?"Final":game.status==="In Progress"?"🔴 LIVE":dateStr}
+                          {game.completed?"Final":game.status==="In Progress"?" LIVE":dateStr}
                         </span>
                       </div>
                     </div>
@@ -602,7 +602,7 @@ function Bracket2026Tab({ owners }) {
                       })}
                     </div>
                     {/* Venue */}
-                    {game.venue&&<div style={{marginTop:6,fontSize:11,color:"#445"}}>📍 {game.venue}</div>}
+                    {game.venue&&<div style={{marginTop:6,fontSize:11,color:"#445"}}> {game.venue}</div>}
                   </div>
                 );
               })}
@@ -645,7 +645,7 @@ function PaymentApprovals({ supabase }) {
   return (
     <div style={{background:"#0d1528",border:"1px solid #1e2d4a",borderRadius:10,padding:"20px 24px",marginBottom:20}}>
       <div style={{color:"#d4af37",fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:1,marginBottom:12}}>
-        💳 PAYMENT APPROVALS
+         PAYMENT APPROVALS
         <span style={{fontSize:12,fontWeight:400,color:"#6677aa",marginLeft:10,fontFamily:"inherit",letterSpacing:0}}>
           Venmo @bracket-bucks-app
         </span>
@@ -662,10 +662,10 @@ function PaymentApprovals({ supabase }) {
               </div>
               <div style={{display:"flex",gap:8}}>
                 <button onClick={()=>approve(p.id,p.email)} style={{background:"#27ae60",color:"#fff",border:"none",borderRadius:6,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-                  ✓ Approve
+                   Approve
                 </button>
                 <button onClick={()=>deny(p.id)} style={{background:"#c0392b",color:"#fff",border:"none",borderRadius:6,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-                  ✗ Deny
+                   Deny
                 </button>
               </div>
             </div>
@@ -676,7 +676,7 @@ function PaymentApprovals({ supabase }) {
               {approved.slice(0,5).map(p => (
                 <div key={p.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"#0a2a14",borderRadius:8,padding:"8px 14px",marginBottom:6,border:"1px solid #27ae6033"}}>
                   <div style={{color:"#2ecc71",fontSize:13}}>{p.email}</div>
-                  <div style={{color:"#27ae60",fontSize:11}}>✓ Approved</div>
+                  <div style={{color:"#27ae60",fontSize:11}}> Approved</div>
                 </div>
               ))}
             </div>
@@ -1060,7 +1060,7 @@ export default function App() {
     }
     const owner = owners.find(o=>o.id===parseInt(winOwnerId));
     const team = owner?.teams[parseInt(winTeamIdx)];
-    alert(`✓ ${team?.name} win recorded for ${owner?.name}`);
+    alert(` ${team?.name} win recorded for ${owner?.name}`);
     setWinTeamIdx("");
     setModal(null);
   }
@@ -1159,16 +1159,16 @@ export default function App() {
   const totalWins = wins.length;
 
   const TABS = [
-    {id:"leaderboard", icon:"🏆", label:"Leaderboard"},
-    {id:"wins",        icon:"📋", label:"Win Tracker"},
-    {id:"espn",        icon:"📡", label:"Live Scores"},
-    {id:"roster",      icon:"👥", label:"Rosters"},
-    {id:"payouts",     icon:"💰", label:"Payout Table"},
-    {id:"bracket2025", icon:"🏆", label:"2025 Bracket"},
-    {id:"bracket2026", icon:"🗓️", label:"2026 Bracket"},
-    {id:"draft",       icon:"🎯", label:"Draft"},
-    {id:"profile",     icon:"👤", label:"My Profile"},
-    {id:"admin",       icon:"⚙️",  label:"Admin"},
+    {id:"leaderboard", icon:"", label:"Leaderboard"},
+    {id:"wins",        icon:"", label:"Win Tracker"},
+    {id:"espn",        icon:"", label:"Live Scores"},
+    {id:"roster",      icon:"", label:"Rosters"},
+    {id:"payouts",     icon:"", label:"Payout Table"},
+    {id:"bracket2025", icon:"", label:"2025 Bracket"},
+    {id:"bracket2026", icon:"", label:"2026 Bracket"},
+    {id:"draft",       icon:"", label:"Draft"},
+    {id:"profile",     icon:"", label:"My Profile"},
+    {id:"admin",       icon:"",  label:"Admin"},
   ];
 
   // ── Auth screen ─────────────────────────────────────────────────────────
@@ -1190,7 +1190,7 @@ export default function App() {
         <div style={{ maxWidth:420, width:"100%", padding:24 }}>
           {/* Logo */}
           <div style={{ textAlign:"center", marginBottom:36 }}>
-            <div style={{ fontSize:52, marginBottom:12 }}>🏀</div>
+            <div style={{ fontSize:52, marginBottom:12 }}></div>
             <h1 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:44, letterSpacing:4,
               color:"#f0c040", margin:0, textShadow:"0 0 30px rgba(240,192,64,0.4)" }}>
               BRACKET BUCKS
@@ -1258,7 +1258,7 @@ export default function App() {
             <button onClick={()=>setModal("howToPlay")} style={{
               background:"none", border:"none", color:"#6677aa",
               fontSize:12, cursor:"pointer", textDecoration:"underline", fontFamily:"inherit"
-            }}>❓ How to Play</button>
+            }}> How to Play</button>
             <button onClick={()=>setModal("adminLogin")} style={{
               background:"none", border:"none", color:"#2a3560",
               fontSize:11, cursor:"pointer", textDecoration:"underline", fontFamily:"inherit"
@@ -1317,7 +1317,7 @@ export default function App() {
         </Modal>
 
         {/* Admin login modal on auth screen */}
-        <Modal open={modal==="adminLogin"} onClose={()=>{setModal(null);setAdminPassInput("");setAdminPassError("");}} title="🔐 Admin Login">
+        <Modal open={modal==="adminLogin"} onClose={()=>{setModal(null);setAdminPassInput("");setAdminPassError("");}} title=" Admin Login">
           <p style={{ color:"#6677aa", fontSize:13, marginBottom:16 }}>Enter your admin password to access all leagues.</p>
           <input type="password" value={adminPassInput} onChange={e=>setAdminPassInput(e.target.value)}
             onKeyDown={e=>{ if(e.key==="Enter"){ if(adminPassInput===ADMIN_PASSWORD){setIsAdmin(true);sessionStorage.setItem("bb_is_admin","true");setModal(null);setAdminPassInput("");setAdminPassError("");}else{setAdminPassError("Incorrect password.");}}}}
@@ -1365,7 +1365,7 @@ export default function App() {
             </div>
           )}
           <div style={{ textAlign:"center", marginBottom:40 }}>
-            <div style={{ fontSize:52, marginBottom:12 }}>🏀</div>
+            <div style={{ fontSize:52, marginBottom:12 }}></div>
             <h1 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:44, letterSpacing:4,
               color:"#f0c040", margin:0, textShadow:"0 0 30px rgba(240,192,64,0.4)" }}>
               BRACKET BUCKS
@@ -1377,7 +1377,7 @@ export default function App() {
 <button onClick={()=>setModal("join")} style={{
               ...S.btn("#1e2840","#dce4f5"), padding:"14px 20px", fontSize:15, borderRadius:12,
             }}>
-              🔑 Join a League
+               Join a League
               <div style={{ fontSize:11, fontWeight:400, color:"#6677aa", marginTop:3 }}>
                 Enter your invite code
               </div>
@@ -1408,7 +1408,7 @@ export default function App() {
             <div style={{ marginTop:28 }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
                 <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:2, fontWeight:700 }}>
-                  🔓 My Leagues
+                   My Leagues
                 </div>
                 <button onClick={()=>{ sessionStorage.removeItem("bb_is_admin"); setIsAdmin(false); }}
                   style={{ background:"none", border:"none", color:"#445", fontSize:11, cursor:"pointer", textDecoration:"underline" }}>
@@ -1437,7 +1437,7 @@ export default function App() {
         </div>
 
         {/* Modals */}
-        <Modal open={modal==="adminLogin"} onClose={()=>{setModal(null);setAdminPassInput("");setAdminPassError("");}} title="🔐 Admin Login">
+        <Modal open={modal==="adminLogin"} onClose={()=>{setModal(null);setAdminPassInput("");setAdminPassError("");}} title=" Admin Login">
           <p style={{ color:"#6677aa", fontSize:13, marginBottom:16 }}>Enter your admin password to access all leagues.</p>
           <input type="password" value={adminPassInput} onChange={e=>setAdminPassInput(e.target.value)}
             onKeyDown={e=>{ if(e.key==="Enter"){ if(adminPassInput===ADMIN_PASSWORD){setIsAdmin(true);sessionStorage.setItem("bb_is_admin","true");setModal(null);setAdminPassInput("");setAdminPassError("");}else{setAdminPassError("Incorrect password.");}}}}
@@ -1447,7 +1447,7 @@ export default function App() {
             style={{ ...S.btn(), width:"100%", marginTop:4 }}>Login</button>
         </Modal>
 
-        <Modal open={modal==="profile"} onClose={()=>setModal(null)} title="👤 My Profile">
+        <Modal open={modal==="profile"} onClose={()=>setModal(null)} title=" My Profile">
           <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:20,
             background:"#0f1625", borderRadius:12, padding:"14px 18px" }}>
             <div style={{ width:48, height:48, borderRadius:"50%", background:"#f0c040",
@@ -1510,7 +1510,7 @@ export default function App() {
             <div>
               <div style={{ background:"#0a2a14", border:"1px solid #27ae60", borderRadius:8,
                 padding:"10px 14px", marginBottom:14, fontSize:13, color:"#2ecc71" }}>
-                🔓 Admin — no payment required
+                 Admin — no payment required
               </div>
               <label style={S.label}>League Name</label>
               <input value={newLeagueName} onChange={e=>setNewLeagueName(e.target.value)}
@@ -1571,7 +1571,7 @@ export default function App() {
                       marginTop: 12
                     }}
                   >
-                    {paymentStep === 'verifying' ? '⏳ Checking payment...' : '✅ I sent it — Verify Payment'}
+                    {paymentStep === 'verifying' ? '⏳ Checking payment...' : ' I sent it — Verify Payment'}
                   </button>
                   {venmoVerifyError && <p style={{color:'#ff6b6b', fontSize: 13, margin: '8px 0 0'}}>{venmoVerifyError}</p>}
 
@@ -1586,7 +1586,7 @@ export default function App() {
               <div style={{ background:"#0a2a14", border:"1px solid #27ae60", borderRadius:8,
                 padding:"12px 14px", marginBottom:16, fontSize:13, color:"#2ecc71",
                 display:"flex", alignItems:"center", gap:8 }}>
-                <span style={{ fontSize:18 }}>✅</span>
+                <span style={{ fontSize:18 }}></span>
                 <span>Payment confirmed — you're good to go!</span>
               </div>
               <label style={S.label}>League Name</label>
@@ -1605,7 +1605,7 @@ export default function App() {
         <div>
           {paymentStep === "error" && venmoVerifyError && (
             <div style={{background:"#2a0a0a",border:"1px solid #e74c3c",borderRadius:8,padding:"10px 14px",marginBottom:12,fontSize:13,color:"#e74c3c"}}>
-              ⚠️ {venmoVerifyError}
+               {venmoVerifyError}
             </div>
           )}
           <div style={{background:"#0a1a2a",border:"1px solid #1e3a5a",borderRadius:8,padding:"14px",marginBottom:14,fontSize:13,color:"#6677aa",lineHeight:1.6}}>
@@ -1622,7 +1622,7 @@ export default function App() {
           </div>
           <a href="https://venmo.com/u/bracket-bucks-app" target="_blank" rel="noreferrer"
             style={{display:"block",textAlign:"center",background:"#3d95ce",color:"#fff",borderRadius:8,padding:"12px",marginBottom:10,fontWeight:700,fontSize:14,textDecoration:"none"}}>
-            💳 Send $10 on Venmo
+             Send $10 on Venmo
           </a>
           <button
             onClick={async () => {
@@ -1648,7 +1648,7 @@ export default function App() {
             }}
             disabled={paymentStep === "verifying"}
             style={{width:"100%",background:paymentStep==="verifying"?"#333":"#f7b731",color:"#1a1a2e",border:"none",borderRadius:8,padding:"13px",fontSize:15,fontWeight:700,cursor:paymentStep==="verifying"?"not-allowed":"pointer",opacity:paymentStep==="verifying"?0.7:1}}>
-            {paymentStep === "verifying" ? "⏳ Checking..." : paymentStep === "pending" ? "✅ Request submitted!" : "✅ I sent it — Verify Payment"}
+            {paymentStep === "verifying" ? "⏳ Checking..." : paymentStep === "pending" ? " Request submitted!" : " I sent it — Verify Payment"}
           </button>
           <p style={{fontSize:11,color:"#445",textAlign:"center",marginTop:8}}>Include your email ({authUser?.email}) in the Venmo note.</p>
         </div>
@@ -1670,7 +1670,7 @@ export default function App() {
         borderBottom:"2px solid #f0c040", padding:"14px 24px",
         display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-          <span style={{ fontSize:28 }}>🏀</span>
+          <span style={{ fontSize:28 }}></span>
           <div>
             <h1 style={{ margin:0, fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:3,
               color:"#f0c040", textShadow:"0 0 20px rgba(240,192,64,0.35)" }}>BRACKET BUCKS</h1>
@@ -1683,10 +1683,10 @@ export default function App() {
           <div style={{ background:"#1a2440", borderRadius:8, padding:"7px 14px", fontSize:12 }}>
             Code: <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040", fontWeight:700 }}>{leagueCode}</span>
           </div>
-          <button onClick={()=>setTab("profile")} style={{ ...S.btn("#1a2440","#dce4f5"), border:"1px solid #2a3560", fontSize:12 }}>👤 Profile</button>
+          <button onClick={()=>setTab("profile")} style={{ ...S.btn("#1a2440","#dce4f5"), border:"1px solid #2a3560", fontSize:12 }}> Profile</button>
           <button onClick={()=>setModal("howToPlay")} style={{ ...S.btn("#1a2440","#6677aa"), border:"1px solid #2a3560", fontSize:12 }}>? How to Play</button>
           <button onClick={()=>{setLeagueCode(null);setLeague(null);setOwners([]);setWins([]);}}
-            style={S.btn("#1e2840","#dce4f5")}>⬅ Switch League</button>
+            style={S.btn("#1e2840","#dce4f5")}> Switch League</button>
           {league && <button onClick={()=>setModal("addWin")} style={S.btn()}>＋ Record Win</button>}
         </div>
       </header>
@@ -1696,7 +1696,7 @@ export default function App() {
         padding:"7px 24px", display:"flex", gap:24, alignItems:"center", flexWrap:"wrap", fontSize:12 }}>
         <span style={{ color:"#6677aa" }}>{owners.length} owners</span>
         <span style={{ color:"#6677aa" }}>{totalWins} wins logged</span>
-        <span style={{ color:"#6677aa" }}>🔴 Live — updates automatically</span>
+        <span style={{ color:"#6677aa" }}> Live — updates automatically</span>
       </div>
 
       {/* Tabs */}
@@ -1757,7 +1757,7 @@ export default function App() {
                 </div>
                 <div style={{ marginTop:10, textAlign:"right", fontSize:12, color:"#445" }}>
                   League net: <span style={{ color:"#2ecc71", fontWeight:700 }}>
-                    ${stats.reduce((a,s)=>a+s.net,0).toFixed(2)} ✓ zero-sum
+                    ${stats.reduce((a,s)=>a+s.net,0).toFixed(2)}  zero-sum
                   </span>
                 </div>
 
@@ -1841,7 +1841,7 @@ export default function App() {
                       </div>
                       <button onClick={()=>removeWin(w.id)} style={{ background:"none",
                         border:"1px solid #3a1820", borderRadius:6, color:"#e74c3c",
-                        padding:"3px 8px", cursor:"pointer", fontSize:12 }}>✕</button>
+                        padding:"3px 8px", cursor:"pointer", fontSize:12 }}></button>
                     </div>
                   );
                 })}
@@ -1879,7 +1879,7 @@ export default function App() {
                               borderRadius:7, padding:"6px 10px" }}>
                               <SeedBadge seed={team.seed} />
                               <span style={{ fontSize:13, flex:1 }}>{team.name}</span>
-                              {hasWin&&<span style={{ fontSize:10, color:"#2ecc71" }}>✓</span>}
+                              {hasWin&&<span style={{ fontSize:10, color:"#2ecc71" }}></span>}
                             </div>
                           );
                         })}
@@ -1946,19 +1946,19 @@ export default function App() {
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
               <h2 style={{ margin:0, fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Live Scores</h2>
               <button onClick={fetchESPN} style={S.btn()} disabled={espnStatus==="loading"}>
-                {espnStatus==="loading"?"⟳ Loading…":"🔄 Fetch from ESPN"}
+                {espnStatus==="loading"?"⟳ Loading…":" Fetch from ESPN"}
               </button>
             </div>
             {owners.length>0 && espnStatus==="success" && (
               <div style={{ background:"#0a1428", border:"1px solid #1e2840", borderRadius:10,
                 padding:"10px 14px", marginBottom:16, fontSize:12, color:"#6677aa" }}>
-                💡 <strong style={{ color:"#f0c040" }}>1-click recording:</strong> When a game is final, click <strong style={{ color:"#2ecc71" }}>✓ Record Win</strong> next to the winning team to instantly log it. You'll be prompted to select the round.
+                 <strong style={{ color:"#f0c040" }}>1-click recording:</strong> When a game is final, click <strong style={{ color:"#2ecc71" }}> Record Win</strong> next to the winning team to instantly log it. You'll be prompted to select the round.
               </div>
             )}
             {espnStatus==="idle"&&<Empty text='Click "Fetch from ESPN" to load live tournament scores.' />}
             {espnStatus==="error"&&(
               <div style={{ ...S.card, borderColor:"#e74c3c", color:"#e74c3c" }}>
-                <strong>⚠️ Could not reach ESPN API</strong>
+                <strong> Could not reach ESPN API</strong>
                 <p style={{ fontSize:13, marginTop:8, color:"#aaa" }}>
                   Common during off-season or due to CORS. Use "+ Record Win" to log results manually.
                 </p>
@@ -1973,7 +1973,7 @@ export default function App() {
                   <span style={{ fontSize:11, padding:"3px 10px", borderRadius:99, fontWeight:700,
                     background:game.isLive?"#3a0a0a":game.isFinal?"#0a2a14":"#1a2440",
                     color:game.isLive?"#e74c3c":game.isFinal?"#2ecc71":"#6677aa" }}>
-                    {game.isLive?"🔴 LIVE":game.status}
+                    {game.isLive?" LIVE":game.status}
                   </span>
                 </div>
                 <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
@@ -2016,11 +2016,11 @@ export default function App() {
                             borderRadius:6, color:"#2ecc71", padding:"4px 10px",
                             cursor:"pointer", fontSize:12, fontWeight:700, fontFamily:"inherit",
                             whiteSpace:"nowrap" }}>
-                            ✓ Record Win
+                             Record Win
                           </button>
                         )}
                         {c.winner && alreadyWon && (
-                          <span style={{ fontSize:11, color:"#2ecc71", fontWeight:700 }}>✓ Logged</span>
+                          <span style={{ fontSize:11, color:"#2ecc71", fontWeight:700 }}> Logged</span>
                         )}
                         {c.winner && !match && (
                           <button onClick={()=>{
@@ -2052,7 +2052,7 @@ export default function App() {
         {!loading && tab==="bracket2025" && (
           <div>
             <h2 style={{ margin:"0 0 4px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Live Bracket — 2025 NCAA Tournament</h2>
-            <p style={{ color:"#6677aa", fontSize:13, marginBottom:20 }}>🏆 Champion: <strong style={{ color:"#f0c040" }}>Florida</strong> · Final: Florida 65, Houston 63</p>
+            <p style={{ color:"#6677aa", fontSize:13, marginBottom:20 }}> Champion: <strong style={{ color:"#f0c040" }}>Florida</strong> · Final: Florida 65, Houston 63</p>
 
             {/* Helper to find owner of a team */}
             {(() => {
@@ -2096,7 +2096,7 @@ export default function App() {
                             {t.score}
                           </span>
                         )}
-                        {t.name===game.winner && <span style={{ color:"#2ecc71", fontSize:12 }}>✓</span>}
+                        {t.name===game.winner && <span style={{ color:"#2ecc71", fontSize:12 }}></span>}
                       </div>
                     ))}
                   </div>
@@ -2112,7 +2112,7 @@ export default function App() {
                     border:"2px solid #f0c040", borderRadius:14, padding:"18px 20px" }}>
                     <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:2,
                       color:"#f0c040", marginBottom:12 }}>
-                      🏆 National Championship — April 7, 2025
+                       National Championship — April 7, 2025
                     </div>
                     <div style={{ maxWidth:340 }}>
                       <GameCard game={BRACKET_2025.championship} label="Florida 65 · Houston 63" />
@@ -2124,7 +2124,7 @@ export default function App() {
                     borderRadius:14, padding:"18px 20px" }}>
                     <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2,
                       color:"#f0c040", marginBottom:12 }}>
-                      🏀 Final Four — San Antonio, TX
+                       Final Four — San Antonio, TX
                     </div>
                     <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:8 }}>
                       {BRACKET_2025.finalFour.map((g,i) => (
@@ -2197,7 +2197,7 @@ export default function App() {
           const draftHasStarted = true;
 
           // ── Draft a team ───────────────────────────────────────────────
-          async function draftPick(team, fromAutoPick = false) {
+          async function draftPick(team) {
             if (!currentPicker) return;
             if (!fromAutoPick && !authUser) { alert("Please sign in to draft a team."); return; }
             const updatedTeams = [...currentPicker.teams];
@@ -2208,10 +2208,7 @@ export default function App() {
             const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
             if (error) { alert("Failed to save pick."); return; }
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
-            // Reset pick timer in league
-            // pick_timer_start write removed
-            if (fromAutoPick) alert(`⏱ Auto-picked ${team.name} for ${currentPicker.name}`);
-            else alert(`✓ ${currentPicker.name} drafted ${team.name}!`);
+            alert(` ${currentPicker.name} drafted ${team.name}!`);
           }
 
           async function clearDraftStart() {
@@ -2261,7 +2258,7 @@ export default function App() {
           }
 
           // ── Save draft start time ──────────────────────────────────────
-          async function saveDraftStart() { /* disabled - no auto-pick timer */ }
+          async function saveDraftStart() { /* draft start - no auto-pick */ }
 
           
   // ── Timezone-aware date formatting ─────────────────────────────────────
@@ -2292,9 +2289,9 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               {/* Header */}
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20, flexWrap:"wrap", gap:12 }}>
                 <div>
-                  <h2 style={{ margin:"0 0 4px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>🎯 Snake Draft</h2>
+                  <h2 style={{ margin:"0 0 4px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}> Snake Draft</h2>
                   <p style={{ margin:0, color:"#6677aa", fontSize:13 }}>
-                    {draftComplete ? "✅ Draft complete! All teams assigned." :
+                    {draftComplete ? " Draft complete! All teams assigned." :
                       numOwners === 0 ? "Add owners in Admin tab first." :
                       !draftHasStarted && draftStart ? `⏳ Draft starts ${fmtDraftTime(draftStart)}` :
                       `Round ${pickRound + 1} · Pick ${posInRound + 1} of ${numOwners} · ${available.length} teams remaining`}
@@ -2302,7 +2299,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                 </div>
                 {draftScheduled && (
                   <div style={{background:"rgba(212,175,55,0.12)",border:"1px solid rgba(212,175,55,0.4)",borderRadius:8,padding:"10px 18px",marginTop:10,display:"flex",alignItems:"center",gap:10}}>
-                    <span style={{fontSize:18}}>📅</span>
+                    <span style={{fontSize:18}}></span>
                     <div>
                       <div style={{color:"#d4af37",fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Draft Scheduled</div>
                       <div style={{color:"#fff",fontSize:15,fontWeight:600,marginTop:2}}>{fmtDraftTime(new Date(draftScheduled))}</div>
@@ -2310,10 +2307,10 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                   </div>
                 )}
                 <div style={{ display:"flex", gap:8 }}>
-                  {isAdmin && <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#d4af37"), border:"1px solid #d4af37", fontSize:13, padding:"8px 16px" }}>🔀 Shuffle Order</button>}
-          <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#f7b731"), border:"1px solid #f7b731", fontSize:12 }}>🔀 Shuffle Order</button>
+                  {isAdmin && <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#d4af37"), border:"1px solid #d4af37", fontSize:13, padding:"8px 16px" }}> Shuffle Order</button>}
+          <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#f7b731"), border:"1px solid #f7b731", fontSize:12 }}> Shuffle Order</button>
                   <button onClick={resetDraft} style={{ ...S.btn("#1a2440","#e74c3c"), border:"1px solid #e74c3c", fontSize:12 }}>
-                    🔄 Reset Draft
+                     Reset Draft
                   </button>
                 </div>
               </div>
@@ -2321,7 +2318,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               {/* ── Schedule Section ── */}
               <div style={{ ...S.card, marginBottom:20, background:"#0f1420" }}>
                 <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:2, color:"#f0c040", marginBottom:12 }}>
-                  📅 Draft Schedule
+                   Draft Schedule
                 </div>
                 <div style={{ display:"flex", gap:12, alignItems:"flex-end", flexWrap:"wrap" }}>
                   <div style={{ flex:1, minWidth:220 }}>
@@ -2332,11 +2329,11 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                       style={{ ...S.input, fontFamily:"'DM Mono',monospace" }} />
                   </div>
                   <button onClick={saveDraftStart} style={{opacity:(draftLive&&!adminUnlocked)?0.4:1,cursor:(draftLive&&!adminUnlocked)?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
-                    💾 Set Draft Time
+                     Set Draft Time
                   </button>
                 {draftScheduled && isAdmin && (
                   <button onClick={clearDraftStart} style={{...S.btn("#1a2440","#e74c3c"),padding:"10px 16px",fontSize:13}}>
-                    ✕ Clear Time
+                     Clear Time
                   </button>
                 )}
                 </div>
@@ -2356,7 +2353,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                     {draftHasStarted && !draftComplete && (
                       <span style={{ fontSize:12, background:"#0a2a14", color:"#2ecc71",
                         border:"1px solid #27ae60", borderRadius:6, padding:"4px 10px", fontWeight:700 }}>
-                        🟢 DRAFT LIVE
+                         DRAFT LIVE
                       </span>
                     )}
                   </div>
@@ -2384,13 +2381,13 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               <div style={{ textAlign:"center", padding:"20px 24px", background:"#0f1420",
                 border:"2px solid #d4af37", borderRadius:12, marginBottom:16 }}>
                 <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, letterSpacing:3,
-                  color:"#d4af37", marginBottom:10 }}>🏀 DRAFT TIME — SELECT YOUR TEAMS BELOW</div>
+                  color:"#d4af37", marginBottom:10 }}> DRAFT TIME — SELECT YOUR TEAMS BELOW</div>
                 {authUser ? (
                   <button onClick={startDraft} style={{
                     background:"#d4af37", color:"#1a1a2e", border:"none", borderRadius:8,
                     padding:"12px 40px", fontSize:16, fontWeight:900, cursor:"pointer",
                     fontFamily:"'Bebas Neue',sans-serif", letterSpacing:2
-                  }}>🚀 START DRAFT — BEGIN 30s TIMER</button>
+                  }}> START DRAFT — BEGIN 30s TIMER</button>
                 ) : (
                   <div style={{ color:"#f0c040", fontSize:13 }}>Sign in to start the draft.</div>
                 )}
@@ -2464,7 +2461,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
         {draftComplete && (
                     <div style={{ textAlign:"center", padding:"32px", background:"linear-gradient(135deg,#1a2e10,#142010)",
                       border:"2px solid #2ecc71", borderRadius:14, marginBottom:20 }}>
-                      <div style={{ fontSize:40, marginBottom:8 }}>🏆</div>
+                      <div style={{ fontSize:40, marginBottom:8 }}></div>
                       <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:3, color:"#2ecc71" }}>
                         Draft Complete!
                       </div>
@@ -2497,7 +2494,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                                     border:`1px solid ${regionColors[region]}44`,
                                     borderRadius:8, padding:"8px 10px", cursor:"pointer",
                                     fontFamily:"inherit", textAlign:"left",
-                                    opacity: (draftComplete || !league?.pick_timer_start) ? 0.45 : 1, cursor: "pointer" }}
+                                    opacity: draftComplete ? 0.45 : 1, cursor: "pointer" }}
                                   onMouseEnter={e => { e.currentTarget.style.background="#1a2e1a"; e.currentTarget.style.borderColor=regionColors[region]; }}
                                   onMouseLeave={e => { e.currentTarget.style.background="#0f1625"; e.currentTarget.style.borderColor=regionColors[region]+"44"; }}>
                                   <SeedBadge seed={team.seed} />
@@ -2666,7 +2663,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                 </div>
               ) : (
                 <div style={{ ...S.card, borderColor:"#2a3350", color:"#6677aa", fontSize:13, marginBottom:20 }}>
-                  <strong style={{ color:"#f0c040" }}>👋 You're not listed as an owner in this league.</strong>
+                  <strong style={{ color:"#f0c040" }}> You're not listed as an owner in this league.</strong>
                   <p style={{ margin:"8px 0 0" }}>Your profile name <strong>"{userName}"</strong> doesn't match any owner in {league?.name}. Ask your admin to add you, or make sure your profile name matches exactly.</p>
                 </div>
               )}
@@ -2675,7 +2672,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               {myOwner && (
                 <div style={{ ...S.card, marginBottom:20 }}>
                   <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:18, letterSpacing:2, color:"#f0c040", marginBottom:14 }}>
-                    🏀 My Teams — {league?.name}
+                     My Teams — {league?.name}
                   </div>
                   <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:8 }}>
                     {myOwner.teams.map((t, i) => {
@@ -2696,7 +2693,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                               </div>
                             )}
                           </div>
-                          {teamWins.length > 0 && <span style={{ color:"#2ecc71" }}>✓</span>}
+                          {teamWins.length > 0 && <span style={{ color:"#2ecc71" }}></span>}
                         </div>
                       );
                     })}
@@ -2708,7 +2705,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               {myStats && (
                 <div style={{ ...S.card, marginBottom:20 }}>
                   <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:18, letterSpacing:2, color:"#f0c040", marginBottom:14 }}>
-                    📊 Round-by-Round Breakdown
+                     Round-by-Round Breakdown
                   </div>
                   <div style={{ overflowX:"auto" }}>
                     <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
@@ -2752,7 +2749,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               {/* My Leagues History */}
               <div style={S.card}>
                 <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:18, letterSpacing:2, color:"#f0c040", marginBottom:14 }}>
-                  🏆 My Leagues
+                   My Leagues
                 </div>
                 {userLeagues.length === 0 ? (
                   <div style={{ color:"#445", fontSize:13 }}>No leagues joined yet.</div>
@@ -2802,7 +2799,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                 </div>
                 <div style={{ marginTop:16, padding:14, background:"#0f1625", borderRadius:10,
                   border:"1px solid #1a2440", fontSize:13 }}>
-                  <strong style={{ color:"#f0c040" }}>📣 Share this invite code with your league:</strong>
+                  <strong style={{ color:"#f0c040" }}> Share this invite code with your league:</strong>
                   <div style={{ fontFamily:"'DM Mono',monospace", fontSize:28, fontWeight:800,
                     color:"#fff", letterSpacing:6, marginTop:8 }}>{leagueCode}</div>
                   <div style={{ color:"#6677aa", fontSize:12, marginTop:4 }}>
@@ -2813,7 +2810,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
 
               {/* Venmo Payments */}
               <div style={S.card}>
-                <SecTitle>💳 Venmo Payments</SecTitle>
+                <SecTitle> Venmo Payments</SecTitle>
                 <p style={{ fontSize:13, color:"#6677aa", marginTop:0, marginBottom:12 }}>
                   Non-admin users pay $10 via Venmo to @bracket-bucks-app before creating a league.
                 </p>
@@ -2822,7 +2819,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                   <div style={{ background:"#1a2440", border:"1px solid #635BFF", borderRadius:8,
                     padding:"10px 16px", fontSize:13, color:"#635BFF", cursor:"pointer",
                     display:"inline-flex", alignItems:"center", gap:8 }}>
-                    💳 View Payments in Venmo ↗
+                     View Payments in Venmo ↗
                   </div>
                 </a>
               </div>
@@ -2836,7 +2833,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
 
         {/* League Management */}
         <div style={{background:"#0d1528",border:"1px solid #1e2d4a",borderRadius:10,padding:"20px 24px",marginBottom:20}}>
-          <div style={{color:"#d4af37",fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:1,marginBottom:12}}>🗑️ LEAGUE MANAGEMENT</div>
+          <div style={{color:"#d4af37",fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:1,marginBottom:12}}> LEAGUE MANAGEMENT</div>
           <p style={{fontSize:13,color:"#6677aa",marginBottom:16}}>Delete a league and all its data permanently.</p>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {owners.length===0 ? <p style={{color:"#445",fontSize:13}}>No leagues found.</p>
@@ -2851,7 +2848,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               {/* Setup Wizard — add all 8 owners at once */}
               {owners.length === 0 && (
                 <div style={S.card}>
-                  <SecTitle>🏀 League Setup — Add All 8 Owners</SecTitle>
+                  <SecTitle> League Setup — Add All 8 Owners</SecTitle>
                   <p style={{ fontSize:13, color:"#6677aa", marginTop:0, marginBottom:16 }}>
                     Fill in each owner's name and their 8 teams below, then click Save All Owners.
                   </p>
@@ -2895,7 +2892,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                           </div>
                           <button onClick={()=>setSetupStep(oi+1<8?oi+1:-1)}
                             style={{ ...S.btn("#1a2e1a","#2ecc71"), border:"1px solid #27ae60", alignSelf:"flex-end" }}>
-                            Next Owner ▶
+                            Next Owner 
                           </button>
                         </div>
                       )}
@@ -2915,16 +2912,16 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                     const { data } = await supabase.from("owners").select("*").eq("league_code", leagueCode).order("num");
                     setOwners(data||[]);
                     setLoading(false);
-                    alert(`${filled.length} owners saved! 🎉`);
+                    alert(`${filled.length} owners saved! `);
                   }} style={{ ...S.btn(), width:"100%", marginTop:8, padding:"13px", fontSize:15 }}>
-                    💾 Save All Owners to League
+                     Save All Owners to League
                   </button>
                 </div>
               )}
 
               {/* Payout Settings */}
               <div style={S.card}>
-                <SecTitle>💰 Payout Settings</SecTitle>
+                <SecTitle> Payout Settings</SecTitle>
                 <p style={{ fontSize:13, color:"#6677aa", margin:"0 0 14px" }}>
                   Set the dollar amount per seed point for each round. Formula: Seed × Amount × (Owners − 1)
                 </p>
@@ -3013,7 +3010,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                             <button onClick={() => setEditingOwnerNameId(null)}
                               style={{ background:"none", border:"1px solid #2a3560", borderRadius:6,
                                 color:"#6677aa", padding:"5px 10px", cursor:"pointer", fontSize:12, fontFamily:"inherit" }}>
-                              ✕
+                              
                             </button>
                           </div>
                         ) : (
@@ -3025,7 +3022,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                               setEditOwnerNameVal(o.name);
                             }} style={{ background:"none", border:"none", color:"#445", cursor:"pointer",
                               fontSize:12, padding:"2px 4px", fontFamily:"inherit", lineHeight:1 }}
-                              title="Edit name">✎</button>
+                              title="Edit name"></button>
                           </div>
                         )}
 
@@ -3039,12 +3036,12 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                             background:"#2a1418", border:"1px solid #3a1820",
                             borderRadius:6, color:"#e74c3c", padding:"4px 10px",
                             cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit"
-                          }}>🗑</button>
+                          }}></button>
                           <button onClick={()=>adminUnlocked?openTeamEditor(o):setModal("pin")} style={{
                             background:"#1a2440", border:"1px solid #2a3560",
                             borderRadius:6, color:"#f0c040", padding:"4px 12px",
                             cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit"
-                          }}>✏️ Edit Teams</button>
+                          }}> Edit Teams</button>
                         </div>
                       </div>
                     ))}
@@ -3086,7 +3083,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
           {isAdmin && (
             <button onClick={shuffleDraftOrder}
               style={{marginTop:20,padding:"10px 28px",background:"#d4af37",color:"#111",border:"none",borderRadius:8,fontSize:15,fontWeight:800,cursor:"pointer",letterSpacing:1}}>
-              🔀 Randomize Draft Order
+               Randomize Draft Order
             </button>
           )}</div>
           )}
@@ -3115,13 +3112,13 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
       </Modal>
 
       {/* PIN Modal */}
-      <Modal open={modal==="pin"} onClose={()=>{setModal(null);setPinInput("");setPinError("");}} title="🔒 Admin Access">
+      <Modal open={modal==="pin"} onClose={()=>{setModal(null);setPinInput("");setPinError("");}} title=" Admin Access">
         <p style={{ color:"#6677aa", fontSize:13, marginBottom:16 }}>Enter your admin PIN to make changes.</p>
         <input type="password" value={pinInput} onChange={e=>setPinInput(e.target.value)}
-          onKeyDown={e=>{ if(e.key==="Enter"){ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");alert("Admin unlocked ✓");}else{setPinError("Incorrect PIN.");}}}}
+          onKeyDown={e=>{ if(e.key==="Enter"){ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");alert("Admin unlocked ");}else{setPinError("Incorrect PIN.");}}}}
           placeholder="Enter PIN" style={{ ...S.input, letterSpacing:6, fontSize:20, textAlign:"center", marginBottom:8 }} autoFocus />
         {pinError && <div style={{ color:"#e74c3c", fontSize:12, marginBottom:8 }}>{pinError}</div>}
-        <button onClick={()=>{ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");alert("Admin unlocked ✓");}else{setPinError("Incorrect PIN.");}}}
+        <button onClick={()=>{ if(pinInput===ADMIN_PIN){setAdminUnlocked(true);setModal(null);setPinInput("");setPinError("");alert("Admin unlocked ");}else{setPinError("Incorrect PIN.");}}}
           style={{ ...S.btn(), width:"100%" }}>Unlock</button>
       </Modal>
 
@@ -3154,7 +3151,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
         <div style={{ fontSize:11, color:"#6677aa", marginBottom:12 }}>
           Left box = seed number (1–16) · Right box = team name
         </div>
-        <button onClick={saveTeams} style={{ ...S.btn(), width:"100%" }}>💾 Save Teams</button>
+        <button onClick={saveTeams} style={{ ...S.btn(), width:"100%" }}> Save Teams</button>
       </Modal>
 
       <style>{`select option{background:#131929;} *{box-sizing:border-box;}`}</style>
