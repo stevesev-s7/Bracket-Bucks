@@ -2276,6 +2276,7 @@ export default function App() {
             if (!fromAutoPick && !authUser) { alert("Please sign in to draft a team."); return; }
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
+            if (!isAdmin && currentPicker) { var myRec=owners.find(function(o){return o.user_id===authUser.id;}); if (!myRec || myRec.num!==currentPicker.num) { alert("It's not your turn!"); return; } }
             // Turn enforcement using user_id
             if (!isAdmin) {
               var myRec=owners.find(function(o){return o.user_id===authUser.id;});
