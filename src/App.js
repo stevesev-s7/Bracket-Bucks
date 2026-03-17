@@ -1,4 +1,14 @@
 // v1773286522751
+  // Show claim-your-spot modal for owners without user_id
+  React.useEffect(function(){
+    if (!authUser || !owners || !leagueCode) return;
+    var alreadyClaimed=owners.some(function(o){return o.user_id===authUser.id;});
+    if (alreadyClaimed) return;
+    var unclaimed=owners.filter(function(o){return o.league_code===leagueCode&&!o.user_id;});
+    if (unclaimed.length===0) return;
+    setClaimModal(unclaimed);
+  }, [authUser, owners, leagueCode]);
+
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 const _APP_BUILD = "1773204216116";
@@ -681,6 +691,23 @@ function PaymentApprovals({ supabase }) {
               ))}
             </div>
           )}
+        {claimModal && authUser && (
+          <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.7)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <div style={{background:"#1a2235",border:"2px solid #f0c040",borderRadius:12,padding:32,maxWidth:400,width:"90%",textAlign:"center"}}>
+              <div style={{fontSize:20,fontWeight:700,color:"#f0c040",marginBottom:16}}>Which owner are you?</div>
+              <div style={{color:"#aab",marginBottom:20,fontSize:14}}>Select your name to link your account. You only need to do this once.</div>
+              {claimModal.map(function(o){
+                return <button key={o.id} onClick={async function(){
+                  await supabase.from("owners").update({user_id:authUser.id}).eq("id",o.id);
+                  setOwners(function(prev){return prev.map(function(x){return x.id===o.id?{...x,user_id:authUser.id}:x;});});
+                  setClaimModal(null);
+                }} style={{display:"block",width:"100%",margin:"8px 0",padding:"12px 16px",background:"#243050",border:"1px solid #3a4a6b",borderRadius:8,color:"#fff",fontSize:16,cursor:"pointer",fontWeight:600}}>{o.name}</button>;
+              })}
+              <button onClick={function(){setClaimModal(null);}} style={{marginTop:12,padding:"8px 24px",background:"transparent",border:"1px solid #3a4a6b",borderRadius:8,color:"#aab",cursor:"pointer"}}>Not me / Skip</button>
+            </div>
+          </div>
+        )}
+
         </>
       )}
     </div>
@@ -808,6 +835,7 @@ export default function App() {
   const [draftStartInput, setDraftStartInput] = useState("");
   const [draftCountdown, setDraftCountdown] = useState(null); // seconds until draft starts
   const [pickTimer, setPickTimer]         = useState(15);    // seconds left for current pick
+  const [claimModal, setClaimModal] = React.useState(null);
   const [draftLive, setDraftLive]         = useState(false);
 
   function alert(msg, type="success") {
