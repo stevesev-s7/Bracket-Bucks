@@ -2241,6 +2241,11 @@ export default function App() {
           async function draftPick(team, fromAutoPick = false) {
             if (!currentPicker) return;
             if (!fromAutoPick && !authUser) { alert("Please sign in to draft a team."); return; }
+            // Only allow picking for your own turn (admin can always pick)
+            if (!isAdmin && authUser?.email !== currentPicker?.email) {
+              alert("It's not your turn to pick!");
+              return;
+            }
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
             if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
