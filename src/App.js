@@ -804,6 +804,7 @@ export default function App() {
 
   // Draft state
   const [draftScheduled, setDraftScheduled] = useState(null); // ISO string from league.draft_start
+  const [clockMs, setClockMs] = useState(Date.now()); // 1s tick for draftHasStarted
   const [draftStartInput, setDraftStartInput] = useState("");
   const [draftCountdown, setDraftCountdown] = useState(null); // seconds until draft starts
   const [pickTimer, setPickTimer]         = useState(15);    // seconds left for current pick
@@ -917,6 +918,12 @@ export default function App() {
 
 
   // ── Draft pick timer + auto-pick ────────────────────────────────────────
+  // ── 1s clock ─────────────────────────────────────────────────────
+  useEffect(() => {
+    const t = setInterval(() => setClockMs(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
   useEffect(() => {
     if (!league?.draft_start || !leagueCode) return;
     const draftStart = new Date(draftScheduled);
@@ -2212,7 +2219,7 @@ export default function App() {
 
           // ── Draft scheduled time ───────────────────────────────────────
           const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
-          const now = new Date();
+          const now = new Date(clockMs);
           const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
           const draftHasStarted = draftStart ? now >= draftStart : false;
 
