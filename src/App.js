@@ -2208,6 +2208,7 @@ export default function App() {
 
           // ── Reset draft ────────────────────────────────────────────────
           async function shuffleDraftOrder() {
+  async function draftPick(team) {
     if (!window.confirm("Randomly shuffle the draft order for all owners?")) return;
     const shuffled = [...owners];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -2221,6 +2222,7 @@ export default function App() {
     alert("Draft order shuffled! New order: " + shuffled.map(o=>o.name).join(", "));
   }
 
+  }
   async function resetDraft() {
             if (!adminUnlocked) { setModal("pin"); return; }
             const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
