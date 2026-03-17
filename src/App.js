@@ -990,6 +990,11 @@ export default function App() {
     const alreadyOwner = existingOwners?.some(o =>
       o.name.toLowerCase().trim() === userName.toLowerCase().trim()
     );
+    // Stamp user_id if owner exists but lacks it
+    if (alreadyOwner && !alreadyOwner.user_id) {
+      await supabase.from("owners").update({ user_id: authUser.id }).eq("id", alreadyOwner.id);
+      setOwners(prev => prev.map(o => o.id === alreadyOwner.id ? { ...o, user_id: authUser.id } : o));
+    }
     if (!alreadyOwner) {
       const color = OWNER_COLORS[(existingOwners?.length || 0) % OWNER_COLORS.length];
       const num = (existingOwners?.length || 0) + 1;
@@ -2243,6 +2248,14 @@ export default function App() {
             if (!fromAutoPick && !authUser) { alert("Please sign in to draft a team."); return; }
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
+            // Turn enforcement using user_id
+            if (!isAdmin) {
+              var myRec=owners.find(function(o){return o.user_id===authUser.id;});
+              if (!myRec || myRec.num !== currentPicker.num) {
+                alert("It's not your turn to pick!");
+                return;
+              }
+            }
             // Restrict to current picker or admin
             if (emptyIdx === -1) { alert("This owner already has 8 teams."); return; }
             updatedTeams[emptyIdx] = { seed: team.seed, name: team.name };
