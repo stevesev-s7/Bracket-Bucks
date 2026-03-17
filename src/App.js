@@ -927,7 +927,7 @@ export default function App() {
 
       const pickTimerStart = league?.pick_timer_start ? new Date(league.pick_timer_start) : draftStart;
       const elapsed = Math.floor((now - pickTimerStart) / 1000);
-      const timeLeft = 15 - elapsed;
+      const timeLeft = 30 - elapsed;
 
       if (timeLeft <= 0) {
         // Auto-pick: find current picker and best available team
@@ -2315,9 +2315,9 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
           // We derive time remaining from league.pick_timer_start (stored in Supabase)
           const pickTimerStart = league?.pick_timer_start ? new Date(league.pick_timer_start) : null;
           const secondsElapsed = pickTimerStart ? Math.floor((now - pickTimerStart) / 1000) : 0;
-          const pickSecondsLeft = draftHasStarted && !draftComplete ? Math.max(0, 15 - secondsElapsed) : 15;
-          const timerPct = (pickSecondsLeft / 15) * 100;
-          const timerColor = pickSecondsLeft > 8 ? "#2ecc71" : pickSecondsLeft > 4 ? "#f0c040" : "#e74c3c";
+          const pickSecondsLeft = draftHasStarted && !draftComplete ? Math.max(0, 30 - secondsElapsed) : 15;
+          const timerPct = (pickSecondsLeft / 30) * 100;
+          const timerColor = pickSecondsLeft > 15 ? "#2ecc71" : pickSecondsLeft > 8 ? "#f0c040" : "#e74c3c";
 
           return (
             <div>
@@ -2418,7 +2418,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                       <div style={{ height:8, background:"#1a2440", borderRadius:99, overflow:"hidden" }}>
                         <div style={{ height:"100%", width:`${timerPct}%`, background:timerColor,
                           borderRadius:99, transition:"width 1s linear",
-                          boxShadow: pickSecondsLeft <= 4 ? `0 0 10px ${timerColor}` : "none" }} />
+                          boxShadow: pickSecondsLeft <= 8 ? `0 0 10px ${timerColor}` : "none" }} />
                       </div>
                       {pickSecondsLeft === 0 && (
                         <div style={{ fontSize:12, color:"#e74c3c", marginTop:6, fontWeight:700 }}>
