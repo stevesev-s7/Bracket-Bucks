@@ -2222,11 +2222,7 @@ export default function App() {
   // ── Start Draft ───────────────────────────────────────────────
   async function startDraft() {
     if (!leagueCode) return;
-    const ts = new Date().toISOString();
-    const { error } = // pick_timer_start update removed from saveDraftStart
-    if (error) { alert("Failed to start draft: " + error.message); return; }
     // Also update local state immediately in case realtime is slow
-    // setLeague pick_timer_start update removed
   }
 
     
