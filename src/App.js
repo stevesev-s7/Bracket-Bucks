@@ -1295,7 +1295,7 @@ export default function App() {
           </div>
 
           <div style={{ textAlign:"center", marginTop:16, display:"flex", justifyContent:"center", gap:20, alignItems:"center" }}>
-            <button onClick={()=>setModal("howToPlay")} style={{
+          <button onClick={()=>setModal("howToPlay")} style={{...S.btn("#1a2440","#6677aa"),border:"1px solid #2a3560",fontSize:12}}>? How to Play</button>
               background:"none", border:"none", color:"#6677aa",
               fontSize:12, cursor:"pointer", textDecoration:"underline", fontFamily:"inherit"
             }}>❓ How to Play</button>
