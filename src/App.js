@@ -2206,37 +2206,37 @@ export default function App() {
 
 
   async function resetDraft() {
-            if (!adminUnlocked) { setModal("pin"); return; }
-            const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
-            for (const o of owners) {
-              await supabase.from("owners").update({ teams: blank }).eq("id", o.id);
-            }
-            setOwners(prev => prev.map(o => ({ ...o, teams: blank })));
-            alert("Draft reset! All picks cleared.");
-          }
+    if (!adminUnlocked) { setModal("pin"); return; }
+    const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
+    for (const o of owners) {
+      await supabase.from("owners").update({ teams: blank }).eq("id", o.id);
+    }
+    setOwners(prev => prev.map(o => ({ ...o, teams: blank })));
+    alert("Draft reset! All picks cleared.");
+  }
 
           // ── Save draft start time ──────────────────────────────────────
-          async function saveDraftStart() {
-            if (!draftStartInput) { alert("Please select a date and time first."); return; }
-            // Treat the input as CST (America/Chicago)
-        const cstDate = new Date(draftStartInput + ":00");
-        // Get the UTC offset for America/Chicago at that moment
-        const cstFormatter = new Intl.DateTimeFormat("en-US", {
-          timeZone: "America/Chicago", hour: "numeric", timeZoneName: "short"
-        });
-        const parts = cstFormatter.formatToParts(cstDate);
-        const tzName = (parts.find(p=>p.type==="timeZoneName")||{}).value||"CST";
-        const offset = tzName.includes("CDT") ? "-05:00" : "-06:00";
-        const pd = new Date(draftStartInput + ":00" + offset);
-            if (isNaN(pd.getTime())) { alert("Invalid date/time."); return; }
-            supabase.from("leagues").update({ draft_start: pd.toISOString() }).eq("code", leagueCode)
-              .then(({ error }) => {
-                if (error) { alert("Save error: " + error.message); return; }
-                setDraftStartInput(pd.toISOString());
-                setDraftScheduled(pd.toISOString());
-                alert("Draft time saved!");
-              }).catch(e => alert("Error: " + e.message));
-          }
+  async function saveDraftStart() {
+    if (!draftStartInput) { alert("Please select a date and time first."); return; }
+    // Treat the input as CST (America/Chicago)
+const cstDate = new Date(draftStartInput + ":00");
+// Get the UTC offset for America/Chicago at that moment
+const cstFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Chicago", hour: "numeric", timeZoneName: "short"
+});
+const parts = cstFormatter.formatToParts(cstDate);
+const tzName = (parts.find(p=>p.type==="timeZoneName")||{}).value||"CST";
+const offset = tzName.includes("CDT") ? "-05:00" : "-06:00";
+const pd = new Date(draftStartInput + ":00" + offset);
+    if (isNaN(pd.getTime())) { alert("Invalid date/time."); return; }
+    supabase.from("leagues").update({ draft_start: pd.toISOString() }).eq("code", leagueCode)
+      .then(({ error }) => {
+        if (error) { alert("Save error: " + error.message); return; }
+        setDraftStartInput(pd.toISOString());
+        setDraftScheduled(pd.toISOString());
+        alert("Draft time saved!");
+      }).catch(e => alert("Error: " + e.message));
+  }
 
           
   // ── Timezone-aware date formatting ─────────────────────────────────────
