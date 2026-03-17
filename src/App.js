@@ -2337,7 +2337,6 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               )}
 
               {/* ── Live Draft UI ── */}
-                <>
               </div>
             )}
 
@@ -2545,7 +2544,6 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                       </div>
                     </div>
                   </div>
-                </>
             </div>
           );
         })()}
