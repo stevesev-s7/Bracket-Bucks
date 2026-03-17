@@ -460,11 +460,12 @@ function Bracket2026Tab({ owners }) {
           ["South","East","West","Midwest"].forEach(r => { if(note.includes(r)) region=r; });
           let round = "First Round";
           if(note.includes("First Four")) round="First Four";
-          else if(note.includes("Second Round")) round="Second Round";
-          else if(note.includes("Sweet 16")) round="Sweet 16";
-          else if(note.includes("Elite Eight")||note.includes("Regional")) round="Elite Eight";
+          else if(note.includes("1st Round")) round="First Round";
+          else if(note.includes("2nd Round")) round="Second Round";
+          else if(note.includes("Sweet 16")||note.includes("Sweet 16")) round="Sweet 16";
+          else if(note.includes("Elite 8")||note.includes("Elite Eight")||note.includes("Regional")) round="Elite Eight";
           else if(note.includes("Final Four")) round="Final Four";
-          else if(note.includes("Championship")) round="Championship";
+          else if(note.includes("National Championship")||note.includes("Championship")) round="Championship";
           return {
             id: ev.id,
             name: ev.name,
