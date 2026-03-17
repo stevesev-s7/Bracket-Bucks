@@ -403,6 +403,7 @@ function DraftCountdownBanner({ secondsLeft }) {
     setSecs(secondsLeft);
     if (secondsLeft <= 0) return;
     const t = setInterval(() => setSecs(s => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
   }, [secondsLeft]);
 
   const d = Math.floor(secs / 86400);
@@ -914,43 +915,8 @@ export default function App() {
   }, []);
 
 
+  // ── Draft pick timer + auto-pick ────────────────────────────────────
 
-  useEffect(() => {
-
-    const tick = setInterval(async () => {
-      const now = new Date();
-      const elapsed = Math.floor((now - pickTimerStart) / 1000);
-      const timeLeft = 30 - elapsed;
-
-      if (timeLeft <= 0) {
-        // Auto-pick: fetch fresh data to avoid stale closure
-        const { data: latestOwners } = await supabase.from("owners").select("*").eq("league_code", leagueCode).order("num");
-        const ownersArr = latestOwners || [];
-        const picked = ownersArr.flatMap(o => o.teams.map(t => t.name?.toLowerCase().trim()).filter(Boolean));
-        const avail = NCAA_2026_TEAMS.filter(t => !picked.includes(t.name.toLowerCase().trim()));
-        if (!avail.length) { clearInterval(tick); return; }
-
-        const totalPks = ownersArr.reduce((sum, o) => sum + o.teams.filter(t => t.name && t.name.trim()).length, 0);
-        const nOwners = ownersArr.length;
-        if (totalPks >= nOwners * 8) { clearInterval(tick); return; }
-
-        const rd = Math.floor(totalPks / Math.max(nOwners, 1));
-        const pos = totalPks % Math.max(nOwners, 1);
-        const sorted = [...ownersArr].sort((a, b) => a.num - b.num);
-        const pickerIdx = rd % 2 === 0 ? pos : (nOwners - 1 - pos);
-        const picker = sorted[pickerIdx];
-        if (!picker) return;
-
-        const best = [...avail].sort((a, b) => (a.seed || 99) - (b.seed || 99))[0];
-        const updatedTeams = [...picker.teams];
-        const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
-        if (emptyIdx === -1) return;
-        updatedTeams[emptyIdx] = { seed: best.seed, name: best.name };
-        await supabase.from("owners").update({ teams: updatedTeams }).eq("id", picker.id);
-      }
-    }, 1000);
-
-    return () => clearInterval(tick);
 
 
   // ── Real-time subscription ───────────────────────────────────────────────
@@ -2232,15 +2198,27 @@ export default function App() {
             const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
             if (error) { alert("Failed to save pick."); return; }
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
-            else alert("Drafted: " + currentPicker.name + " picked " + team.name + "!");
+            else alert(`✓ ${currentPicker.name} drafted ${team.name}!`);
           }
 
 
   // ── Start Draft ───────────────────────────────────────────────
 
+    // ── Auto-pick (highest available seed = lowest seed number) ───
 
           // ── Reset draft ────────────────────────────────────────────────
           async function shuffleDraftOrder() {
+    if (!window.confirm("Randomly shuffle the draft order for all owners?")) return;
+    const shuffled = [...owners];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    await Promise.all(shuffled.map((o, idx) =>
+      supabase.from("owners").update({ num: idx + 1 }).eq("id", o.id)
+    ));
+    setOwners(shuffled.map((o, i) => ({ ...o, num: i + 1 })));
+    alert("Draft order shuffled! New order: " + shuffled.map(o=>o.name).join(", "));
   }
 
   async function resetDraft() {
