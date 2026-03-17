@@ -394,39 +394,6 @@ function Spinner() {
   );
 }
 
-// ── Draft Countdown Banner (live ticking) ──────────────────────────────
-function DraftCountdownBanner({ secondsLeft }) {
-  const [secs, setSecs] = React.useState(secondsLeft);
-  // Handle Venmo redirect back after payment
-
-  React.useEffect(() => {
-    setSecs(secondsLeft);
-    if (secondsLeft <= 0) return;
-    const t = setInterval(() => setSecs(s => Math.max(0, s - 1)), 1000);
-    return () => clearInterval(t);
-  }, [secondsLeft]);
-
-  const d = Math.floor(secs / 86400);
-  const h = Math.floor((secs % 86400) / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = secs % 60;
-
-  const parts = [];
-  if (d > 0) parts.push(`${d}d`);
-  if (h > 0) parts.push(`${h}h`);
-  if (m > 0) parts.push(`${m}m`);
-  parts.push(`${s}s`);
-
-  return (
-    <div style={{ display:"flex", alignItems:"center", gap:8, background:"#1a2440",
-      border:"1px solid #2a3560", borderRadius:8, padding:"6px 12px", fontSize:13 }}>
-      <span style={{ color:"#6677aa" }}>Starts in:</span>
-      <span style={{ fontFamily:"'DM Mono',monospace", fontWeight:800, color:"#f0c040", fontSize:15 }}>
-        {parts.join(" ")}
-      </span>
-    </div>
-  );
-}
 
 
 // ── Main App ─────────────────────────────────────────────────────────────────
@@ -490,8 +457,6 @@ function Bracket2026Tab({ owners }) {
   };
   React.useEffect(() => {
     load();
-    const interval = setInterval(load, 60000);
-    return () => clearInterval(interval);
   }, [load]);
 
   const findOwner = (teamName) => {
@@ -2187,7 +2152,6 @@ export default function App() {
           // ── Draft scheduled time ───────────────────────────────────────
           const draftStart = league?.draft_start ? new Date(league.draft_start) : null;
           const now = new Date();
-          const secondsUntilDraft = draftStart ? Math.ceil((draftStart - now) / 1000) : null;
           const draftHasStarted = true;
 
           // ── Draft a team ───────────────────────────────────────────────
@@ -2333,8 +2297,6 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                         {fmtDraftTimeShort(draftStart)}
                       </span>
                     </div>
-                    {!draftHasStarted && secondsUntilDraft !== null && (
-                      <DraftCountdownBanner secondsLeft={secondsUntilDraft} />
                     )}
                     {draftHasStarted && !draftComplete && (
                       <span style={{ fontSize:12, background:"#0a2a14", color:"#2ecc71",
