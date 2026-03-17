@@ -2190,6 +2190,7 @@ export default function App() {
           const draftHasStarted = draftStart ? now >= draftStart : false;
 
           // ── Draft a team ───────────────────────────────────────────────
+          async function draftPick(team) {
             if (!currentPicker) return;
             const updatedTeams = [...currentPicker.teams];
             const emptyIdx = updatedTeams.findIndex(t => !t.name || !t.name.trim());
@@ -2198,7 +2199,7 @@ export default function App() {
             const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
             if (error) { alert("Failed to save pick."); return; }
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
-            else alert(`✓ ${currentPicker.name} drafted ${team.name}!`);
+            else { alert("Drafted: " + currentPicker.name + " picked " + team.name + "!"); }
           }
 
 
@@ -2208,7 +2209,6 @@ export default function App() {
 
           // ── Reset draft ────────────────────────────────────────────────
           async function shuffleDraftOrder() {
-  async function draftPick(team) {
     if (!window.confirm("Randomly shuffle the draft order for all owners?")) return;
     const shuffled = [...owners];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -2222,7 +2222,6 @@ export default function App() {
     alert("Draft order shuffled! New order: " + shuffled.map(o=>o.name).join(", "));
   }
 
-  }
   async function resetDraft() {
             if (!adminUnlocked) { setModal("pin"); return; }
             const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
