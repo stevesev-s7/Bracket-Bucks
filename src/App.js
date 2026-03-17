@@ -2219,6 +2219,7 @@ export default function App() {
   }
 
   // ── Start Draft ───────────────────────────────────────────────
+  async function startDraft() {
     if (!leagueCode) return;
   }
 
@@ -2239,6 +2240,7 @@ export default function App() {
   }
 
   async function resetDraft() {
+    await supabase.from("leagues").update({pick_timer_start:null}).eq("code",leagueCode);
             if (!adminUnlocked) { setModal("pin"); return; }
             const blank = Array.from({length:8}, (_,i) => ({ seed: i+1, name: "" }));
             for (const o of owners) {
@@ -2318,6 +2320,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                       onChange={e => setDraftStartInput(e.target.value)}
                       style={{ ...S.input, fontFamily:"'DM Mono',monospace" }} />
                   </div>
+                  <button onClick={saveDraftStart} style={{opacity:(draftLive&&!adminUnlocked)?0.4:1,cursor:(draftLive&&!adminUnlocked)?"not-allowed":"pointer"}} style={{ ...S.btn(), padding:"10px 20px", marginBottom:0 }}>
                      Set Draft Time
                   </button>
                 {draftScheduled && isAdmin && (
@@ -2372,6 +2375,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                 <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, letterSpacing:3,
                   color:"#d4af37", marginBottom:10 }}> DRAFT TIME — SELECT YOUR TEAMS BELOW</div>
                 {authUser ? (
+                  <button onClick={startDraft} style={{
                     background:"#d4af37", color:"#1a1a2e", border:"none", borderRadius:8,
                     padding:"12px 40px", fontSize:16, fontWeight:900, cursor:"pointer",
                     fontFamily:"'Bebas Neue',sans-serif", letterSpacing:2
