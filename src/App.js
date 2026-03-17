@@ -923,6 +923,15 @@ export default function App() {
     return () => clearInterval(t);
   }, []);
 
+    // ── Initialize pick timer when draft goes live ──────────────────────────
+  useEffect(() => {
+    if (!draftHasStarted || !leagueCode || !league || draftComplete) return;
+    if (!league.pick_timer_start) {
+      // Draft just went live - set the initial pick timer start
+      supabase.from("leagues").update({ pick_timer_start: new Date().toISOString() }).eq("code", leagueCode);
+    }
+  }, [draftHasStarted, leagueCode]);
+
     // ── Draft pick timer + auto-pick ────────────────────────────────────────
   useEffect(() => {
     if (!league?.draft_start || !leagueCode) return;
