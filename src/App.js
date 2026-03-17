@@ -3100,5 +3100,4 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
       <style>{`select option{background:#131929;} *{box-sizing:border-box;}`}</style>
     </div>
   );
-}
 // build: 1773441631501
