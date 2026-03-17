@@ -2203,11 +2203,6 @@ export default function App() {
             alert("Drafted: "+currentPicker.name+" picked "+team.name+"!");
           }
 
-    if (!window.confirm("Clear the scheduled draft time?")) return;
-    await supabase.from("leagues").update({ draft_start: null }).eq("code", leagueCode);
-    setDraftScheduled(null);
-    setDraftStartInput("");
-    alert("Draft time cleared.");
   }
 
   // ── Start Draft ───────────────────────────────────────────────
