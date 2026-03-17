@@ -959,7 +959,7 @@ export default function App() {
         if (emptyIdx === -1) return;
         updatedTeams[emptyIdx] = { seed: best.seed, name: best.name };
         await supabase.from("owners").update({ teams: updatedTeams }).eq("id", picker.id);
-        await supabase.from("leagues").update({ pick_timer_start: new Date().toISOString() }).eq("code", leagueCode);
+        await Promise.resolve() // pick_timer_start disabled.eq("code", leagueCode);
       }
     }, 1000);
 
@@ -2264,6 +2264,7 @@ export default function App() {
 
   // ── Start Draft ───────────────────────────────────────────────
   async function startDraft() {
+    return; // auto-draft disabled
     if (!leagueCode) return;
     const ts = new Date().toISOString();
     const { error } = await supabase.from("leagues").update({ pick_timer_start: ts }).eq("code", leagueCode);
