@@ -2199,13 +2199,18 @@ export default function App() {
             const { error } = await supabase.from("owners").update({ teams: updatedTeams }).eq("id", currentPicker.id);
             if (error) { alert("Failed to save pick."); return; }
             setOwners(prev => prev.map(o => o.id === currentPicker.id ? { ...o, teams: updatedTeams } : o));
-            else alert("Drafted: " + currentPicker.name + " picked " + team.name + "!");
+            else alert("Drafted: "+currentPicker.name+" picked "+team.name+"!");
           }
 
 
   // ── Start Draft ───────────────────────────────────────────────
 
     // ── Auto-pick (highest available seed = lowest seed number) ───
+          async function autoPick() {
+            if (!available.length || !currentPicker) return;
+            const best = [...available].sort((a,b)=>(a.seed||99)-(b.seed||99))[0];
+            await draftPick(best, true);
+          }
 
           // ── Reset draft ────────────────────────────────────────────────
           async function shuffleDraftOrder() {
@@ -2371,6 +2376,22 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
               {/* ── Live Draft UI ── */}
                 <>
             {/* ── Start Draft Banner ── */}
+            {!league?.pick_timer_start && (
+              <div style={{ textAlign:"center", padding:"20px 24px", background:"#0f1420",
+                border:"2px solid #d4af37", borderRadius:12, marginBottom:16 }}>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, letterSpacing:3,
+                  color:"#d4af37", marginBottom:10 }}>🏀 DRAFT TIME — SELECT YOUR TEAMS BELOW</div>
+                {authUser ? (
+                  <button onClick={startDraft} style={{
+                    background:"#d4af37", color:"#1a1a2e", border:"none", borderRadius:8,
+                    padding:"12px 40px", fontSize:16, fontWeight:900, cursor:"pointer",
+                    fontFamily:"'Bebas Neue',sans-serif", letterSpacing:2
+                  }}>🚀 START DRAFT — BEGIN 30s TIMER</button>
+                ) : (
+                  <div style={{ color:"#f0c040", fontSize:13 }}>Sign in to start the draft.</div>
+                )}
+              </div>
+            )}
 
                   )}
 
