@@ -2359,6 +2359,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
                 )}
                 <div style={{ display:"flex", gap:8 }}>
                   {isAdmin && <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#d4af37"), border:"1px solid #d4af37", fontSize:13, padding:"8px 16px" }}>🔀 Shuffle Order</button>}
+          <button onClick={shuffleDraftOrder} style={{ ...S.btn("#1a2440","#f7b731"), border:"1px solid #f7b731", fontSize:12 }}>🔀 Shuffle Order</button>
                   <button onClick={resetDraft} style={{ ...S.btn("#1a2440","#e74c3c"), border:"1px solid #e74c3c", fontSize:12 }}>
                     🔄 Reset Draft
                   </button>
