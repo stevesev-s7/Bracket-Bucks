@@ -917,7 +917,6 @@ export default function App() {
   }, []);
 
 
-  // ── Draft pick timer + auto-pick ────────────────────────────────────
   useEffect(() => {
     const t = null; // disabled: setInterval(() => setTick(n => (n+1) % 1000), 1000);
     return () => clearInterval(t);
@@ -2222,10 +2221,8 @@ export default function App() {
   // ── Start Draft ───────────────────────────────────────────────
   async function startDraft() {
     if (!leagueCode) return;
-    // Also update local state immediately in case realtime is slow
   }
 
-    
 
           // ── Reset draft ────────────────────────────────────────────────
           async function shuffleDraftOrder() {
