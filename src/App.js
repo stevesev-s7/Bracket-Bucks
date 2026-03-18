@@ -356,7 +356,7 @@ function Modal({ open, onClose, title, children }) {
         onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:22 }}>
           <h3 style={{ margin:0, fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:2, color:"#f0c040" }}>{title}</h3>
-          <button onClick={onClose} style={{ background:"none", border:"none", color:"#667", fontSize:22, cursor:"pointer" }}></button>
+          <button onClick={onClose} style={{ background:"none", border:"none", color:"#667", fontSize:22, cursor:"pointer" }}>X</button>
         </div>
         {children}
       </div>
@@ -368,7 +368,7 @@ function Empty({ text }) {
     <div style={{ textAlign:"center", padding:"48px 24px",
       background:"#111827", border:"1px dashed #1a2440",
       borderRadius:14, color:"#334" }}>
-      <div style={{ fontSize:30, marginBottom:10 }}></div>
+      <div style={{ fontSize:30, marginBottom:10 }}>-</div>
       <p style={{ margin:0, fontSize:14 }}>{text}</p>
     </div>
   );
@@ -1231,8 +1231,8 @@ export default function App() {
             </div>
             <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
               <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>HOW THE DRAFT WORKS</div>
-              <p style={{margin:"0 0 8px"}}>The admin sets a draft time. When it arrives, the <strong style={{color:"#fff"}}>snake draft</strong> begins. Owner 1 picks first in Round 1, then the order reverses each round.</p>
-              <p style={{margin:"0 0 6px"}}>Each owner picks <strong style={{color:"#f0c040"}}>8 teams</strong> total. You have <strong style={{color:"#f0c040"}}>30 seconds</strong> per pick. Time up means the best available team is auto-selected.</p>
+              <p style={{margin:"0 0 8px"}}>The admin starts the draft when everyone is ready. The <strong style={{color:"#fff"}}>snake draft</strong> begins immediately. Owner 1 picks first in Round 1, then the order reverses each round.</p>
+              <p style={{margin:"0 0 6px"}}>Each owner picks <strong style={{color:"#f0c040"}}>8 teams</strong> total. Click any available team to draft them. The admin controls the pace of the draft.</p>
               <p style={{margin:0}}>The admin can shuffle the draft order randomly before the draft begins.</p>
             </div>
             <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
