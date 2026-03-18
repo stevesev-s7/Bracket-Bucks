@@ -1227,7 +1227,7 @@ export default function App() {
             <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
               <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>OVERVIEW</div>
               <p style={{margin:"0 0 8px"}}>Bracket Bucks is a <strong style={{color:"#fff"}}>snake draft pool</strong> where each player drafts <strong style={{color:"#f0c040"}}>8 NCAA tournament teams</strong>. Every time your team wins, the other owners pay you based on the seed and round.</p>
-              <p style={{margin:0}}>Higher seed = bigger upset = more money. A 16-seed run is worth a fortune! However, it is highly unlikely. A low-seeded team earns the Owner less than a high-seeded team, but the chances are less likely. Draft wisely!</p>
+              <p style={{margin:0}}>Higher seed = bigger upset = more money. A 16-seed run is worth a fortune! However, it is highly unlikely. A low-seeded team earns the Owner less than a high-seeded team, but the chances are the high-seeded team is less likely to win!</p>
             </div>
             <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
               <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>HOW THE DRAFT WORKS</div>
@@ -2866,7 +2866,7 @@ const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:
             <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
               <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>OVERVIEW</div>
               <p style={{margin:"0 0 8px"}}>Bracket Bucks is a <strong style={{color:"#fff"}}>snake draft pool</strong> where each player drafts <strong style={{color:"#f0c040"}}>8 NCAA tournament teams</strong>. Every time your team wins, the other owners pay you based on the seed and round.</p>
-              <p style={{margin:0}}>Higher seed = bigger upset = more money. A 16-seed run is worth a fortune! However, it is highly unlikely. A low-seeded team earns the Owner less than a high-seeded team, but the chances are less likely. Draft wisely!</p>
+              <p style={{margin:0}}>Higher seed = bigger upset = more money. A 16-seed run is worth a fortune! However, it is highly unlikely. A low-seeded team earns the Owner less than a high-seeded team, but the chances are the high-seeded team is less likely to win!</p>
             </div>
             <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
               <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>HOW THE DRAFT WORKS</div>
