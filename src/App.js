@@ -1452,7 +1452,7 @@ export default function App() {
           {venmoLoading ? (
             /* Verifying payment with Venmo */
             <div style={{ textAlign:"center", padding:"30px 0" }}>
-              <div style={{ fontSize:36, marginBottom:12 }}>⏳</div>
+              <div style={{ fontSize:36, marginBottom:12 }}></div>
               <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2, color:"#f0c040" }}>
                 Verifying Payment…
               </div>
@@ -1525,7 +1525,7 @@ export default function App() {
                       marginTop: 12
                     }}
                   >
-                    {paymentStep === 'verifying' ? '⏳ Checking payment...' : ' I sent it — Verify Payment'}
+                    {paymentStep === 'verifying' ? ' Checking payment...' : ' I sent it — Verify Payment'}
                   </button>
                   {venmoVerifyError && <p style={{color:'#ff6b6b', fontSize: 13, margin: '8px 0 0'}}>{venmoVerifyError}</p>}
 
@@ -1602,7 +1602,7 @@ export default function App() {
             }}
             disabled={paymentStep === "verifying"}
             style={{width:"100%",background:paymentStep==="verifying"?"#333":"#f7b731",color:"#1a1a2e",border:"none",borderRadius:8,padding:"13px",fontSize:15,fontWeight:700,cursor:paymentStep==="verifying"?"not-allowed":"pointer",opacity:paymentStep==="verifying"?0.7:1}}>
-            {paymentStep === "verifying" ? "⏳ Checking..." : paymentStep === "pending" ? " Request submitted!" : " I sent it — Verify Payment"}
+            {paymentStep === "verifying" ? " Checking..." : paymentStep === "pending" ? " Request submitted!" : " I sent it — Verify Payment"}
           </button>
           <p style={{fontSize:11,color:"#445",textAlign:"center",marginTop:8}}>Include your email ({authUser?.email}) in the Venmo note.</p>
         </div>
