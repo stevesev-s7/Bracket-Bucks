@@ -765,7 +765,6 @@ export default function App() {
   const [espnGames, setEspnGames]   = useState([]);
   const [espnStatus, setEspnStatus] = useState("idle");
   const [autoSync, setAutoSync]     = useState(false);
-  const [eliminatedTeams, setEliminatedTeams] = useState(new Set());
   const [lastSync, setLastSync]       = useState(null);
   const [syncLog, setSyncLog]         = useState([]);
 
@@ -1199,26 +1198,6 @@ export default function App() {
 
   //  Auto-sync interval 
   React.useEffect(() => {
-  // Fetch eliminated teams from ESPN
-  React.useEffect(() => {
-    async function fetchElim() {
-      try {
-        const r = await fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200');
-        const data = await r.json();
-        const elim = new Set();
-        (data.events||[]).forEach(g => {
-          if(!g.status?.type?.completed) return;
-          const loser = (g.competitions?.[0]?.competitors||[]).find(c=>!c.winner);
-          if(loser?.team?.displayName) elim.add(loser.team.displayName.toLowerCase().trim());
-        });
-        setEliminatedTeams(elim);
-      } catch(e) {}
-    }
-    if(!leagueCode) return;
-    fetchElim();
-    const intv = setInterval(fetchElim, 60000);
-    return () => clearInterval(intv);
-  }, [leagueCode]);
 
 
     if (!autoSync || !leagueCode) return;
@@ -1905,8 +1884,6 @@ export default function App() {
                               border:`1px solid ${hasWin?"#27ae60":"#1a2440"}`,
                               borderRadius:7, padding:"6px 10px" }}>
                               <SeedBadge seed={team.seed} />
-                              <span style={{ fontSize:13, flex:1, textDecoration:eliminatedTeams.has((team.name||'').toLowerCase().trim())?'line-through':'none', color:eliminatedTeams.has((team.name||'').toLowerCase().trim())?'#e74c3c':'#dce4f5' }}>{team.name}</span>
-                              {eliminatedTeams.has((team.name||'').toLowerCase().trim())&&<span style={{fontSize:9,background:'#2a0a0a',color:'#e74c3c',border:'1px solid #e74c3c',borderRadius:3,padding:'1px 4px',fontWeight:700,marginLeft:2}}>OUT</span>}
                               {hasWin&&<span style={{ fontSize:10, color:"#2ecc71" }}></span>}
                             </div>
                           );
