@@ -13,12 +13,21 @@ function getRoundId(note){
   for(const r of ROUND_MAP){if(r.keys.some(k=>note.includes(k)))return r.id;}
   return null;
 }
-function nameMatches(espnName,teamName){
-  if(!espnName||!teamName)return false;
+function nameMatches(espnName, teamName) {
+  if(!espnName||!teamName) return false;
   const w=espnName.toLowerCase().trim();
   const t=teamName.toLowerCase().trim();
-  if(w===t||w.includes(t)||t.includes(w))return true;
-  return w.split(' ').some(word=>word.length>3&&t.includes(word));
+  // Exact match only - prevents "Michigan" matching "Michigan State"
+  if(w===t) return true;
+  // ESPN uses full names like "Duke Blue Devils", roster has "Duke"
+  // Only match if the team name is a complete word match at start of ESPN name
+  const espnWords = w.split(' ');
+  const teamWords = t.split(' ');
+  // All team words must appear consecutively at start of ESPN name
+  if(espnWords.slice(0,teamWords.length).join(' ')===t) return true;
+  // Or team name contains ESPN name exactly
+  if(t.includes(w)) return true;
+  return false;
 }
 const sb=(p)=>fetch(SB_URL+'/rest/v1/'+p,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(r=>r.json());
 const sbPost=(p,b)=>fetch(SB_URL+'/rest/v1/'+p,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(b)});
