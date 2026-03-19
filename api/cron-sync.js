@@ -2,7 +2,15 @@
 const SB_URL='https://cxkqkmakwynpgqpfzvtp.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4a3FrbWFrd3lucGdxcGZ6dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1ODEwMDIsImV4cCI6MjA4ODE1NzAwMn0.biNsjhSH3HcuWG9q25XO5CRpiTkdmpF59iLAOCk8yUE';
 const LEAGUES=['FX8OZB','OIU8IS','CHI2025','TSS7OR','J5JBYC','V55GGL','QZ81AN','7NW5J3'];
-const ROUNDS={'First Round':'r1','Second Round':'r2','Sweet 16':'r3','Elite Eight':'r4','Final Four':'r5','National Championship':'r6'};
+const ROUNDS=[
+  {keys:['1st Round','First Round','Round of 64'],id:'r1'},
+  {keys:['2nd Round','Second Round','Round of 32'],id:'r2'},
+  {keys:['Sweet 16','Sweet Sixteen'],id:'r3'},
+  {keys:['Elite Eight','Elite 8'],id:'r4'},
+  {keys:['Final Four'],id:'r5'},
+  {keys:['National Championship','Championship'],id:'r6'},
+];
+function getRoundId(note){for(const r of ROUNDS){if(r.keys.some(k=>note.includes(k)))return r.id;}return null;}
 const sb=(p)=>fetch(SB_URL+'/rest/v1/'+p,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(r=>r.json());
 const sbPost=(p,b)=>fetch(SB_URL+'/rest/v1/'+p,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(b)});
 export default async function handler(req,res){
@@ -18,7 +26,7 @@ export default async function handler(req,res){
     let ins=0;
     for(const g of done){
       const rn=g.competitions?.[0]?.notes?.[0]?.headline||'';
-      const rid=Object.entries(ROUNDS).find(([k])=>rn.includes(k))?.[1];
+      const rid=getRoundId(rn);
       if(!rid)continue;
       const w=(g.competitions?.[0]?.competitors||[]).find(c=>c.winner);
       if(!w)continue;
