@@ -1200,6 +1200,28 @@ export default function App() {
 
   //  Auto-sync interval 
   React.useEffect(() => {
+  // Fetch eliminated teams from ESPN
+  React.useEffect(() => {
+    async function fetchElim() {
+      try {
+        const r = await fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200');
+        const data = await r.json();
+        const elim = new Set();
+        (data.events||[]).forEach(g => {
+          if(!g.status?.type?.completed) return;
+          const loser = (g.competitions?.[0]?.competitors||[]).find(c=>!c.winner);
+          if(loser?.team?.displayName) elim.add(loser.team.displayName.toLowerCase().trim());
+        });
+        setEliminatedTeams(elim);
+      } catch(e) {}
+    }
+    if(!leagueCode) return;
+    fetchElim();
+    const intv = setInterval(fetchElim, 60000);
+    return () => clearInterval(intv);
+  }, [leagueCode]);
+
+
     if (!autoSync || !leagueCode) return;
     autoSyncESPN(); // run immediately
     const interval = setInterval(autoSyncESPN, 60000);
