@@ -1348,6 +1348,7 @@ export default function App() {
                 background:"none", border:"none", color:"#2a3560",
                 fontSize:12, cursor:"pointer", textDecoration:"underline"
               }}>Admin Login</button>
+              <button onClick={()=>setModal("howToPlay")} style={{ background:"none", border:"none", color:"#6677aa", fontSize:12, cursor:"pointer", marginTop:8, textDecoration:"underline" }}>? How to Play</button>
             </div>
           ) : (
             <div style={{ marginTop:28 }}>
