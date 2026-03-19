@@ -766,7 +766,6 @@ export default function App() {
   const [espnStatus, setEspnStatus] = useState("idle");
   const [autoSync, setAutoSync]     = useState(false);
   const [eliminatedTeams, setEliminatedTeams] = useState(new Set());
-  const [eliminatedTeams, setEliminatedTeams] = useState(new Set());
   const [lastSync, setLastSync]       = useState(null);
   const [syncLog, setSyncLog]         = useState([]);
 
