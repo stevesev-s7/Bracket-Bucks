@@ -457,6 +457,8 @@ function Bracket2026Tab({ owners }) {
   };
   React.useEffect(() => {
     load();
+    const draftPoll = setInterval(load, 5000);
+    return () => clearInterval(draftPoll);
   }, [load]);
 
   const findOwner = (teamName) => {
