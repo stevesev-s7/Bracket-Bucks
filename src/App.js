@@ -1205,7 +1205,6 @@ export default function App() {
   }, [autoSync, leagueCode, owners, wins]);
 
   const stats = calcStats(owners, wins, rounds);
-    const stats = calcStats(owners, wins, rounds);
   const totalWins = wins.length;
 
   const TABS = [
