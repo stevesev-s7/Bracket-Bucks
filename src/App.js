@@ -765,6 +765,7 @@ export default function App() {
   const [espnGames, setEspnGames]   = useState([]);
   const [espnStatus, setEspnStatus] = useState("idle");
   const [autoSync, setAutoSync]     = useState(false);
+  const [eliminatedTeams, setEliminatedTeams] = useState(new Set());
   const [lastSync, setLastSync]       = useState(null);
   const [syncLog, setSyncLog]         = useState([]);
 
@@ -1882,7 +1883,8 @@ export default function App() {
                               border:`1px solid ${hasWin?"#27ae60":"#1a2440"}`,
                               borderRadius:7, padding:"6px 10px" }}>
                               <SeedBadge seed={team.seed} />
-                              <span style={{ fontSize:13, flex:1 }}>{team.name}</span>
+                              <span style={{ fontSize:13, flex:1, textDecoration:eliminatedTeams.has((team.name||'').toLowerCase().trim())?'line-through':'none', color:eliminatedTeams.has((team.name||'').toLowerCase().trim())?'#e74c3c':'#dce4f5' }}>{team.name}</span>
+                              {eliminatedTeams.has((team.name||'').toLowerCase().trim())&&<span style={{fontSize:9,background:'#2a0a0a',color:'#e74c3c',border:'1px solid #e74c3c',borderRadius:3,padding:'1px 4px',fontWeight:700,marginLeft:2}}>OUT</span>}
                               {hasWin&&<span style={{ fontSize:10, color:"#2ecc71" }}></span>}
                             </div>
                           );
