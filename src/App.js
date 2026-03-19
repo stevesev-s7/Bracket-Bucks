@@ -386,7 +386,7 @@ function HowToPlayModal({ open, onClose }) {
             <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>EXAMPLE PAYOUT</div>
             <p style={{margin:"0 0 6px"}}>#12 seed McNeese wins in Round 1:</p>
             <p style={{margin:"0 0 4px",color:"#2ecc71",fontWeight:700}}>12 x $0.50 = $6.00 per owner x 7 other owners = $42.00 total collected</p>
-            <p style={{margin:"0 0 6px"}}>#12 seed McNeese then wins in Round of 32:</p>
+            <p style={{margin:"0 0 6px"}}>#12 seed McNeese then wins in Round 2 (Round of 32):</p>
             <p style={{margin:"0 0 4px",color:"#2ecc71",fontWeight:700}}>12 x $1.00 = $12.00 per owner x 7 other owners = $84.00 total collected</p>
             <p style={{margin:0,color:"#8899cc",fontSize:12}}>Each other owner owes you the amount per win, settled however your group prefers.</p>
           </div>
