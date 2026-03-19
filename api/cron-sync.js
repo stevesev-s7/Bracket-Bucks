@@ -9,28 +9,28 @@ const ROUND_MAP=[
   {keys:['Final Four'],id:4},
   {keys:['National Championship','Championship'],id:5},
 ];
-function getRoundId(note){
-  for(const r of ROUND_MAP){if(r.keys.some(k=>note.includes(k)))return r.id;}
-  return null;
-}
-function nameMatches(espnName, teamName) {
-  if(!espnName||!teamName) return false;
-  const w=espnName.toLowerCase().trim();
-  const t=teamName.toLowerCase().trim();
-  // Exact match only - prevents "Michigan" matching "Michigan State"
-  if(w===t) return true;
-  // ESPN uses full names like "Duke Blue Devils", roster has "Duke"
-  // Only match if the team name is a complete word match at start of ESPN name
-  const espnWords = w.split(' ');
-  const teamWords = t.split(' ');
-  // All team words must appear consecutively at start of ESPN name
-  if(espnWords.slice(0,teamWords.length).join(' ')===t) return true;
-  // Or team name contains ESPN name exactly
-  if(t.includes(w)) return true;
+function getRoundId(note){for(const r of ROUND_MAP){if(r.keys.some(k=>note.includes(k)))return r.id;}return null;}
+
+// STRICT matching: ESPN "Duke Blue Devils" matches roster "Duke"
+// but ESPN "Michigan State Spartans" does NOT match roster "Michigan"
+function nameMatches(espnFull, rosterName){
+  if(!espnFull||!rosterName) return false;
+  const e=espnFull.toLowerCase().trim();
+  const r=rosterName.toLowerCase().trim();
+  if(e===r) return true;
+  // ESPN name starts with roster name as complete words
+  // e.g. "duke blue devils" starts with "duke" -> match
+  // but "michigan state spartans" starts with "michigan" but "michigan state" != "michigan" -> no match
+  const eWords=e.split(' ');
+  const rWords=r.split(' ');
+  // roster must match exactly the first N words of ESPN name
+  if(rWords.length<=eWords.length && eWords.slice(0,rWords.length).join(' ')===r) return true;
   return false;
 }
+
 const sb=(p)=>fetch(SB_URL+'/rest/v1/'+p,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(r=>r.json());
 const sbPost=(p,b)=>fetch(SB_URL+'/rest/v1/'+p,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(b)});
+
 export default async function handler(req,res){
   const log=[];
   try{
@@ -42,38 +42,32 @@ export default async function handler(req,res){
     const ow=owners.filter(o=>LEAGUES.includes(o.league_code));
     const espn=await espnRes.json();
     const done=(espn.events||[]).filter(g=>g.status?.type?.completed);
-    log.push('owners:'+ow.length+' existing_wins:'+wins.length+' completed_games:'+done.length);
+    log.push('owners:'+ow.length+' wins:'+wins.length+' games:'+done.length);
     let ins=0;
     for(const g of done){
       const note=g.competitions?.[0]?.notes?.[0]?.headline||'';
       const rid=getRoundId(note);
-      if(rid===null){log.push('no_round_match:'+note.slice(0,60));continue;}
+      if(rid===null) continue;
       const winner=(g.competitions?.[0]?.competitors||[]).find(c=>c.winner);
-      if(!winner)continue;
+      if(!winner) continue;
       const espnName=winner.team?.displayName||'';
       for(const o of ow){
-        if(!o.teams||!Array.isArray(o.teams))continue;
+        if(!o.teams||!Array.isArray(o.teams)) continue;
         for(let i=0;i<o.teams.length;i++){
           const t=o.teams[i];
-          const teamName=typeof t==='string'?t:(t?.name||'');
-          if(!teamName)continue;
-          if(!nameMatches(espnName,teamName))continue;
-          if(wins.some(x=>x.owner_id===o.id&&x.round_id===rid&&x.team_index===i))continue;
+          const tn=typeof t==='string'?t:(t?.name||'');
+          if(!tn||!nameMatches(espnName,tn)) continue;
+          if(wins.some(x=>x.owner_id===o.id&&x.round_id===rid&&x.team_index===i)) continue;
           const r=await sbPost('wins',{league_code:o.league_code,owner_id:o.id,round_id:rid,team_index:i});
           if(r.ok||r.status===201||r.status===204){
             ins++;
             wins.push({owner_id:o.id,round_id:rid,team_index:i});
-            log.push('WIN:['+o.league_code+'] '+o.name+' - '+teamName+' ('+espnName+' rid:'+rid+')');
-          }else{
-            const b=await r.json().catch(()=>({}));
-            log.push('FAIL:['+o.league_code+'] '+o.name+' '+teamName+' status:'+r.status+' '+JSON.stringify(b).slice(0,80));
+            log.push('WIN:['+o.league_code+'] '+o.name+' - '+tn);
           }
         }
       }
     }
     log.push('inserted:'+ins);
     res.status(200).json({success:true,inserted:ins,log});
-  }catch(e){
-    res.status(500).json({success:false,error:e.message});
-  }
+  }catch(e){res.status(500).json({success:false,error:e.message});}
 }
