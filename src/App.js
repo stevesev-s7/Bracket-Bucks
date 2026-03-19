@@ -1432,7 +1432,7 @@ export default function App() {
                         Code: <span style={{ fontFamily:"'DM Mono',monospace", color:"#f0c040" }}>{l.code}</span>
                       </div>
                     </div>
-                    <span style={{ color:"#f0c040", fontSize:18 }}>Ã¢ÂÂ</span>
+                    <span style={{ color:"#f0c040" }}>&#8594;</span>
                   </button>
                 ))}
               </div>
