@@ -1623,6 +1623,45 @@ export default function App() {
           )}
         </Modal>
         <style>{`select option { background: #131929; } * { box-sizing: border-box; }`}</style>
+        <Modal open={modal==="howToPlay"} onClose={()=>setModal(null)} title="How to Play">
+          <div style={{fontSize:13,color:"#aab",lineHeight:1.8,maxHeight:"72vh",overflowY:"auto",paddingRight:4}}>
+            <p style={{margin:"0 0 14px",color:"#dce4f5",fontSize:15,fontWeight:600}}>Welcome to Bracket Bucks - the March Madness Upset Pool!</p>
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>OVERVIEW</div>
+              <p style={{margin:"0 0 8px"}}>Bracket Bucks is a <strong style={{color:"#fff"}}>snake draft pool</strong> where each player drafts <strong style={{color:"#f0c040"}}>8 NCAA tournament teams</strong>. Every time your team wins, the other owners pay you based on the seed and round.</p>
+              <p style={{margin:0}}>Higher seed = bigger upset = more money. A 16-seed run is worth a fortune! However, it is highly unlikely. A low-seeded team earns the Owner less than a high-seeded team, but the chances are the high-seeded team is less likely to win!</p>
+            </div>
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>HOW THE DRAFT WORKS</div>
+              <p style={{margin:"0 0 8px"}}>Owner 1 picks first in Round 1, each Owner selects their first team to add to their Roster, then the order reverses. So, the order is as follows: 1-8, then 8-1, and so on.</p>
+              <p style={{margin:0}}>Each owner picks <strong style={{color:"#f0c040"}}>8 teams</strong> total. Click any available team to draft them.</p>
+            </div>
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>HOW PAYOUTS WORK</div>
+              <p style={{margin:"0 0 10px"}}>Each time your team wins, every other owner pays you: <strong style={{color:"#2ecc71"}}>Seed # x Round Multiplier = $ per player</strong></p>
+              <div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #1a2440",fontSize:13}}><span style={{color:"#dce4f5"}}>Round 1</span><span style={{color:"#f0c040"}}>$0.50 x seed</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #1a2440",fontSize:13}}><span style={{color:"#dce4f5"}}>Round of 32</span><span style={{color:"#f0c040"}}>$1.00 x seed</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #1a2440",fontSize:13}}><span style={{color:"#dce4f5"}}>Sweet 16</span><span style={{color:"#f0c040"}}>$1.50 x seed</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #1a2440",fontSize:13}}><span style={{color:"#dce4f5"}}>Elite Eight</span><span style={{color:"#f0c040"}}>$2.00 x seed</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #1a2440",fontSize:13}}><span style={{color:"#dce4f5"}}>Final Four</span><span style={{color:"#f0c040"}}>$2.50 x seed</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",fontSize:13}}><span style={{color:"#dce4f5"}}>Championship</span><span style={{color:"#f0c040"}}>$3.00 x seed</span></div>
+            </div>
+            <div style={{background:"#0f1625",border:"1px solid #1e2840",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
+              <div style={{fontWeight:700,color:"#f0c040",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>EXAMPLE PAYOUT</div>
+              <p style={{margin:"0 0 6px"}}>#12 seed McNeese wins in Round 1:</p>
+              <p style={{margin:"0 0 4px",color:"#2ecc71",fontWeight:700}}>12 x $0.50 = $6.00 per owner x 7 other owners = $42.00 total collected</p>
+              <p style={{margin:"0 0 6px"}}>#12 seed McNeese then wins in Round 2 (Round of 32):</p>
+              <p style={{margin:"0 0 4px",color:"#2ecc71",fontWeight:700}}>12 x $1.00 = $12.00 per owner x 7 other owners = $84.00 total collected</p>
+              <p style={{margin:0,color:"#8899cc",fontSize:12}}>Each other owner owes you the amount per win, settled however your group prefers.</p>
+            </div>
+            <div style={{background:"#0a1a2e",border:"1px solid #1e3a5a",borderRadius:10,padding:"14px 16px"}}>
+              <div style={{fontWeight:700,color:"#3498db",marginBottom:8,fontSize:12,textTransform:"uppercase",letterSpacing:1}}>STRATEGY TIPS</div>
+              <p style={{margin:"0 0 6px"}}><strong style={{color:"#dce4f5"}}>High seeds earn more</strong> but go out earlier. Balance your 8 picks.</p>
+              <p style={{margin:"0 0 6px"}}><strong style={{color:"#dce4f5"}}>Mix strong low seeds</strong> (1s and 2s) with high seeds (10s-12s) who can upset.</p>
+              <p style={{margin:0}}><strong style={{color:"#dce4f5"}}>Championship pays 3x</strong> - a 5-seed winning it all pays $15 per owner per win!</p>
+            </div>
+          </div>
+        </Modal>
       </div>
     );
   }
