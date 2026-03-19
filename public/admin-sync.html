@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bracket Bucks - Admin Sync</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0c1120; color: #dce4f5; font-family: 'DM Sans', sans-serif; padding: 24px; min-height: 100vh; }
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;600;700&family=DM+Mono&display=swap');
+  h1 { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 3px; color: #f0c040; margin-bottom: 4px; }
+  .sub { color: #6677aa; font-size: 13px; margin-bottom: 24px; }
+  .card { background: #131929; border: 1px solid #1a2440; border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  .btn { background: linear-gradient(135deg,#d4af37,#f0c040); color: #1a1a2e; border: none; border-radius: 8px; padding: 12px 28px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-red { background: #e74c3c; color: #fff; }
+  .btn-green { background: #2ecc71; color: #0c1120; }
+  .status { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+  .status-on { background: #0a2a14; color: #2ecc71; border: 1px solid #27ae60; }
+  .status-off { background: #1a2440; color: #6677aa; border: 1px solid #2a3560; }
+  .log-entry { padding: 6px 0; border-bottom: 1px solid #1a2440; font-size: 12px; font-family: 'DM Mono', monospace; }
+  .log-time { color: #6677aa; }
+  .log-win { color: #2ecc71; }
+  .log-info { color: #3498db; }
+  .log-err { color: #e74c3c; }
+  .league-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a2440; font-size: 13px; }
+  .league-name { font-weight: 600; }
+  .league-code { color: #f0c040; font-family: 'DM Mono', monospace; font-size: 11px; }
+  .counter { font-size: 28px; font-weight: 700; color: #f0c040; font-family: 'DM Mono', monospace; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stat { background: #0f1625; border: 1px solid #1a2440; border-radius: 10px; padding: 14px; text-align: center; }
+  .stat-label { font-size: 10px; color: #6677aa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<h1>Bracket Bucks Admin Sync</h1>
+<p class="sub">Syncs wins across ALL leagues automatically from ESPN</p>
+
+<div class="grid">
+  <div class="stat"><div class="stat-label">Total Wins Recorded</div><div class="counter" id="totalWins">—</div></div>
+  <div class="stat"><div class="stat-label">Leagues Active</div><div class="counter" id="totalLeagues">—</div></div>
+  <div class="stat"><div class="stat-label">Last Sync</div><div class="counter" style="font-size:16px" id="lastSync">Never</div></div>
+  <div class="stat"><div class="stat-label">Sync Status</div><div id="syncStatus" class="status status-off" style="margin-top:4px">OFF</div></div>
+</div>
+
+<div class="card">
+  <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+    <button class="btn btn-green" id="toggleBtn" onclick="toggleSync()">Start Auto-Sync</button>
+    <button class="btn" onclick="runSync()" id="runOnceBtn">Run Once Now</button>
+    <span style="font-size:12px;color:#6677aa">Syncs every 60 seconds when ON</span>
+  </div>
+  <div id="leagues" style="margin-top:8px"></div>
+</div>
+
+<div class="card">
+  <div style="font-weight:700;color:#f0c040;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Sync Log</div>
+  <div id="log" style="max-height:400px;overflow-y:auto"></div>
+</div>
+
+<script>
+const SB_URL = 'https://cxkqkmakwynpgqpfzvtp.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4a3FrbWFrd3lucGdxcGZ6dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1ODEwMDIsImV4cCI6MjA4ODE1NzAwMn0.biNsjhSH3HcuWG9q25XO5CRpiTkdmpF59iLAOCk8yUE';
+const ESPN_ROUND_MAP = {
+  'First Round': 'r1',
+  'Second Round': 'r2',
+  'Sweet 16': 'r3',
+  'Elite Eight': 'r4',
+  'Final Four': 'r5',
+  'National Championship': 'r6',
+};
+const REAL_LEAGUES = ['FX8OZB','OIU8IS','CHI2025','TSS7OR','J5JBYC','V55GGL','QZ81AN','7NW5J3'];
+
+let syncInterval = null;
+let isRunning = false;
+let allOwners = [];
+let allWins = [];
+let leagues = [];
+
+function addLog(msg, type='info') {
+  const div = document.createElement('div');
+  div.className = 'log-entry';
+  const time = new Date().toLocaleTimeString();
+  div.innerHTML = '<span class="log-time">[' + time + ']</span> <span class="log-' + type + '">' + msg + '</span>';
+  const log = document.getElementById('log');
+  log.insertBefore(div, log.firstChild);
+}
+
+async function sb(path) {
+  const r = await fetch(SB_URL + '/rest/v1/' + path, {
+    headers: {'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY}
+  });
+  return r.json();
+}
+
+async function sbPost(path, body) {
+  return fetch(SB_URL + '/rest/v1/' + path, {
+    method: 'POST',
+    headers: {'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal'},
+    body: JSON.stringify(body)
+  });
+}
+
+async function loadData() {
+  addLog('Loading leagues and rosters...', 'info');
+  const [ownersData, winsData, leaguesData] = await Promise.all([
+    sb('owners?select=id,name,teams,league_code&order=league_code'),
+    sb('wins?select=*'),
+    sb('leagues?select=code,name')
+  ]);
+  allOwners = ownersData.filter(o => REAL_LEAGUES.includes(o.league_code));
+  allWins = winsData;
+  leagues = leaguesData.filter(l => REAL_LEAGUES.includes(l.code));
+  
+  document.getElementById('totalWins').textContent = allWins.length;
+  document.getElementById('totalLeagues').textContent = leagues.length;
+  
+  const leagueDiv = document.getElementById('leagues');
+  leagueDiv.innerHTML = leagues.map(l => {
+    const owners = allOwners.filter(o => o.league_code === l.code);
+    const wins = allWins.filter(w => owners.some(o => o.id === w.owner_id));
+    return '<div class="league-row"><div><div class="league-name">' + l.name + '</div><div class="league-code">' + l.code + '</div></div><div style="color:#6677aa;font-size:12px">' + owners.length + ' owners &nbsp;|&nbsp; ' + wins.length + ' wins</div></div>';
+  }).join('');
+  
+  addLog('Loaded ' + allOwners.length + ' owners across ' + leagues.length + ' leagues', 'info');
+}
+
+async function runSync() {
+  if (isRunning) return;
+  isRunning = true;
+  document.getElementById('runOnceBtn').disabled = true;
+  
+  try {
+    addLog('Fetching ESPN scoreboard...', 'info');
+    const res = await fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200');
+    if (!res.ok) throw new Error('ESPN fetch failed');
+    const data = await res.json();
+    const games = data.events || [];
+    
+    const finished = games.filter(g => g.status?.type?.completed);
+    addLog('Found ' + finished.length + ' completed games', 'info');
+    
+    let inserted = 0;
+    
+    for (const game of finished) {
+      const roundName = game.competitions?.[0]?.notes?.[0]?.headline || '';
+      const roundId = Object.entries(ESPN_ROUND_MAP).find(([k]) => roundName.includes(k))?.[1];
+      if (!roundId) continue;
+      
+      const competitors = game.competitions?.[0]?.competitors || [];
+      const winner = competitors.find(c => c.winner);
+      if (!winner) continue;
+      const winnerName = (winner.team?.displayName || '').toLowerCase().trim();
+      
+      for (const owner of allOwners) {
+        if (!owner.teams || !Array.isArray(owner.teams)) continue;
+        owner.teams.forEach(async (team, teamIdx) => {
+          const teamName = (typeof team === 'string' ? team : team?.name || '').toLowerCase().trim();
+          if (!teamName) return;
+          
+          const matches = winnerName.includes(teamName) || teamName.includes(winnerName) ||
+            winnerName.split(' ').some(w => w.length > 3 && teamName.includes(w));
+          if (!matches) return;
+          
+          const exists = allWins.some(w =>
+            w.owner_id === owner.id && w.round_id === roundId && w.team_index === teamIdx
+          );
+          if (exists) return;
+          
+          const r = await sbPost('wins', {
+            league_code: owner.league_code,
+            owner_id: owner.id,
+            round_id: roundId,
+            team_index: teamIdx
+          });
+          
+          if (r.ok || r.status === 201 || r.status === 204) {
+            inserted++;
+            const leagueName = leagues.find(l => l.code === owner.league_code)?.name || owner.league_code;
+            addLog('[' + leagueName + '] ' + owner.name + ' - ' + (typeof team === 'string' ? team : team?.name) + ' won in ' + roundName, 'win');
+            allWins.push({owner_id: owner.id, round_id: roundId, team_index: teamIdx});
+          }
+        });
+      }
+    }
+    
+    // Refresh win count
+    setTimeout(async () => {
+      const wins = await sb('wins?select=id');
+      document.getElementById('totalWins').textContent = wins.length;
+      allWins = await sb('wins?select=*');
+    }, 2000);
+    
+    const now = new Date().toLocaleTimeString();
+    document.getElementById('lastSync').textContent = now;
+    if (inserted === 0) addLog('No new wins found', 'info');
+    else addLog('Inserted ' + inserted + ' new wins', 'win');
+    
+  } catch(e) {
+    addLog('Error: ' + e.message, 'err');
+  }
+  
+  isRunning = false;
+  document.getElementById('runOnceBtn').disabled = false;
+}
+
+function toggleSync() {
+  const btn = document.getElementById('toggleBtn');
+  const status = document.getElementById('syncStatus');
+  if (syncInterval) {
+    clearInterval(syncInterval);
+    syncInterval = null;
+    btn.textContent = 'Start Auto-Sync';
+    btn.className = 'btn btn-green';
+    status.textContent = 'OFF';
+    status.className = 'status status-off';
+    addLog('Auto-sync stopped', 'info');
+  } else {
+    runSync();
+    syncInterval = setInterval(runSync, 60000);
+    btn.textContent = 'Stop Auto-Sync';
+    btn.className = 'btn btn-red';
+    status.textContent = 'ON';
+    status.className = 'status status-on';
+    addLog('Auto-sync started - running every 60 seconds', 'info');
+  }
+}
+
+// Load on startup
+loadData();
+</script>
+</body>
+</html>
