@@ -764,6 +764,9 @@ export default function App() {
   // ESPN
   const [espnGames, setEspnGames]   = useState([]);
   const [espnStatus, setEspnStatus] = useState("idle");
+  const [autoSync, setAutoSync]     = useState(false);
+  const [lastSync, setLastSync]       = useState(null);
+  const [syncLog, setSyncLog]         = useState([]);
 
   // Bracket
   const [bracketData, setBracketData]     = useState(null);
@@ -1111,7 +1114,98 @@ export default function App() {
     } catch { setEspnStatus("error"); }
   }
 
+
+  // ── ESPN round mapping ────────────────────────────────────────────────────
+  const ESPN_ROUND_MAP = {
+    "First Round": "r1",
+    "Second Round": "r2",
+    "Sweet 16": "r3",
+    "Elite Eight": "r4",
+    "Final Four": "r5",
+    "National Championship": "r6",
+    "First Four": null, // play-in, no payout
+  };
+
+  // ── Auto-sync ESPN wins ───────────────────────────────────────────────────
+  async function autoSyncESPN() {
+    if (!leagueCode || !owners.length) return;
+    try {
+      const res = await fetch("https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200");
+      if (!res.ok) return;
+      const data = await res.json();
+      const games = data.events || [];
+      const newWins = [];
+
+      for (const game of games) {
+        if (!game.status?.type?.completed) continue;
+        const roundName = game.competitions?.[0]?.notes?.[0]?.headline || "";
+        const roundId = Object.entries(ESPN_ROUND_MAP).find(([k]) => roundName.includes(k))?.[1];
+        if (!roundId) continue; // skip First Four or unknown rounds
+
+        const competitors = game.competitions?.[0]?.competitors || [];
+        const winner = competitors.find(c => c.winner);
+        if (!winner) continue;
+        const winnerName = winner.team?.displayName?.toLowerCase().trim();
+
+        // Check each owner's roster for this winner
+        for (const owner of owners) {
+          if (!owner.teams) continue;
+          owner.teams.forEach((team, teamIdx) => {
+            const teamName = (typeof team === 'string' ? team : team?.name || '').toLowerCase().trim();
+            if (!teamName) return;
+            // Fuzzy match - check if ESPN name contains team name or vice versa
+            if (winnerName.includes(teamName) || teamName.includes(winnerName) ||
+                winnerName.split(' ').some(w => w.length > 3 && teamName.includes(w))) {
+              newWins.push({owner, teamIdx, roundId, teamName, winnerName, roundName});
+            }
+          });
+        }
+      }
+
+      // Insert wins that don't already exist
+      let inserted = 0;
+      for (const w of newWins) {
+        const alreadyExists = wins.some(existing =>
+          existing.owner_id === w.owner.id &&
+          existing.round_id === w.roundId &&
+          existing.team_index === w.teamIdx
+        );
+        if (alreadyExists) continue;
+
+        const { error } = await supabase.from("wins").insert({
+          league_code: leagueCode,
+          owner_id: w.owner.id,
+          round_id: w.roundId,
+          team_index: w.teamIdx,
+        });
+        if (!error) {
+          inserted++;
+          setSyncLog(prev => [{
+            time: new Date().toLocaleTimeString(),
+            msg: w.owner.name + " - " + w.winnerName + " (" + w.roundName + ")"
+          }, ...prev.slice(0, 19)]);
+        }
+      }
+
+      setLastSync(new Date());
+      if (inserted > 0) {
+        // Reload wins
+        const { data: newWinsData } = await supabase.from("wins").select("*").eq("league_code", leagueCode);
+        if (newWinsData) setWins(newWinsData);
+      }
+    } catch(e) { console.error("autoSyncESPN error:", e); }
+  }
+
+  // ── Auto-sync interval ────────────────────────────────────────────────────
+  React.useEffect(() => {
+    if (!autoSync || !leagueCode) return;
+    autoSyncESPN(); // run immediately
+    const interval = setInterval(autoSyncESPN, 60000);
+    return () => clearInterval(interval);
+  }, [autoSync, leagueCode, owners, wins]);
+
   const stats = calcStats(owners, wins, rounds);
+    const stats = calcStats(owners, wins, rounds);
   const totalWins = wins.length;
 
   const TABS = [
@@ -1855,7 +1949,19 @@ export default function App() {
         {!loading && tab==="espn" && (
           <div>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
-              <h2 style={{ margin:0, fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Live Scores</h2>
+              <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+                <h2 style={{ margin:0, fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Live Scores</h2>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginLeft:"auto"}}>
+                  <button onClick={()=>setAutoSync(a=>!a)} style={{
+                    ...S.btn(autoSync?"#0a2a14":"#1a2440", autoSync?"#2ecc71":"#6677aa"),
+                    border:"1px solid "+(autoSync?"#27ae60":"#2a3560"),
+                    fontSize:12, padding:"6px 14px"
+                  }}>
+                    {autoSync ? "Auto-Sync ON" : "Auto-Sync OFF"}
+                  </button>
+                  {lastSync && <span style={{fontSize:11,color:"#6677aa"}}>Last sync: {lastSync.toLocaleTimeString()}</span>}
+                </div>
+              </div>
               <button onClick={fetchESPN} style={S.btn()} disabled={espnStatus==="loading"}>
                 {espnStatus==="loading"?"⟳ Loading…":" Fetch from ESPN"}
               </button>
@@ -1866,7 +1972,17 @@ export default function App() {
                  <strong style={{ color:"#f0c040" }}>1-click recording:</strong> When a game is final, click <strong style={{ color:"#2ecc71" }}> Record Win</strong> next to the winning team to instantly log it. You'll be prompted to select the round.
               </div>
             )}
-            {espnStatus==="idle"&&<Empty text='Click "Fetch from ESPN" to load live tournament scores.' />}
+            {espnStatus==="idle"&&!autoSync&&<Empty text='Click "Fetch from ESPN" to load live tournament scores, or turn on Auto-Sync.' />}
+              {syncLog.length > 0 && (
+                <div style={{background:"#0a1a2e",border:"1px solid #1e3a5a",borderRadius:10,padding:"12px 16px",marginBottom:16}}>
+                  <div style={{fontSize:11,color:"#3498db",textTransform:"uppercase",letterSpacing:1,fontWeight:700,marginBottom:8}}>Auto-Sync Log</div>
+                  {syncLog.map((l,i) => (
+                    <div key={i} style={{fontSize:12,color:"#dce4f5",padding:"3px 0",borderBottom:"1px solid #1a2440"}}>
+                      <span style={{color:"#6677aa"}}>{l.time}</span> — {l.msg}
+                    </div>
+                  ))}
+                </div>
+              )}
             {espnStatus==="error"&&(
               <div style={{ ...S.card, borderColor:"#e74c3c", color:"#e74c3c" }}>
                 <strong> Could not reach ESPN API</strong>
