@@ -2338,7 +2338,7 @@ const regionColors = { South:"#f0c040", East:"#ffffff", Midwest:"#9b59b6", West:
                       </div>
                       <div style={{ marginLeft:"auto", textAlign:"right" }}>
                         <div style={{ fontSize:11, color:"#6677aa", marginBottom:2 }}>Round {pickRound + 1}  Pick {totalPicks + 1}</div>
-                        <div style={{ fontSize:12, color:(REGION_COLORS[REGION_MAP[team.name]]||"#dce4f5") }}>{currentPicker.teams.filter(t=>t.name).length}/8 teams drafted</div>
+                        <div style={{ fontSize:12, color:(regionColors[REGION_MAP[team.name]]||"#dce4f5") }}>{currentPicker.teams.filter(t=>t.name).length}/8 teams drafted</div>
                       </div>
                     </div>
                   )}
@@ -2471,7 +2471,7 @@ const regionColors = { South:"#f0c040", East:"#ffffff", Midwest:"#9b59b6", West:
                                     {pick?.name ? (
                                       <div>
                                         <div style={{ fontSize:9, color:o.color, fontWeight:700 }}>#{pick.seed}</div>
-                                        <div style={{ fontSize:9, color:(regionColors[REGION_MAP[pick.name]]||"#dce4f5"), lineHeight:1.2,
+                                        <div style={{ fontSize:9, color:(regionColors[REGION_MAP[pick?.name]]||"#dce4f5"), lineHeight:1.2,
                                           overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:50 }}>
                                           {pick.name.split(" ").slice(-1)[0]}
                                         </div>
