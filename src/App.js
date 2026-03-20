@@ -2296,7 +2296,7 @@ export default function App() {
           //  Save draft start time 
 
           
-const regionColors = { South:"#e05c3a", East:"#3a9be0", Midwest:"#2ecc71", West:"#9b59b6" };
+const regionColors = { South:"#f0c040", East:"#ffffff", Midwest:"#9b59b6", West:"#4a9eff" };
 
 
           return (
