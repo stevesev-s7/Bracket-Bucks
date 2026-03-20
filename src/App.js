@@ -661,11 +661,14 @@ function PaymentApprovals({ supabase }) {
 
 
 
+
 function LiveBracket() {
   const [games,setGames]=React.useState([]);
   const [loading,setLoading]=React.useState(true);
   const [lastUpdate,setLastUpdate]=React.useState('');
   const RC={South:'#f0c040',Midwest:'#9b59b6',East:'#ffffff',West:'#4a9eff'};
+  // Standard bracket seed order: top half 1,8,5,4 bottom half 6,3,7,2
+  const SEED_ORDER=[1,16,8,9,5,12,4,13,6,11,3,14,7,10,2,15];
 
   function fetchGames(){
     fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200')
@@ -677,102 +680,185 @@ function LiveBracket() {
   }
   React.useEffect(()=>{fetchGames();const t=setInterval(fetchGames,30000);return()=>clearInterval(t);},[]);
 
-  // Parse region and round from note
   function parseGame(g){
     const note=g.competitions?.[0]?.notes?.[0]?.headline||'';
     const rm=note.match(/(East|West|Midwest|South) Region/);
     const rdm=note.match(/(1st Round|2nd Round|Sweet 16|Elite Eight|Final Four|Championship)/);
     const comps=g.competitions?.[0]?.competitors||[];
     const status=g.status?.type;
-    const top=comps.find(c=>c.homeAway==='home')||comps[0]||{};
-    const bot=comps.find(c=>c.homeAway==='away')||comps[1]||{};
+    // Sort so lower seed is first (top team)
+    const sorted=[...comps].sort((a,b)=>(a.curatedRank?.current||99)-(b.curatedRank?.current||99));
+    const top=sorted[0]||{};
+    const bot=sorted[1]||{};
     return {
       id:g.id,
       region:rm?.[1]||'',
       round:rdm?.[1]||'',
-      status:status?.description||'',
       isLive:status?.state==='in',
       isDone:status?.completed,
       clock:g.status?.displayClock||'',
-      top:{seed:top.curatedRank?.current||top.seed||'',name:top.team?.shortDisplayName||'',score:top.score||'',winner:top.winner},
-      bot:{seed:bot.curatedRank?.current||bot.seed||'',name:bot.team?.shortDisplayName||'',score:bot.score||'',winner:bot.winner},
+      shortDetail:status?.shortDetail||'',
+      top:{seed:top.curatedRank?.current||'',name:top.team?.shortDisplayName||'',score:top.score||'',winner:top.winner},
+      bot:{seed:bot.curatedRank?.current||'',name:bot.team?.shortDisplayName||'',score:bot.score||'',winner:bot.winner},
     };
   }
 
-  function Matchup({game,flip}){
-    if(!game) return (
-      <div style={{width:130,background:'#0a0f1a',border:'1px solid #1a2440',borderRadius:6,padding:'6px 8px'}}>
-        <div style={{height:18,borderBottom:'1px solid #1a2440',marginBottom:4}}></div>
-        <div style={{height:18}}></div>
+  function Matchup({game}){
+    const empty=(
+      <div style={{width:138,marginBottom:2}}>
+        <div style={{background:'#0f1625',border:'1px solid #1a2440',borderRadius:5,padding:'5px 8px'}}>
+          <div style={{display:'flex',gap:6,height:17,alignItems:'center'}}>
+            <span style={{fontSize:9,color:'#333',width:12}}></span>
+            <span style={{fontSize:10,color:'#222',flex:1}}>TBD</span>
+          </div>
+          <div style={{height:1,background:'#1a2440',margin:'2px 0'}}></div>
+          <div style={{display:'flex',gap:6,height:17,alignItems:'center'}}>
+            <span style={{fontSize:9,color:'#333',width:12}}></span>
+            <span style={{fontSize:10,color:'#222',flex:1}}>TBD</span>
+          </div>
+        </div>
       </div>
     );
-    const {top,bot,isLive,isDone,clock,round}=game;
+    if(!game) return empty;
+    const {top,bot,isLive,isDone,clock,shortDetail}=game;
     function Team({t}){
       const win=isDone&&t.winner;
       const lose=isDone&&!t.winner;
       return (
-        <div style={{display:'flex',alignItems:'center',gap:4,height:20}}>
-          <span style={{fontSize:9,color:'#445',width:12,textAlign:'right',flexShrink:0}}>{t.seed}</span>
+        <div style={{display:'flex',gap:4,height:17,alignItems:'center'}}>
+          <span style={{fontSize:9,color:'#556',width:12,textAlign:'right',flexShrink:0,fontWeight:700}}>{t.seed}</span>
           <span style={{fontSize:10,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
             fontWeight:win?700:400,
-            color:win?'#2ecc71':lose?'#444':'#ccd',
+            color:win?'#2ecc71':lose?'#3a3a4a':'#ccd',
             textDecoration:lose?'line-through':'none'}}>{t.name||'TBD'}</span>
-          {(isLive||isDone)&&<span style={{fontSize:10,fontWeight:700,minWidth:18,textAlign:'right',
-            color:win?'#2ecc71':isLive?'#f0c040':'#889'}}>{t.score}</span>}
+          {(isLive||isDone)&&<span style={{fontSize:10,fontWeight:700,minWidth:22,textAlign:'right',flexShrink:0,
+            color:win?'#2ecc71':isLive?'#f0c040':'#778'}}>{t.score}</span>}
         </div>
       );
     }
     return (
-      <div style={{width:130,background:'#0f1625',border:`1px solid ${isLive?'#e74c3c':isDone?'#1e3a1e':'#1a2440'}`,
-        borderRadius:6,padding:'5px 7px',position:'relative'}}>
-        <Team t={top}/>
-        <div style={{height:1,background:'#1a2440',margin:'3px 0'}}></div>
-        <Team t={bot}/>
-        {(isLive||isDone)&&(
-          <div style={{position:'absolute',top:-8,right:4,fontSize:8,fontWeight:700,
-            background:isLive?'#e74c3c':isDone?'#1e3a1e':'transparent',
-            color:isLive?'#fff':isDone?'#2ecc71':'transparent',
-            borderRadius:3,padding:'0 4px'}}>
-            {isLive?'LIVE':isDone?'F':''}
-          </div>
-        )}
+      <div style={{width:138,marginBottom:2,position:'relative'}}>
+        <div style={{background:'#0f1625',
+          border:`1px solid ${isLive?'#e74c3c44':isDone?'#2ecc7133':'#1a2440'}`,
+          borderRadius:5,padding:'5px 8px'}}>
+          <Team t={top}/>
+          <div style={{height:1,background:'#1a2440',margin:'2px 0'}}></div>
+          <Team t={bot}/>
+        </div>
+        <div style={{position:'absolute',top:-7,right:3,fontSize:8,fontWeight:700,padding:'0 3px',borderRadius:2,
+          background:isLive?'#e74c3c':isDone?'#1a3a1a':'transparent',
+          color:isLive?'#fff':isDone?'#2ecc71':'transparent'}}>
+          {isLive?'LIVE':isDone?'F':''}
+        </div>
       </div>
     );
   }
 
-  function RoundColumn({games,roundName,width}){
-    return (
-      <div style={{display:'flex',flexDirection:'column',justifyContent:'space-around',
-        width:width||140,flexShrink:0,gap:4}}>
-        {games.map((g,i)=><Matchup key={i} game={g}/>)}
-      </div>
-    );
-  }
-
-  function Region({name,games,flip}){
+  // Build a region half - 8 first round slots ordered by seed bracket position
+  function RegionHalf({name,games,flip}){
     const color=RC[name]||'#dce4f5';
-    const rounds=['1st Round','2nd Round','Sweet 16','Elite Eight'];
-    const byRound={};
-    rounds.forEach(r=>{byRound[r]=[];});
-    games.forEach(g=>{if(byRound[g.round])byRound[g.round].push(g);});
-    const cols=rounds.map(r=>byRound[r]);
-    const display=flip?[...cols].reverse():cols;
-    const labels=flip?[...rounds].reverse():rounds;
+    const roundOrder=flip
+      ?['Elite Eight','Sweet 16','2nd Round','1st Round']
+      :['1st Round','2nd Round','Sweet 16','Elite Eight'];
+    const roundLabels={
+      '1st Round':'First Round
+March 19-20',
+      '2nd Round':'Second Round
+March 21-22',
+      'Sweet 16':'Sweet 16
+March 26-27',
+      'Elite Eight':'Elite 8
+March 28-29'
+    };
+
+    // Sort first round games by standard bracket position
+    const r1=games.filter(g=>g.round==='1st Round');
+    const r2=games.filter(g=>g.round==='2nd Round');
+    const s16=games.filter(g=>g.round==='Sweet 16');
+    const e8=games.filter(g=>g.round==='Elite Eight');
+
+    // Place 8 first round matchups in seed order: 1v16, 8v9, 5v12, 4v13, 6v11, 3v14, 7v10, 2v15
+    const pairs=[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]];
+    const r1ordered=pairs.map(([s1])=>r1.find(g=>g.top.seed===s1||g.bot.seed===s1)||null);
+
+    // R2: 4 games (winners of pairs 1-2, 3-4, 5-6, 7-8)
+    const r2slots=[r2[0]||null,r2[1]||null,r2[2]||null,r2[3]||null];
+    const s16slots=[s16[0]||null,s16[1]||null];
+    const e8slot=e8[0]||null;
+
+    // Spacing: each R1 matchup is ~50px tall, groups of 2 feed into R2
+    // R2 matchups are centered between their two R1 matchups
+    const GAP=6; // gap between matchups
+    const MH=44; // matchup height approx
+
+    // Build columns
+    const cols=[];
+    // R1: 8 matchups with small gap
+    const r1col=(
+      <div style={{display:'flex',flexDirection:'column',gap:GAP}}>
+        {r1ordered.map((g,i)=><Matchup key={i} game={g}/>)}
+      </div>
+    );
+    // R2: 4 matchups, each centered between 2 r1 matchups
+    // Each r1 pair takes (MH+GAP)*2 - GAP pixels
+    const pairH=(MH+GAP)*2-GAP;
+    const r2col=(
+      <div style={{display:'flex',flexDirection:'column',gap:0}}>
+        {r2slots.map((g,i)=>(
+          <div key={i} style={{height:pairH+(i<3?GAP:0),display:'flex',alignItems:'center'}}>
+            <Matchup game={g}/>
+          </div>
+        ))}
+      </div>
+    );
+    // S16: 2 matchups
+    const s16H=pairH*2+GAP;
+    const s16col=(
+      <div style={{display:'flex',flexDirection:'column',gap:0}}>
+        {s16slots.map((g,i)=>(
+          <div key={i} style={{height:s16H+(i<1?GAP:0),display:'flex',alignItems:'center'}}>
+            <Matchup game={g}/>
+          </div>
+        ))}
+      </div>
+    );
+    // E8: 1 matchup
+    const e8H=s16H*2+GAP;
+    const e8col=(
+      <div style={{height:e8H,display:'flex',alignItems:'center'}}>
+        <Matchup game={e8slot}/>
+      </div>
+    );
+
+    const allCols=flip
+      ?[
+          {label:roundLabels['Elite Eight'],col:e8col},
+          {label:roundLabels['Sweet 16'],col:s16col},
+          {label:roundLabels['2nd Round'],col:r2col},
+          {label:roundLabels['1st Round'],col:r1col},
+        ]
+      :[
+          {label:roundLabels['1st Round'],col:r1col},
+          {label:roundLabels['2nd Round'],col:r2col},
+          {label:roundLabels['Sweet 16'],col:s16col},
+          {label:roundLabels['Elite Eight'],col:e8col},
+        ];
+
     return (
-      <div>
+      <div style={{display:'flex',flexDirection:'column'}}>
+        <div style={{fontSize:12,fontWeight:700,color:color,textTransform:'uppercase',
+          letterSpacing:2,marginBottom:6,paddingLeft:flip?0:4,textAlign:flip?'right':'left'}}>
+          {name} Region
+        </div>
         <div style={{display:'flex',gap:4,alignItems:'flex-start'}}>
-          {display.map((roundGames,ci)=>(
-            <div key={ci}>
-              <div style={{fontSize:9,color:'#445',textAlign:'center',marginBottom:4,whiteSpace:'nowrap'}}>
-                {labels[ci]}
+          {allCols.map(({label,col},ci)=>(
+            <div key={ci} style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
+              <div style={{fontSize:8,color:'#445',textAlign:'center',marginBottom:4,whiteSpace:'pre-line',lineHeight:1.3}}>
+                {label}
               </div>
-              <RoundColumn games={roundGames} roundName={labels[ci]}/>
+              {col}
             </div>
           ))}
-          <div style={{display:'flex',alignItems:'center',justifyContent:'center',width:40}}>
-            <span style={{fontSize:11,fontWeight:700,color:color,transform:'rotate(-90deg)',whiteSpace:'nowrap',
-              textTransform:'uppercase',letterSpacing:2}}>{name}</span>
-          </div>
         </div>
       </div>
     );
@@ -783,10 +869,11 @@ function LiveBracket() {
   const parsed=games.map(parseGame);
   const byRegion={East:[],West:[],South:[],Midwest:[]};
   parsed.forEach(g=>{if(byRegion[g.region])byRegion[g.region].push(g);});
-  const lateRound=parsed.filter(g=>!g.region||g.round==='Final Four'||g.round==='Championship');
+  const ff=parsed.filter(g=>g.round==='Final Four');
+  const champ=parsed.filter(g=>g.round==='Championship');
 
   return (
-    <div style={{overflowX:'auto'}}>
+    <div style={{overflowX:'auto',paddingBottom:20}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}}>
         <h2 style={{margin:0,fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}}>Live Bracket</h2>
         <div style={{display:'flex',gap:14,alignItems:'center',flexWrap:'wrap'}}>
@@ -802,27 +889,32 @@ function LiveBracket() {
         </div>
       </div>
 
-      <div style={{display:'flex',gap:8,alignItems:'flex-start',minWidth:1100}}>
-        {/* Left side - East on top, South on bottom */}
-        <div style={{display:'flex',flexDirection:'column',gap:16}}>
-          <Region name="East" games={byRegion.East} flip={false}/>
-          <Region name="South" games={byRegion.South} flip={false}/>
+      <div style={{display:'flex',gap:8,alignItems:'flex-start',minWidth:1200}}>
+        {/* Left side: East top, South bottom */}
+        <div style={{display:'flex',flexDirection:'column',gap:24}}>
+          <RegionHalf name="East" games={byRegion.East} flip={false}/>
+          <RegionHalf name="South" games={byRegion.South} flip={false}/>
         </div>
 
-        {/* Center - Final Four + Championship */}
+        {/* Center: FF + Championship */}
         <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
-          minWidth:200,gap:16,paddingTop:20}}>
-          <div style={{fontSize:11,color:'#667',textAlign:'center',letterSpacing:1,textTransform:'uppercase'}}>Final Four</div>
-          {lateRound.filter(g=>g.round==='Final Four').map((g,i)=><Matchup key={i} game={g}/>)}
-          <div style={{marginTop:16,fontSize:11,color:'#667',textAlign:'center',letterSpacing:1,textTransform:'uppercase'}}>Championship</div>
-          {lateRound.filter(g=>g.round==='Championship').map((g,i)=><Matchup key={i} game={g}/>)}
-          {lateRound.filter(g=>g.round!=='Final Four'&&g.round!=='Championship').map((g,i)=><Matchup key={i} game={g}/>)}
+          minWidth:180,paddingTop:30,gap:12}}>
+          <div style={{fontSize:10,color:'#556',letterSpacing:1,textTransform:'uppercase',textAlign:'center'}}>
+            Final Four<br/><span style={{fontSize:9,color:'#445'}}>April 4</span>
+          </div>
+          {ff.map((g,i)=><Matchup key={i} game={g}/>)}
+          {ff.length===0&&<><Matchup game={null}/><Matchup game={null}/></>}
+          <div style={{fontSize:10,color:'#556',letterSpacing:1,textTransform:'uppercase',textAlign:'center',marginTop:8}}>
+            Championship<br/><span style={{fontSize:9,color:'#445'}}>April 6</span>
+          </div>
+          {champ.map((g,i)=><Matchup key={i} game={g}/>)}
+          {champ.length===0&&<Matchup game={null}/>}
         </div>
 
-        {/* Right side - West on top, Midwest on bottom */}
-        <div style={{display:'flex',flexDirection:'column',gap:16}}>
-          <Region name="West" games={byRegion.West} flip={true}/>
-          <Region name="Midwest" games={byRegion.Midwest} flip={true}/>
+        {/* Right side: West top, Midwest bottom */}
+        <div style={{display:'flex',flexDirection:'column',gap:24}}>
+          <RegionHalf name="West" games={byRegion.West} flip={true}/>
+          <RegionHalf name="Midwest" games={byRegion.Midwest} flip={true}/>
         </div>
       </div>
     </div>
