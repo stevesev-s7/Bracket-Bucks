@@ -666,105 +666,183 @@ function PaymentApprovals({ supabase }) {
 
 
 
+
 function LiveBracket(){
-  const [liveData,setLiveData]=React.useState({});
-  const [lastUpdate,setLastUpdate]=React.useState('');
-  const [html,setHtml]=React.useState('');
-  const B={East:[{t:{s:1,n:'Duke'},b:{s:16,n:'Siena'}},{t:{s:8,n:'Ohio St'},b:{s:9,n:'TCU'}},{t:{s:5,n:"St John's"},b:{s:12,n:'N Iowa'}},{t:{s:4,n:'Kansas'},b:{s:13,n:'Cal Baptist'}},{t:{s:6,n:'Louisville'},b:{s:11,n:'S Florida'}},{t:{s:3,n:'Michigan St'},b:{s:14,n:'N Dakota St'}},{t:{s:7,n:'UCLA'},b:{s:10,n:'UCF'}},{t:{s:2,n:'UConn'},b:{s:15,n:'Furman'}}],West:[{t:{s:1,n:'Arizona'},b:{s:16,n:'LIU'}},{t:{s:8,n:'Villanova'},b:{s:9,n:'Utah St'}},{t:{s:5,n:'Wisconsin'},b:{s:12,n:'High Point'}},{t:{s:4,n:'Arkansas'},b:{s:13,n:"Hawai'i"}},{t:{s:6,n:'BYU'},b:{s:11,n:'Texas'}},{t:{s:3,n:'Gonzaga'},b:{s:14,n:'Kennesaw St'}},{t:{s:7,n:'Miami'},b:{s:10,n:'Missouri'}},{t:{s:2,n:'Purdue'},b:{s:15,n:'Queens'}}],South:[{t:{s:1,n:'Florida'},b:{s:16,n:'Prairie View'}},{t:{s:8,n:'Clemson'},b:{s:9,n:'Iowa'}},{t:{s:5,n:'Vanderbilt'},b:{s:12,n:'McNeese'}},{t:{s:4,n:'Nebraska'},b:{s:13,n:'Troy'}},{t:{s:6,n:'N Carolina'},b:{s:11,n:'VCU'}},{t:{s:3,n:'Illinois'},b:{s:14,n:'Penn'}},{t:{s:7,n:"Saint Mary's"},b:{s:10,n:'Texas A&M'}},{t:{s:2,n:'Houston'},b:{s:15,n:'Idaho'}}],Midwest:[{t:{s:1,n:'Michigan'},b:{s:16,n:'Howard'}},{t:{s:8,n:'Georgia'},b:{s:9,n:'Saint Louis'}},{t:{s:5,n:'Texas Tech'},b:{s:12,n:'Akron'}},{t:{s:4,n:'Alabama'},b:{s:13,n:'Hofstra'}},{t:{s:6,n:'Tennessee'},b:{s:11,n:'Miami OH'}},{t:{s:3,n:'Virginia'},b:{s:14,n:'Wright St'}},{t:{s:7,n:'Kentucky'},b:{s:10,n:'Santa Clara'}},{t:{s:2,n:'Iowa State'},b:{s:15,n:'Tenn State'}}]};
-  const RC={South:'#f0c040',Midwest:'#9b59b6',East:'#dce4f5',West:'#4a9eff'};
-  function fetch2(){
-    fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200')
-      .then(r=>r.json()).then(data=>{
-        const map={};
-        (data.events||[]).forEach(g=>{
-          const note=g.competitions?.[0]?.notes?.[0]?.headline||'';
-          const rm=note.match(/(East|West|Midwest|South) Region/);
-          const rdm=note.match(/(1st Round|2nd Round|Sweet 16|Elite Eight|Final Four|Championship)/);
+  var [liveData,setLiveData]=React.useState({});
+  var [lastUpdate,setLastUpdate]=React.useState('');
+  var [html,setHtml]=React.useState('');
+  var RC={South:'#f0c040',Midwest:'#9b59b6',East:'#dce4f5',West:'#4a9eff'};
+  var B={
+    East:[
+      {t:{s:1,n:'Duke Blue Devils'},b:{s:16,n:'Siena Saints'}},
+      {t:{s:8,n:'Ohio State Buckeyes'},b:{s:9,n:'TCU Horned Frogs'}},
+      {t:{s:5,n:"St. John's Red Storm"},b:{s:12,n:'Northern Iowa Panthers'}},
+      {t:{s:4,n:'Kansas Jayhawks'},b:{s:13,n:'California Baptist Lancers'}},
+      {t:{s:6,n:'Louisville Cardinals'},b:{s:11,n:'South Florida Bulls'}},
+      {t:{s:3,n:'Michigan State Spartans'},b:{s:14,n:'North Dakota State Bison'}},
+      {t:{s:7,n:'UCLA Bruins'},b:{s:10,n:'UCF Knights'}},
+      {t:{s:2,n:'UConn Huskies'},b:{s:15,n:'Furman Paladins'}}
+    ],
+    West:[
+      {t:{s:1,n:'Arizona Wildcats'},b:{s:16,n:'Long Island University Sharks'}},
+      {t:{s:8,n:'Villanova Wildcats'},b:{s:9,n:'Utah State Aggies'}},
+      {t:{s:5,n:'Wisconsin Badgers'},b:{s:12,n:'High Point Panthers'}},
+      {t:{s:4,n:'Arkansas Razorbacks'},b:{s:13,n:"Hawai'i Rainbow Warriors"}},
+      {t:{s:6,n:'BYU Cougars'},b:{s:11,n:'Texas Longhorns'}},
+      {t:{s:3,n:'Gonzaga Bulldogs'},b:{s:14,n:'Kennesaw State Owls'}},
+      {t:{s:7,n:'Miami Hurricanes'},b:{s:10,n:'Missouri Tigers'}},
+      {t:{s:2,n:'Purdue Boilermakers'},b:{s:15,n:'Queens University Royals'}}
+    ],
+    South:[
+      {t:{s:1,n:'Florida Gators'},b:{s:16,n:'Prairie View A&M Panthers'}},
+      {t:{s:8,n:'Clemson Tigers'},b:{s:9,n:'Iowa Hawkeyes'}},
+      {t:{s:5,n:'Vanderbilt Commodores'},b:{s:12,n:'McNeese Cowboys'}},
+      {t:{s:4,n:'Nebraska Cornhuskers'},b:{s:13,n:'Troy Trojans'}},
+      {t:{s:6,n:'North Carolina Tar Heels'},b:{s:11,n:'VCU Rams'}},
+      {t:{s:3,n:'Illinois Fighting Illini'},b:{s:14,n:'Pennsylvania Quakers'}},
+      {t:{s:7,n:"Saint Mary's Gaels"},b:{s:10,n:'Texas A&M Aggies'}},
+      {t:{s:2,n:'Houston Cougars'},b:{s:15,n:'Idaho Vandals'}}
+    ],
+    Midwest:[
+      {t:{s:1,n:'Michigan Wolverines'},b:{s:16,n:'Howard Bison'}},
+      {t:{s:8,n:'Georgia Bulldogs'},b:{s:9,n:'Saint Louis Billikens'}},
+      {t:{s:5,n:'Texas Tech Red Raiders'},b:{s:12,n:'Akron Zips'}},
+      {t:{s:4,n:'Alabama Crimson Tide'},b:{s:13,n:'Hofstra Pride'}},
+      {t:{s:6,n:'Tennessee Volunteers'},b:{s:11,n:'Miami (OH) RedHawks'}},
+      {t:{s:3,n:'Virginia Cavaliers'},b:{s:14,n:'Wright State Raiders'}},
+      {t:{s:7,n:'Kentucky Wildcats'},b:{s:10,n:'Santa Clara Broncos'}},
+      {t:{s:2,n:'Iowa State Cyclones'},b:{s:15,n:'Tennessee State Tigers'}}
+    ]
+  };
+  function doFetch(){
+    var dates=['20260319','20260320','20260321','20260322','20260326','20260327','20260328','20260329','20260404','20260406'];
+    Promise.all(dates.map(function(dt){
+      return fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200&dates='+dt).then(function(r){return r.json();}).catch(function(){return {events:[]};});
+    })).then(function(days){
+      var map={};
+      days.forEach(function(data){
+        (data.events||[]).forEach(function(g){
+          var note=(g.competitions&&g.competitions[0]&&g.competitions[0].notes&&g.competitions[0].notes[0]&&g.competitions[0].notes[0].headline)||'';
+          var rm=note.match(/(East|West|Midwest|South) Region/);
+          var rdm=note.match(/(1st Round|2nd Round|Sweet 16|Elite Eight|Final Four|Championship)/);
           if(!rdm) return;
-          const comps=g.competitions?.[0]?.competitors||[];
-          const ss=[...comps].sort((a,b)=>(a.curatedRank?.current||99)-(b.curatedRank?.current||99));
-          const region=rm?.[1]||'',round=rdm[1];
-          if(round==='Championship'&&region) return; // skip regional championships
-          const key=(region?region+'|':'')+round+'|'+(ss[0]?.curatedRank?.current||'X');
-          map[key]={t:{s:ss[0]?.curatedRank?.current||'',n:ss[0]?.team?.shortDisplayName||'',sc:ss[0]?.score||'',w:ss[0]?.winner},b:{s:ss[1]?.curatedRank?.current||'',n:ss[1]?.team?.shortDisplayName||'',sc:ss[1]?.score||'',w:ss[1]?.winner},done:g.status?.type?.completed,live:g.status?.type?.state==='in',clock:g.status?.displayClock||''};
+          var round=rdm[1];
+          if(round==='Championship'&&rm) return;
+          var region=rm?rm[1]:'';
+          var comps=(g.competitions&&g.competitions[0]&&g.competitions[0].competitors)||[];
+          var ss=comps.slice().sort(function(a,b){return ((a.curatedRank&&a.curatedRank.current)||99)-((b.curatedRank&&b.curatedRank.current)||99);});
+          var ts=(ss[0]&&ss[0].curatedRank&&ss[0].curatedRank.current)||'X';
+          var key=region+'|'+round+'|'+ts;
+          if(!map[key]){
+            var st=g.status&&g.status.type;
+            map[key]={
+              t:{s:(ss[0]&&ss[0].curatedRank&&ss[0].curatedRank.current)||'',n:(ss[0]&&ss[0].team&&ss[0].team.displayName)||'',sc:(ss[0]&&ss[0].score)||'',w:!!(ss[0]&&ss[0].winner)},
+              b:{s:(ss[1]&&ss[1].curatedRank&&ss[1].curatedRank.current)||'',n:(ss[1]&&ss[1].team&&ss[1].team.displayName)||'',sc:(ss[1]&&ss[1].score)||'',w:!!(ss[1]&&ss[1].winner)},
+              done:!!(st&&st.completed),live:!!(st&&st.state==='in')
+            };
+          }
         });
-        setLiveData(map);setLastUpdate(new Date().toLocaleTimeString());
-      }).catch(()=>{});
+      });
+      setLiveData(map);
+      setLastUpdate(new Date().toLocaleTimeString());
+    });
   }
-  React.useEffect(()=>{fetch2();const t=setInterval(fetch2,30000);return()=>clearInterval(t);},[]);
-  React.useEffect(()=>{
-    const GH=43,GP=5,TH=8*(GH+GP)-GP,bw=108;
-    function getR1(region,st,sb){for(const k of Object.keys(liveData)){if(!k.startsWith(region+'|1st Round|'))continue;const g=liveData[k];if(g.t.s===st||g.b.s===st||g.t.s===sb||g.b.s===sb)return g;}return null;}
-    function getLater(region,round){return Object.entries(liveData).filter(([k])=>k.startsWith(region+'|'+round+'|')).map(([,v])=>v);}
-    function getFF(){return Object.entries(liveData).filter(([k])=>k.includes('Final Four')).map(([,v])=>v);}
-    function getCH(){return Object.entries(liveData).filter(([k])=>k.startsWith('Championship|')||k.startsWith('|Championship')).map(([,v])=>v);}
+  React.useEffect(function(){doFetch();var t=setInterval(doFetch,60000);return function(){clearInterval(t);};},[]);
+  React.useEffect(function(){if(lastUpdate)setHtml(buildHtml());},[liveData,lastUpdate]);
+
+  function buildHtml(){
+    var GH=43,GP=5,TH=8*(GH+GP)-GP,bw=150;
+    function getR1(region,ts,bs){
+      var keys=Object.keys(liveData);
+      for(var i=0;i<keys.length;i++){
+        var k=keys[i];
+        if(k.indexOf(region+'|1st Round|')!==0) continue;
+        var g=liveData[k];
+        if(g.t.s===ts||g.b.s===ts||g.t.s===bs||g.b.s===bs) return g;
+      }
+      return null;
+    }
+    function getLater(region,round){
+      return Object.keys(liveData).filter(function(k){return k.indexOf(region+'|'+round+'|')===0;}).map(function(k){return liveData[k];});
+    }
+    function getFF(){return Object.keys(liveData).filter(function(k){return k.indexOf('Final Four')>=0;}).map(function(k){return liveData[k];});}
+    function getCH(){return Object.keys(liveData).filter(function(k){return k.indexOf('Championship')>=0&&k.indexOf('East')<0&&k.indexOf('West')<0&&k.indexOf('South')<0&&k.indexOf('Midwest')<0;}).map(function(k){return liveData[k];});}
     function tr(name,seed,lg,done,live){
-      const w=done&&lg?.w,l=done&&lg&&!lg.w;
-      return '<div style="display:flex;align-items:center;gap:3px;height:17px">'+
-        '<span style="font-size:8px;color:#556;width:11px;text-align:right;flex-shrink:0;font-weight:700">'+seed+'</span>'+
-        '<span style="font-size:9px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:'+(w?'#2ecc71':l?'#252535':'#bbc')+';font-weight:'+(w?700:400)+';text-decoration:'+(l?'line-through':'none')+'">'+(lg?.n||name)+'</span>'+
-        ((done||live)?'<span style="font-size:9px;font-weight:700;min-width:20px;text-align:right;flex-shrink:0;color:'+(w?'#2ecc71':live?'#f0c040':'#556')+'">'+lg.sc+'</span>':'')+
+      var w=done&&lg&&lg.w,l=done&&lg&&!lg.w;
+      var disp=lg&&lg.n?lg.n:name;
+      return '<div style="display:flex;align-items:center;gap:3px;height:18px">'+
+        '<span style="font-size:8px;color:#556;width:12px;text-align:right;flex-shrink:0;font-weight:700">'+seed+'</span>'+
+        '<span style="font-size:9px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:'+(w?'#2ecc71':l?'#252535':'#ccd')+';font-weight:'+(w?700:400)+';text-decoration:'+(l?'line-through':'none')+'">'+disp+'</span>'+
+        ((done||live)?'<span style="font-size:9px;font-weight:700;min-width:22px;text-align:right;flex-shrink:0;color:'+(w?'#2ecc71':live?'#f0c040':'#556')+'">'+lg.sc+'</span>':'')+
       '</div>';
     }
-    function r1b(base,region){
-      const g=getR1(region,base.t.s,base.b.s);
-      const bdr=g?.live?'#e74c3c55':g?.done?'#2ecc7122':'#1e2a3a';
-      const bdg=g?.live?'<div style="position:absolute;top:-7px;right:2px;background:#e74c3c;color:#fff;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">LIVE</div>':g?.done?'<div style="position:absolute;top:-7px;right:2px;background:#1a3a1a;color:#2ecc71;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">F</div>':'';
-      return '<div style="width:'+bw+'px;background:#0f1625;border:1px solid '+bdr+';border-radius:4px;padding:4px 5px;position:relative;margin-bottom:'+GP+'px">'+bdg+tr(base.t.n,base.t.s,g?g.t:null,g?.done,g?.live)+'<div style="height:1px;background:#1e2a3a;margin:2px 0"></div>'+tr(base.b.n,base.b.s,g?g.b:null,g?.done,g?.live)+'</div>';
+    function r1box(base,region){
+      var g=getR1(region,base.t.s,base.b.s);
+      var bdr=g&&g.live?'#e74c3c55':g&&g.done?'#2ecc7122':'#1e2a3a';
+      var bdg=g&&g.live?'<div style="position:absolute;top:-7px;right:2px;background:#e74c3c;color:#fff;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">LIVE</div>':g&&g.done?'<div style="position:absolute;top:-7px;right:2px;background:#1a3a1a;color:#2ecc71;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">F</div>':'';
+      return '<div style="width:'+bw+'px;background:#0f1625;border:1px solid '+bdr+';border-radius:4px;padding:4px 6px;position:relative;margin-bottom:'+GP+'px">'+bdg+
+        tr(base.t.n,base.t.s,g?g.t:null,g?g.done:false,g?g.live:false)+
+        '<div style="height:1px;background:#1e2a3a;margin:2px 0"></div>'+
+        tr(base.b.n,base.b.s,g?g.b:null,g?g.done:false,g?g.live:false)+
+      '</div>';
     }
     function lb(g){
-      if(!g)return '<div style="width:'+bw+'px;background:#0a0f1a;border:1px solid #181f2e;border-radius:4px;padding:4px 5px"><div style="height:17px;display:flex;align-items:center"><span style="font-size:8px;color:#181f2e;margin-left:14px">TBD</span></div><div style="height:1px;background:#181f2e;margin:2px 0"></div><div style="height:17px;display:flex;align-items:center"><span style="font-size:8px;color:#181f2e;margin-left:14px">TBD</span></div></div>';
-      const bdr=g.live?'#e74c3c55':g.done?'#2ecc7122':'#1e2a3a';
-      const bdg=g.live?'<div style="position:absolute;top:-7px;right:2px;background:#e74c3c;color:#fff;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">LIVE</div>':g.done?'<div style="position:absolute;top:-7px;right:2px;background:#1a3a1a;color:#2ecc71;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">F</div>':'';
-      return '<div style="width:'+bw+'px;background:#0f1625;border:1px solid '+bdr+';border-radius:4px;padding:4px 5px;position:relative">'+bdg+tr(g.t.n,g.t.s,g.t,g.done,g.live)+'<div style="height:1px;background:#1e2a3a;margin:2px 0"></div>'+tr(g.b.n,g.b.s,g.b,g.done,g.live)+'</div>';
+      if(!g)return '<div style="width:'+bw+'px;background:#0a0f1a;border:1px solid #181f2e;border-radius:4px;padding:4px 6px"><div style="height:18px;display:flex;align-items:center"><span style="font-size:8px;color:#222;margin-left:14px">TBD</span></div><div style="height:1px;background:#181f2e;margin:2px 0"></div><div style="height:18px;display:flex;align-items:center"><span style="font-size:8px;color:#222;margin-left:14px">TBD</span></div></div>';
+      var bdr=g.live?'#e74c3c55':g.done?'#2ecc7122':'#1e2a3a';
+      var bdg=g.live?'<div style="position:absolute;top:-7px;right:2px;background:#e74c3c;color:#fff;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">LIVE</div>':g.done?'<div style="position:absolute;top:-7px;right:2px;background:#1a3a1a;color:#2ecc71;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">F</div>':'';
+      return '<div style="width:'+bw+'px;background:#0f1625;border:1px solid '+bdr+';border-radius:4px;padding:4px 6px;position:relative">'+bdg+
+        tr(g.t.n,g.t.s,g.t,g.done,g.live)+
+        '<div style="height:1px;background:#1e2a3a;margin:2px 0"></div>'+
+        tr(g.b.n,g.b.s,g.b,g.done,g.live)+
+      '</div>';
     }
-    function sl(c,n){const h=Math.floor((TH+GP)/n)-GP;return '<div style="height:'+(h+GP)+'px;display:flex;align-items:center">'+c+'</div>';}
-    function lbl(t,dt){return '<div style="font-size:7px;text-align:center;margin-bottom:3px;line-height:1.3"><span style="color:#667;font-weight:600">'+t+'</span><br><span style="color:#334;font-size:6px">'+dt+'</span></div>';}
-    function rLeft(name){
-      const c=RC[name],r2=getLater(name,'2nd Round'),s16=getLater(name,'Sweet 16'),e8=getLater(name,'Elite Eight');
-      return '<div style="display:flex;flex-direction:column"><div style="font-size:10px;font-weight:700;color:'+c+';text-transform:uppercase;letter-spacing:2px;margin-bottom:4px">'+name+'</div>'+
-        '<div style="display:flex;gap:2px;align-items:flex-start">'+
-        '<div>'+lbl('First Round','Mar 19-20')+'<div>'+B[name].map(g=>r1b(g,name)).join('')+'</div></div>'+
-        '<div>'+lbl('2nd Round','Mar 21-22')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+''+[0,1,2,3].map(i=>sl(lb(r2[i]||null),4)).join('')+'</div></div>'+
-        '<div>'+lbl('Sweet 16','Mar 26-27')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+[0,1].map(i=>sl(lb(s16[i]||null),2)).join('')+'</div></div>'+
+    function sl(c,n){var h=Math.floor((TH+GP)/n)-GP;return '<div style="height:'+(h+GP)+'px;display:flex;align-items:center">'+c+'</div>';}
+    function lbl(t,dt){return '<div style="font-size:7.5px;text-align:center;margin-bottom:4px;line-height:1.4"><span style="color:#778;font-weight:600">'+t+'</span><br><span style="color:#445;font-size:6.5px">'+dt+'</span></div>';}
+    function rL(name){
+      var c=RC[name],r2=getLater(name,'2nd Round'),s16=getLater(name,'Sweet 16'),e8=getLater(name,'Elite Eight');
+      return '<div style="display:flex;flex-direction:column">'+
+        '<div style="font-size:11px;font-weight:700;color:'+c+';text-transform:uppercase;letter-spacing:2px;margin-bottom:5px">'+name+'</div>'+
+        '<div style="display:flex;gap:3px;align-items:flex-start">'+
+        '<div>'+lbl('First Round','Mar 19-20')+'<div>'+B[name].map(function(g){return r1box(g,name);}).join('')+'</div></div>'+
+        '<div>'+lbl('2nd Round','Mar 21-22')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+[0,1,2,3].map(function(i){return sl(lb(r2[i]||null),4);}).join('')+'</div></div>'+
+        '<div>'+lbl('Sweet 16','Mar 26-27')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+[0,1].map(function(i){return sl(lb(s16[i]||null),2);}).join('')+'</div></div>'+
         '<div>'+lbl('Elite 8','Mar 28-29')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+sl(lb(e8[0]||null),1)+'</div></div>'+
         '</div></div>';
     }
-    function rRight(name){
-      const c=RC[name],r2=getLater(name,'2nd Round'),s16=getLater(name,'Sweet 16'),e8=getLater(name,'Elite Eight');
-      return '<div style="display:flex;flex-direction:column"><div style="font-size:10px;font-weight:700;color:'+c+';text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;text-align:right">'+name+'</div>'+
-        '<div style="display:flex;gap:2px;align-items:flex-start">'+
+    function rR(name){
+      var c=RC[name],r2=getLater(name,'2nd Round'),s16=getLater(name,'Sweet 16'),e8=getLater(name,'Elite Eight');
+      return '<div style="display:flex;flex-direction:column">'+
+        '<div style="font-size:11px;font-weight:700;color:'+c+';text-transform:uppercase;letter-spacing:2px;margin-bottom:5px;text-align:right">'+name+'</div>'+
+        '<div style="display:flex;gap:3px;align-items:flex-start">'+
         '<div>'+lbl('Elite 8','Mar 28-29')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+sl(lb(e8[0]||null),1)+'</div></div>'+
-        '<div>'+lbl('Sweet 16','Mar 26-27')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+[0,1].map(i=>sl(lb(s16[i]||null),2)).join('')+'</div></div>'+
-        '<div>'+lbl('2nd Round','Mar 21-22')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+[0,1,2,3].map(i=>sl(lb(r2[i]||null),4)).join('')+'</div></div>'+
-        '<div>'+lbl('First Round','Mar 19-20')+'<div>'+B[name].map(g=>r1b(g,name)).join('')+'</div></div>'+
+        '<div>'+lbl('Sweet 16','Mar 26-27')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+[0,1].map(function(i){return sl(lb(s16[i]||null),2);}).join('')+'</div></div>'+
+        '<div>'+lbl('2nd Round','Mar 21-22')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+[0,1,2,3].map(function(i){return sl(lb(r2[i]||null),4);}).join('')+'</div></div>'+
+        '<div>'+lbl('First Round','Mar 19-20')+'<div>'+B[name].map(function(g){return r1box(g,name);}).join('')+'</div></div>'+
         '</div></div>';
     }
-    const ff=getFF(),ch=getCH();
-    const key=Object.entries(RC).map(([r,c])=>'<div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:2px;background:'+c+'"></div><span style="color:'+c+';font-weight:600;font-size:10px">'+r+'</span></div>').join('');
-    setHtml('<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#060d1a;color:#dce4f5;font-family:-apple-system,sans-serif;padding:8px;overflow-x:auto}</style></head><body>'+
-      '<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">'+key+'<span style="font-size:9px;color:#334;margin-left:auto">Auto-updates every 30s | '+lastUpdate+'</span></div>'+
-      '<div style="display:flex;gap:4px;align-items:flex-start;min-width:1200px">'+
-      '<div style="display:flex;flex-direction:column;gap:10px">'+rLeft('East')+rLeft('South')+'</div>'+
-      '<div style="display:flex;flex-direction:column;align-items:center;min-width:122px;padding-top:16px;gap:5px">'+
-        lbl('Final Four','April 4')+lb(ff[0]||null)+'<div style="height:4px"></div>'+lb(ff[1]||null)+
+    var ff=getFF(),ch=getCH();
+    var key=Object.keys(RC).map(function(r){var c=RC[r];return '<div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:2px;background:'+c+'"></div><span style="color:'+c+';font-weight:600;font-size:10px">'+r+'</span></div>';}).join('');
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#060d1a;color:#dce4f5;font-family:-apple-system,sans-serif;padding:10px;overflow-x:auto}</style></head><body>'+
+      '<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">'+key+'<span style="font-size:9px;color:#334;margin-left:auto">Auto-updates every 60s | '+lastUpdate+'</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;min-width:1500px">'+
+      '<div style="display:flex;flex-direction:column;gap:12px">'+rL('East')+rL('South')+'</div>'+
+      '<div style="display:flex;flex-direction:column;align-items:center;min-width:165px;padding-top:18px;gap:6px">'+
+        lbl('Final Four','April 4')+lb(ff[0]||null)+'<div style="height:5px"></div>'+lb(ff[1]||null)+
         '<div style="height:8px"></div>'+lbl('Championship','April 6')+lb(ch[0]||null)+
       '</div>'+
-      '<div style="display:flex;flex-direction:column;gap:10px">'+rRight('West')+rRight('Midwest')+'</div>'+
-      '</div></body></html>');
-  },[liveData,lastUpdate]);
-
-  if(!html)return <div style={{textAlign:'center',padding:40,color:'#667'}}>Loading bracket...</div>;
-  return(
-    <div>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-        <h2 style={{margin:0,fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}}>Live Bracket</h2>
-        <button onClick={fetch2} style={{fontSize:11,background:'#1a2440',border:'1px solid #2a3a5a',color:'#8899cc',borderRadius:5,padding:'4px 12px',cursor:'pointer'}}>Refresh</button>
-      </div>
-      <iframe srcDoc={html} style={{width:'100%',height:'900px',border:'none',borderRadius:8}} title="Live Bracket"/>
-    </div>
+      '<div style="display:flex;flex-direction:column;gap:12px">'+rR('West')+rR('Midwest')+'</div>'+
+      '</div></body></html>';
+  }
+  if(!html)return React.createElement('div',{style:{textAlign:'center',padding:40,color:'#667'}},'Loading bracket...');
+  return React.createElement('div',null,
+    React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}},
+      React.createElement('h2',{style:{margin:0,fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}},'Live Bracket'),
+      React.createElement('button',{onClick:doFetch,style:{fontSize:11,background:'#1a2440',border:'1px solid #2a3a5a',color:'#8899cc',borderRadius:5,padding:'4px 12px',cursor:'pointer'}},'Refresh')
+    ),
+    React.createElement('iframe',{srcDoc:html,style:{width:'100%',height:'920px',border:'none',borderRadius:8},title:'Live Bracket'})
   );
 }
+
 export default function App() {
   // League state
   const [leagueCode, setLeagueCode] = useState(null);
