@@ -2422,7 +2422,7 @@ const regionColors = { South:"#f0c040", East:"#ffffff", Midwest:"#9b59b6", West:
                                   onMouseEnter={e => { e.currentTarget.style.background="#1a2e1a"; e.currentTarget.style.borderColor=regionColors[region]; }}
                                   onMouseLeave={e => { e.currentTarget.style.background="#0f1625"; e.currentTarget.style.borderColor=regionColors[region]+"44"; }}>
                                   <SeedBadge seed={team.seed} />
-                <span style={{ fontSize:12, fontWeight:600, color:"#dce4f5", flex:1 }}>{PLAY_IN_OPPONENTS[team.name] ? `${team.name} / ${team.seed} ${PLAY_IN_OPPONENTS[team.name]}` : team.name}</span>
+                <span style={{ fontSize:12, fontWeight:600, color:(regionColors[REGION_MAP[team.name]]||"#dce4f5"), flex:1 }}>{PLAY_IN_OPPONENTS[team.name] ? `${team.name} / ${team.seed} ${PLAY_IN_OPPONENTS[team.name]}` : team.name}</span>
                                 </button>
                               ))}
                             </div>
@@ -2471,7 +2471,7 @@ const regionColors = { South:"#f0c040", East:"#ffffff", Midwest:"#9b59b6", West:
                                     {pick?.name ? (
                                       <div>
                                         <div style={{ fontSize:9, color:o.color, fontWeight:700 }}>#{pick.seed}</div>
-                                        <div style={{ fontSize:9, color:(regionColors[REGION_MAP[pick?.name]]||"#dce4f5"), lineHeight:1.2,
+                                        <div style={{ fontSize:9, color:(regionColors[REGION_MAP[pick?.name]]||(regionColors[REGION_MAP[pick?.name]]||"#dce4f5")), lineHeight:1.2,
                                           overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:50 }}>
                                           {pick.name.split(" ").slice(-1)[0]}
                                         </div>
