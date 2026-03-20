@@ -1917,7 +1917,7 @@ export default function App() {
                               border:`1px solid ${hasWin?"#27ae60":"#1a2440"}`,
                               borderRadius:7, padding:"6px 10px" }}>
                               <SeedBadge seed={team.seed} />
-                              <span style={{ fontSize:13, flex:1, textDecoration:eliminatedTeams.has(team.name)?'line-through':'none', color:eliminatedTeams.has(team.name)?'#e74c3c':(REGION_COLORS[REGION_MAP[team.name]]||'#dce4f5') }}>{team.name}</span>
+                              <span style={{ fontSize:13, flex:1, textDecoration:eliminatedTeams.has(team.name)?'line-through':'none', color:eliminatedTeams.has(team.name)?'#e74c3c':"#dce4f5" }}>{team.name}</span>
                               {hasWin&&<span style={{ fontSize:10, color:"#2ecc71" }}></span>}
                             </div>
                           );
@@ -2338,7 +2338,7 @@ const regionColors = { South:"#f0c040", East:"#ffffff", Midwest:"#9b59b6", West:
                       </div>
                       <div style={{ marginLeft:"auto", textAlign:"right" }}>
                         <div style={{ fontSize:11, color:"#6677aa", marginBottom:2 }}>Round {pickRound + 1}  Pick {totalPicks + 1}</div>
-                        <div style={{ fontSize:12, color:(regionColors[REGION_MAP[team.name]]||"#dce4f5") }}>{currentPicker.teams.filter(t=>t.name).length}/8 teams drafted</div>
+                        <div style={{ fontSize:12, color:"#dce4f5" }}>{currentPicker.teams.filter(t=>t.name).length}/8 teams drafted</div>
                       </div>
                     </div>
                   )}
@@ -2422,7 +2422,7 @@ const regionColors = { South:"#f0c040", East:"#ffffff", Midwest:"#9b59b6", West:
                                   onMouseEnter={e => { e.currentTarget.style.background="#1a2e1a"; e.currentTarget.style.borderColor=regionColors[region]; }}
                                   onMouseLeave={e => { e.currentTarget.style.background="#0f1625"; e.currentTarget.style.borderColor=regionColors[region]+"44"; }}>
                                   <SeedBadge seed={team.seed} />
-                <span style={{ fontSize:12, fontWeight:600, color:(REGION_COLORS[REGION_MAP[team.name]]||"#dce4f5"), flex:1 }}>{PLAY_IN_OPPONENTS[team.name] ? `${team.name} / ${team.seed} ${PLAY_IN_OPPONENTS[team.name]}` : team.name}</span>
+                <span style={{ fontSize:12, fontWeight:600, color:"#dce4f5", flex:1 }}>{PLAY_IN_OPPONENTS[team.name] ? `${team.name} / ${team.seed} ${PLAY_IN_OPPONENTS[team.name]}` : team.name}</span>
                                 </button>
                               ))}
                             </div>
@@ -2500,7 +2500,7 @@ const regionColors = { South:"#f0c040", East:"#ffffff", Midwest:"#9b59b6", West:
                               borderRadius:10, padding:"10px 12px" }}>
                               <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
                                 <div style={{ width:8, height:8, borderRadius:"50%", background:o.color }} />
-                                <span style={{ fontWeight:700, fontSize:13, color:o.id===currentPicker?.id?o.color:(REGION_COLORS[REGION_MAP[team.name]]||"#dce4f5") }}>{o.name}</span>
+                                <span style={{ fontWeight:700, fontSize:13, color:o.id===currentPicker?.id?o.color:"#dce4f5" }}>{o.name}</span>
                                 <span style={{ marginLeft:"auto", fontSize:11, color:"#445" }}>{drafted.length}/8</span>
                               </div>
                               <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
