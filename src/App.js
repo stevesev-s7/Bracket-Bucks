@@ -2491,6 +2491,9 @@ const regionColors = { South:"#f0c040", East:"#ffffff", Midwest:"#9b59b6", West:
                       <div style={{ marginTop:14 }}>
                         <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:1.5, fontWeight:700, marginBottom:8 }}>
                           Teams Drafted
+              <div style={{ display:"flex", gap:14, marginBottom:10, flexWrap:"wrap" }}>
+                {[["South","#f0c040"],["Midwest","#9b59b6"],["East","#ffffff"],["West","#4a9eff"]].map(function(e,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:5,fontSize:12}}><div style={{width:10,height:10,borderRadius:2,background:e[1]}}></div><span style={{color:e[1],fontWeight:600}}>{e[0]}</span></div>;})}
+              </div>
                         </div>
                         {sortedOwners.map(o => {
                           const drafted = o.teams.filter(t => t.name && t.name.trim());
@@ -2505,7 +2508,7 @@ const regionColors = { South:"#f0c040", East:"#ffffff", Midwest:"#9b59b6", West:
                               </div>
                               <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
                                 {drafted.map((t,i) => (
-                                  <span key={i} style={{ fontSize:10, background:"#1a2440", color:"#dce4f5",
+                                  <span key={i} style={{ fontSize:10, background:"#1a2440", color:(regionColors[REGION_MAP[t.name]]||"#dce4f5"),
                                     borderRadius:4, padding:"2px 6px", display:"flex", alignItems:"center", gap:3 }}>
                                     <SeedBadge seed={t.seed} />
                                     <span>{t.name}</span>
