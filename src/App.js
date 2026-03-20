@@ -335,24 +335,6 @@ function Toast({ msg, type }) {
   if (!msg) return null;
   const ok = type !== "error";
 
-  // Fetch eliminated teams from ESPN
-  React.useEffect(() => {
-    function fetchElim() {
-      fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200')
-        .then(r=>r.json()).then(data=>{
-          const elim = new Set();
-          (data.events||[]).forEach(g=>{
-            if(!g.status?.type?.completed) return;
-            const loser = (g.competitions?.[0]?.competitors||[]).find(c=>!c.winner);
-            if(loser?.team?.displayName) elim.add(loser.team.displayName);
-          });
-          setEliminatedTeams(elim);
-        }).catch(()=>{});
-    }
-    fetchElim();
-    const t = setInterval(fetchElim, 60000);
-    return () => clearInterval(t);
-  }, []);
   return (
     <div style={{ position:"fixed", top:20, right:20, zIndex:9999,
       background: ok ? "#142a1e" : "#2a1418",
@@ -1225,6 +1207,25 @@ export default function App() {
     const interval = setInterval(autoSyncESPN, 60000);
     return () => clearInterval(interval);
   }, [autoSync, leagueCode, owners, wins]);
+
+  // Fetch eliminated teams from ESPN
+  React.useEffect(() => {
+    function fetchElim() {
+      fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200')
+        .then(r=>r.json()).then(data=>{
+          const elim = new Set();
+          (data.events||[]).forEach(g=>{
+            if(!g.status?.type?.completed) return;
+            const loser = (g.competitions?.[0]?.competitors||[]).find(c=>!c.winner);
+            if(loser?.team?.displayName) elim.add(loser.team.displayName);
+          });
+          setEliminatedTeams(elim);
+        }).catch(()=>{});
+    }
+    fetchElim();
+    const t = setInterval(fetchElim, 60000);
+    return () => clearInterval(t);
+  }, []);
 
   const stats = calcStats(owners, wins, rounds);
   const totalWins = wins.length;
