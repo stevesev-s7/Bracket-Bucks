@@ -334,6 +334,25 @@ function SeedBadge({ seed }) {
 function Toast({ msg, type }) {
   if (!msg) return null;
   const ok = type !== "error";
+
+  // Fetch eliminated teams from ESPN
+  React.useEffect(() => {
+    function fetchElim() {
+      fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200')
+        .then(r=>r.json()).then(data=>{
+          const elim = new Set();
+          (data.events||[]).forEach(g=>{
+            if(!g.status?.type?.completed) return;
+            const loser = (g.competitions?.[0]?.competitors||[]).find(c=>!c.winner);
+            if(loser?.team?.displayName) elim.add(loser.team.displayName);
+          });
+          setEliminatedTeams(elim);
+        }).catch(()=>{});
+    }
+    fetchElim();
+    const t = setInterval(fetchElim, 60000);
+    return () => clearInterval(t);
+  }, []);
   return (
     <div style={{ position:"fixed", top:20, right:20, zIndex:9999,
       background: ok ? "#142a1e" : "#2a1418",
@@ -765,6 +784,7 @@ export default function App() {
   const [espnGames, setEspnGames]   = useState([]);
   const [espnStatus, setEspnStatus] = useState("idle");
   const [autoSync, setAutoSync]     = useState(false);
+  const [eliminatedTeams, setEliminatedTeams] = useState(new Set());
   const [lastSync, setLastSync]       = useState(null);
   const [syncLog, setSyncLog]         = useState([]);
 
@@ -1884,7 +1904,7 @@ export default function App() {
                               border:`1px solid ${hasWin?"#27ae60":"#1a2440"}`,
                               borderRadius:7, padding:"6px 10px" }}>
                               <SeedBadge seed={team.seed} />
-                              <span style={{ fontSize:13, flex:1 }}>{team.name}</span>
+                              <span style={{ fontSize:13, flex:1, textDecoration:eliminatedTeams.has(team.name)?'line-through':'none', color:eliminatedTeams.has(team.name)?'#e74c3c':'inherit' }}>{team.name}</span>
                               {hasWin&&<span style={{ fontSize:10, color:"#2ecc71" }}></span>}
                             </div>
                           );
