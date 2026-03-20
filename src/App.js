@@ -1857,7 +1857,7 @@ export default function App() {
                       borderRadius:10, padding:"11px 16px",
                       display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
                       <SeedBadge seed={team.seed} />
-                      <span style={{ fontWeight:600, flex:1, minWidth:120 }}>{team.name}</span>
+                      <span style={{ fontWeight:600, flex:1, minWidth:120, color:(REGION_COLORS[REGION_MAP[team.name]]||'#dce4f5') }}>{team.name}</span>
                       <span style={{ fontSize:11, background:"#1a2440", color:"#8899cc",
                         borderRadius:5, padding:"2px 8px" }}>{round.label}</span>
                       <span style={{ color:"#f0c040", fontWeight:700, fontFamily:"'DM Mono',monospace" }}>
