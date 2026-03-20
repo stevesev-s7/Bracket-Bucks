@@ -743,8 +743,8 @@ function LiveBracket(){
           var live=!!(st&&st.state==='in');
           if(!map[key]||done||live){
             map[key]={
-              t:{s:(s0.curatedRank&&s0.curatedRank.current)||'',n:(s0.team&&s0.team.displayName)||'',sc:s0.score||'',w:s0.winner===true},
-              b:{s:(s1.curatedRank&&s1.curatedRank.current)||'',n:(s1.team&&s1.team.displayName)||'',sc:s1.score||'',w:s1.winner===true},
+              t:{s:(s0.curatedRank&&s0.curatedRank.current)||'',n:(s0.team&&s0.team.displayName)||'',sc:s0.score||'',w:!!s0.winner},
+              b:{s:(s1.curatedRank&&s1.curatedRank.current)||'',n:(s1.team&&s1.team.displayName)||'',sc:s1.score||'',w:!!s1.winner},
               done:done,live:live
             };
           }
