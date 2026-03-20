@@ -664,131 +664,231 @@ function PaymentApprovals({ supabase }) {
 
 
 
+
 function LiveBracket() {
+  const [liveData,setLiveData]=React.useState({});
+  const [lastUpdate,setLastUpdate]=React.useState('');
   const [html,setHtml]=React.useState('');
-  const [loading,setLoading]=React.useState(true);
-  const PAIRS=[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]];
+
+  // Full verified 2026 bracket - all 64 teams
+  const BRACKET={
+    East:[
+      {t:{s:1,n:'Duke'},b:{s:16,n:'Siena'}},
+      {t:{s:8,n:'Ohio St'},b:{s:9,n:'TCU'}},
+      {t:{s:5,n:"St John's"},b:{s:12,n:'N Iowa'}},
+      {t:{s:4,n:'Kansas'},b:{s:13,n:'Cal Baptist'}},
+      {t:{s:6,n:'Louisville'},b:{s:11,n:'S Florida'}},
+      {t:{s:3,n:'Michigan St'},b:{s:14,n:'N Dakota St'}},
+      {t:{s:7,n:'UCLA'},b:{s:10,n:'UCF'}},
+      {t:{s:2,n:'UConn'},b:{s:15,n:'Furman'}}
+    ],
+    West:[
+      {t:{s:1,n:'Arizona'},b:{s:16,n:'LIU'}},
+      {t:{s:8,n:'Villanova'},b:{s:9,n:'Utah St'}},
+      {t:{s:5,n:'Wisconsin'},b:{s:12,n:'High Point'}},
+      {t:{s:4,n:'Arkansas'},b:{s:13,n:"Hawai'i"}},
+      {t:{s:6,n:'BYU'},b:{s:11,n:'Texas'}},
+      {t:{s:3,n:'Gonzaga'},b:{s:14,n:'Kennesaw St'}},
+      {t:{s:7,n:'Miami'},b:{s:10,n:'Missouri'}},
+      {t:{s:2,n:'Purdue'},b:{s:15,n:'Queens'}}
+    ],
+    South:[
+      {t:{s:1,n:'Florida'},b:{s:16,n:'Prairie View'}},
+      {t:{s:8,n:'Clemson'},b:{s:9,n:'Iowa'}},
+      {t:{s:5,n:'Vanderbilt'},b:{s:12,n:'McNeese'}},
+      {t:{s:4,n:'Nebraska'},b:{s:13,n:'Troy'}},
+      {t:{s:6,n:'N Carolina'},b:{s:11,n:'VCU'}},
+      {t:{s:3,n:'Illinois'},b:{s:14,n:'Penn'}},
+      {t:{s:7,n:"Saint Mary's"},b:{s:10,n:'Texas A&M'}},
+      {t:{s:2,n:'Houston'},b:{s:15,n:'Idaho'}}
+    ],
+    Midwest:[
+      {t:{s:1,n:'Michigan'},b:{s:16,n:'Howard'}},
+      {t:{s:8,n:'Georgia'},b:{s:9,n:'Saint Louis'}},
+      {t:{s:5,n:'Texas Tech'},b:{s:12,n:'Akron'}},
+      {t:{s:4,n:'Alabama'},b:{s:13,n:'Hofstra'}},
+      {t:{s:6,n:'Tennessee'},b:{s:11,n:'Miami OH'}},
+      {t:{s:3,n:'Virginia'},b:{s:14,n:'Wright St'}},
+      {t:{s:7,n:'Kentucky'},b:{s:10,n:'Santa Clara'}},
+      {t:{s:2,n:'Iowa State'},b:{s:15,n:'Tenn State'}}
+    ]
+  };
   const RC={South:'#f0c040',Midwest:'#9b59b6',East:'#dce4f5',West:'#4a9eff'};
 
-  function build(events){
-    const map={};
-    events.forEach(g=>{
-      const note=g.competitions?.[0]?.notes?.[0]?.headline||'';
-      const rm=note.match(/(East|West|Midwest|South) Region/);
-      const rdm=note.match(/(1st Round|2nd Round|Sweet 16|Elite Eight|Final Four|Championship)/);
-      if(!rdm) return;
-      const comps=g.competitions?.[0]?.competitors||[];
-      const s=[...comps].sort((a,b)=>(a.curatedRank?.current||99)-(b.curatedRank?.current||99));
-      const region=rm?.[1]||'Late',round=rdm[1];
-      const key=region+'|'+round+'|'+(s[0]?.curatedRank?.current||'X');
-      map[key]={t:{s:s[0]?.curatedRank?.current||'',n:s[0]?.team?.shortDisplayName||'',sc:s[0]?.score||'',w:s[0]?.winner},
-        b:{s:s[1]?.curatedRank?.current||'',n:s[1]?.team?.shortDisplayName||'',sc:s[1]?.score||'',w:s[1]?.winner},
-        done:g.status?.type?.completed,live:g.status?.type?.state==='in'};
-    });
-    function findR1(region,s1,s2){
-      for(const key of Object.keys(map)){
-        if(!key.startsWith(region+'|1st Round|')) continue;
-        const g=map[key];
-        if(g.t.s===s1||g.t.s===s2||g.b.s===s1||g.b.s===s2) return g;
+  function fetchLive(){
+    fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200')
+      .then(r=>r.json()).then(data=>{
+        const map={};
+        (data.events||[]).forEach(g=>{
+          const note=g.competitions?.[0]?.notes?.[0]?.headline||'';
+          const rm=note.match(/(East|West|Midwest|South) Region/);
+          const rdm=note.match(/(1st Round|2nd Round|Sweet 16|Elite Eight|Final Four|Championship)/);
+          const comps=g.competitions?.[0]?.competitors||[];
+          const sorted=[...comps].sort((a,b)=>(a.curatedRank?.current||99)-(b.curatedRank?.current||99));
+          const region=rm?.[1]||'',round=rdm?.[1]||'';
+          if(!region||!round) return;
+          const topSeed=sorted[0]?.curatedRank?.current;
+          const key=region+'|'+round+'|'+topSeed;
+          map[key]={
+            t:{s:sorted[0]?.curatedRank?.current,n:sorted[0]?.team?.shortDisplayName,sc:sorted[0]?.score||'',w:sorted[0]?.winner},
+            b:{s:sorted[1]?.curatedRank?.current,n:sorted[1]?.team?.shortDisplayName,sc:sorted[1]?.score||'',w:sorted[1]?.winner},
+            done:g.status?.type?.completed,
+            live:g.status?.type?.state==='in',
+            clock:g.status?.displayClock||''
+          };
+        });
+        setLiveData(map);
+        setLastUpdate(new Date().toLocaleTimeString());
+      }).catch(()=>{});
+  }
+  React.useEffect(()=>{fetchLive();const t=setInterval(fetchLive,30000);return()=>clearInterval(t);},[]);
+
+  React.useEffect(()=>{
+    setHtml(buildHtml(BRACKET,liveData,RC,lastUpdate,fetchLive));
+  },[liveData,lastUpdate]);
+
+  function buildHtml(BRACKET,liveData,RC,lastUpdate){
+    const GH=43,GP=5;
+    const totalH=8*(GH+GP)-GP;
+
+    // Find live game by region + round + seed
+    function getLive(region,round,seedT,seedB){
+      for(const key of Object.keys(liveData)){
+        if(!key.startsWith(region+'|'+round+'|')) continue;
+        const g=liveData[key];
+        if(g.t.s===seedT||g.b.s===seedT||g.t.s===seedB||g.b.s===seedB) return g;
       }
       return null;
     }
-    function getRound(region,round){
-      return Object.entries(map).filter(([k])=>k.startsWith(region+'|'+round+'|')).map(([,v])=>v);
-    }
-    function team(t,done,live){
-      const w=done&&t.w,l=done&&!t.w;
+
+    function teamRow(base,live,isTop){
+      // base = {s,n} from hardcoded bracket
+      // live = live game data if available
+      const lt=live?(isTop?live.t:live.b):null;
+      const win=live?.done&&lt?.w;
+      const lose=live?.done&&!lt?.w;
+      const sc=lt?.sc||'';
+      const name=lt?.n||base.n;
       return '<div style="display:flex;align-items:center;gap:3px;height:17px">'+
-        '<span style="font-size:8px;color:#556;width:11px;text-align:right;flex-shrink:0;font-weight:700">'+t.s+'</span>'+
-        '<span style="font-size:9px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:'+(w?'#2ecc71':l?'#2a2a3a':'#bbc')+';font-weight:'+(w?700:400)+';text-decoration:'+(l?'line-through':'none')+'">'+t.n+'</span>'+
-        ((done||live)?'<span style="font-size:9px;font-weight:700;min-width:20px;text-align:right;color:'+(w?'#2ecc71':live?'#f0c040':'#556')+'">'+t.sc+'</span>':'')+
+        '<span style="font-size:8px;color:#556;width:11px;text-align:right;flex-shrink:0;font-weight:700">'+base.s+'</span>'+
+        '<span style="font-size:9px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+
+          'color:'+(win?'#2ecc71':lose?'#2a2a3a':'#bbc')+';font-weight:'+(win?700:400)+';text-decoration:'+(lose?'line-through':'none')+'">'+name+'</span>'+
+        ((live?.done||live?.live)?'<span style="font-size:9px;font-weight:700;min-width:20px;text-align:right;color:'+(win?'#2ecc71':live?.live?'#f0c040':'#556')+'">'+sc+'</span>':'')+
       '</div>';
     }
-    function box(g,w){
-      const bw=w||108;
+
+    function box(base,region,round,bw,slotIdx){
+      const w=bw||108;
+      const live=(base&&round)?getLive(region,round,base.t.s,base.b.s):null;
+      // For later rounds, find live game by slot index from live data
+      const liveForSlot=(round&&!base)?
+        Object.values(liveData).filter(g=>Object.keys(liveData).find(k=>liveData[k]===g&&k.startsWith(region+'|'+round+'|')))[slotIdx||0]:null;
+      const g=live||liveForSlot;
       const border=g?.live?'#e74c3c44':g?.done?'#2ecc7122':'#1e2a3a';
-      const badge=g?.live?'<div style="position:absolute;top:-7px;right:2px;background:#e74c3c;color:#fff;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">LIVE</div>':g?.done?'<div style="position:absolute;top:-7px;right:2px;background:#1a3a1a;color:#2ecc71;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">F</div>':'';
-      return '<div style="width:'+bw+'px;background:#0f1625;border:1px solid '+border+';border-radius:4px;padding:4px 5px;position:relative;flex-shrink:0">'+badge+
-        (g?team(g.t,g.done,g.live):'<div style="height:17px;display:flex;align-items:center"><span style="font-size:8px;color:#1e2a3a;margin-left:14px">TBD</span></div>')+
+      const badge=g?.live?'<div style="position:absolute;top:-7px;right:2px;background:#e74c3c;color:#fff;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">LIVE</div>':
+        g?.done?'<div style="position:absolute;top:-7px;right:2px;background:#1a3a1a;color:#2ecc71;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">F</div>':'';
+
+      if(!base&&!g) return '<div style="width:'+w+'px;background:#0a0f1a;border:1px solid #1a2035;border-radius:4px;padding:4px 5px">'+
+        '<div style="height:17px;display:flex;align-items:center"><span style="font-size:8px;color:#1a2035;margin-left:14px">TBD</span></div>'+
+        '<div style="height:1px;background:#1a2035;margin:2px 0"></div>'+
+        '<div style="height:17px;display:flex;align-items:center"><span style="font-size:8px;color:#1a2035;margin-left:14px">TBD</span></div></div>';
+
+      // For later rounds, build from live data
+      if(!base&&g){
+        return '<div style="width:'+w+'px;background:#0f1625;border:1px solid '+border+';border-radius:4px;padding:4px 5px;position:relative">'+badge+
+          '<div style="display:flex;align-items:center;gap:3px;height:17px"><span style="font-size:8px;color:#556;width:11px;text-align:right;font-weight:700">'+g.t.s+'</span><span style="font-size:9px;flex:1;overflow:hidden;white-space:nowrap;color:'+(g.done&&g.t.w?'#2ecc71':g.done&&!g.t.w?'#2a2a3a':'#bbc')+';font-weight:'+(g.done&&g.t.w?700:400)+';text-decoration:'+(g.done&&!g.t.w?'line-through':'none')+'">'+g.t.n+'</span>'+(g.done||g.live?'<span style="font-size:9px;font-weight:700;min-width:20px;text-align:right;color:'+(g.done&&g.t.w?'#2ecc71':g.live?'#f0c040':'#556')+'">'+g.t.sc+'</span>':'')+
+          '</div><div style="height:1px;background:#1e2a3a;margin:2px 0"></div>'+
+          '<div style="display:flex;align-items:center;gap:3px;height:17px"><span style="font-size:8px;color:#556;width:11px;text-align:right;font-weight:700">'+g.b.s+'</span><span style="font-size:9px;flex:1;overflow:hidden;white-space:nowrap;color:'+(g.done&&g.b.w?'#2ecc71':g.done&&!g.b.w?'#2a2a3a':'#bbc')+';font-weight:'+(g.done&&g.b.w?700:400)+';text-decoration:'+(g.done&&!g.b.w?'line-through':'none')+'">'+g.b.n+'</span>'+(g.done||g.live?'<span style="font-size:9px;font-weight:700;min-width:20px;text-align:right;color:'+(g.done&&g.b.w?'#2ecc71':g.live?'#f0c040':'#556')+'">'+g.b.sc+'</span>':'')+
+          '</div></div>';
+      }
+
+      return '<div style="width:'+w+'px;background:#0f1625;border:1px solid '+border+';border-radius:4px;padding:4px 5px;position:relative">'+badge+
+        teamRow(base.t,live,true)+
         '<div style="height:1px;background:#1e2a3a;margin:2px 0"></div>'+
-        (g?team(g.b,g.done,g.live):'<div style="height:17px;display:flex;align-items:center"><span style="font-size:8px;color:#1e2a3a;margin-left:14px">TBD</span></div>')+
+        teamRow(base.b,live,false)+
       '</div>';
     }
-    // Each round slot height in px
-    const R=4,GH=43,GP=5; // rounds, game height, gap
-    const totalH=8*(GH+GP)-GP;
-    function slot(g,n,bw){
+
+    function slot(content,n){
       const h=Math.floor((totalH+GP)/n)-GP;
-      return '<div style="height:'+(h+GP)+'px;display:flex;align-items:center">'+box(g,bw)+'</div>';
+      return '<div style="height:'+(h+GP)+'px;display:flex;align-items:center">'+content+'</div>';
     }
+
+    function lbl(t,dt){
+      return '<div style="font-size:7px;color:#445;text-align:center;margin-bottom:3px;line-height:1.4"><span style="color:#667;font-weight:600">'+t+'</span><br><span style="color:#334;font-size:6px">'+dt+'</span></div>';
+    }
+
+    function getLatrRound(region,round){
+      return Object.entries(liveData).filter(([k])=>k.startsWith(region+'|'+round+'|')).map(([,v])=>v);
+    }
+
     function regionLeft(name){
       const c=RC[name];
-      const r1=PAIRS.map(([s1,s2])=>findR1(name,s1,s2));
-      const r2=getRound(name,'2nd Round');
-      const s16=getRound(name,'Sweet 16');
-      const e8=getRound(name,'Elite Eight');
+      const r1=BRACKET[name];
+      const r2=getLatrRound(name,'2nd Round');
+      const s16=getLatrRound(name,'Sweet 16');
+      const e8=getLatrRound(name,'Elite Eight');
       const bw=108;
-      const lbl=(t,d)=>'<div style="font-size:7px;color:#445;text-align:center;margin-bottom:3px;line-height:1.3"><b style="color:#556;font-size:7px">'+t+'</b><br><span style="color:#334">'+d+'</span></div>';
       return '<div style="display:flex;flex-direction:column">'+
         '<div style="font-size:10px;font-weight:700;color:'+c+';text-transform:uppercase;letter-spacing:2px;margin-bottom:4px">'+name+'</div>'+
-        '<div style="display:flex;gap:3px;align-items:flex-start">'+
-        '<div>'+lbl('First Round','Mar 19-20')+'<div style="display:flex;flex-direction:column">'+r1.map(g=>'<div style="margin-bottom:'+GP+'px">'+box(g,bw)+'</div>').join('')+'</div></div>'+
-        '<div>'+lbl('2nd Round','Mar 21-22')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+[0,1,2,3].map(i=>slot(r2[i]||null,4,bw)).join('')+'</div></div>'+
-        '<div>'+lbl('Sweet 16','Mar 26-27')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+[0,1].map(i=>slot(s16[i]||null,2,bw)).join('')+'</div></div>'+
-        '<div>'+lbl('Elite 8','Mar 28-29')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+slot(e8[0]||null,1,bw)+'</div></div>'+
+        '<div style="display:flex;gap:2px;align-items:flex-start">'+
+        '<div>'+lbl('First Round','Mar 19-20')+'<div>'+r1.map(g=>'<div style="margin-bottom:'+GP+'px">'+box(g,name,'1st Round',bw)+'</div>').join('')+'</div></div>'+
+        '<div>'+lbl('2nd Round','Mar 21-22')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+[0,1,2,3].map(i=>slot(box(null,name,'2nd Round',bw,i),4)).join('')+'</div></div>'+
+        '<div>'+lbl('Sweet 16','Mar 26-27')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+[0,1].map(i=>slot(box(null,name,'Sweet 16',bw,i),2)).join('')+'</div></div>'+
+        '<div>'+lbl('Elite 8','Mar 28-29')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+slot(box(null,name,'Elite Eight',bw,0),1)+'</div></div>'+
         '</div></div>';
     }
+
     function regionRight(name){
       const c=RC[name];
-      const r1=PAIRS.map(([s1,s2])=>findR1(name,s1,s2));
-      const r2=getRound(name,'2nd Round');
-      const s16=getRound(name,'Sweet 16');
-      const e8=getRound(name,'Elite Eight');
+      const r1=BRACKET[name];
+      const r2=getLatrRound(name,'2nd Round');
+      const s16=getLatrRound(name,'Sweet 16');
+      const e8=getLatrRound(name,'Elite Eight');
       const bw=108;
-      const lbl=(t,d)=>'<div style="font-size:7px;color:#445;text-align:center;margin-bottom:3px;line-height:1.3"><b style="color:#556;font-size:7px">'+t+'</b><br><span style="color:#334">'+d+'</span></div>';
       return '<div style="display:flex;flex-direction:column">'+
         '<div style="font-size:10px;font-weight:700;color:'+c+';text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;text-align:right">'+name+'</div>'+
-        '<div style="display:flex;gap:3px;align-items:flex-start">'+
-        '<div>'+lbl('Elite 8','Mar 28-29')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+slot(e8[0]||null,1,bw)+'</div></div>'+
-        '<div>'+lbl('Sweet 16','Mar 26-27')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+[0,1].map(i=>slot(s16[i]||null,2,bw)).join('')+'</div></div>'+
-        '<div>'+lbl('2nd Round','Mar 21-22')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+[0,1,2,3].map(i=>slot(r2[i]||null,4,bw)).join('')+'</div></div>'+
-        '<div>'+lbl('First Round','Mar 19-20')+'<div style="display:flex;flex-direction:column">'+r1.map(g=>'<div style="margin-bottom:'+GP+'px">'+box(g,bw)+'</div>').join('')+'</div></div>'+
+        '<div style="display:flex;gap:2px;align-items:flex-start">'+
+        '<div>'+lbl('Elite 8','Mar 28-29')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+slot(box(null,name,'Elite Eight',bw,0),1)+'</div></div>'+
+        '<div>'+lbl('Sweet 16','Mar 26-27')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+[0,1].map(i=>slot(box(null,name,'Sweet 16',bw,i),2)).join('')+'</div></div>'+
+        '<div>'+lbl('2nd Round','Mar 21-22')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+[0,1,2,3].map(i=>slot(box(null,name,'2nd Round',bw,i),4)).join('')+'</div></div>'+
+        '<div>'+lbl('First Round','Mar 19-20')+'<div>'+r1.map(g=>'<div style="margin-bottom:'+GP+'px">'+box(g,name,'1st Round',bw)+'</div>').join('')+'</div></div>'+
         '</div></div>';
     }
-    const late=getRound('Late','Final Four').concat(Object.entries(map).filter(([k])=>k.startsWith('Late|Final Four')).map(([,v])=>v));
-    const ff=Object.entries(map).filter(([k])=>k.includes('|Final Four|')).map(([,v])=>v);
-    const ch=Object.entries(map).filter(([k])=>k.includes('|Championship|')).map(([,v])=>v);
+
+    const ffGames=Object.entries(liveData).filter(([k])=>k.includes('|Final Four|')).map(([,v])=>v);
+    const chGames=Object.entries(liveData).filter(([k])=>k.includes('|Championship|')).map(([,v])=>v);
     const bw=108;
     const keyHtml=Object.entries(RC).map(([r,c])=>'<div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:2px;background:'+c+'"></div><span style="color:'+c+';font-weight:600;font-size:10px">'+r+'</span></div>').join('');
+    const ffBox=(g)=>g?'<div style="width:'+bw+'px;background:#0f1625;border:1px solid '+(g.live?'#e74c3c44':g.done?'#2ecc7122':'#1e2a3a')+';border-radius:4px;padding:4px 5px;position:relative">'+(g.live?'<div style="position:absolute;top:-7px;right:2px;background:#e74c3c;color:#fff;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">LIVE</div>':g.done?'<div style="position:absolute;top:-7px;right:2px;background:#1a3a1a;color:#2ecc71;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">F</div>':'')+
+      '<div style="display:flex;align-items:center;gap:3px;height:17px"><span style="font-size:8px;color:#556;width:11px;text-align:right;font-weight:700">'+g.t.s+'</span><span style="font-size:9px;flex:1;color:'+(g.done&&g.t.w?'#2ecc71':g.done?'#2a2a3a':'#bbc')+';font-weight:'+(g.done&&g.t.w?700:400)+'">'+g.t.n+'</span>'+(g.done||g.live?'<span style="font-size:9px;font-weight:700;min-width:20px;text-align:right;color:'+(g.done&&g.t.w?'#2ecc71':g.live?'#f0c040':'#556')+'">'+g.t.sc+'</span>':'')+
+      '</div><div style="height:1px;background:#1e2a3a;margin:2px 0"></div>'+
+      '<div style="display:flex;align-items:center;gap:3px;height:17px"><span style="font-size:8px;color:#556;width:11px;text-align:right;font-weight:700">'+g.b.s+'</span><span style="font-size:9px;flex:1;color:'+(g.done&&g.b.w?'#2ecc71':g.done?'#2a2a3a':'#bbc')+';font-weight:'+(g.done&&g.b.w?700:400)+'">'+g.b.n+'</span>'+(g.done||g.live?'<span style="font-size:9px;font-weight:700;min-width:20px;text-align:right;color:'+(g.done&&g.b.w?'#2ecc71':g.live?'#f0c040':'#556')+'">'+g.b.sc+'</span>':'')+
+      '</div></div>':'<div style="width:'+bw+'px;background:#0a0f1a;border:1px solid #1a2035;border-radius:4px;padding:4px 5px"><div style="height:17px;display:flex;align-items:center"><span style="font-size:8px;color:#1a2035;margin-left:14px">TBD</span></div><div style="height:1px;background:#1a2035;margin:2px 0"></div><div style="height:17px;display:flex;align-items:center"><span style="font-size:8px;color:#1a2035;margin-left:14px">TBD</span></div></div>';
+
     return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#060d1a;color:#dce4f5;font-family:-apple-system,sans-serif;padding:8px;overflow-x:auto}</style></head><body>'+
-      '<div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;flex-wrap:wrap">'+keyHtml+
-      '<span style="font-size:9px;color:#334;margin-left:auto">Updated: '+new Date().toLocaleTimeString()+'</span></div>'+
-      '<div style="display:flex;gap:5px;align-items:flex-start;min-width:1200px">'+
+      '<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap">'+keyHtml+
+      '<span style="font-size:9px;color:#334;margin-left:auto">Auto-updates every 30s | Updated: '+lastUpdate+'</span></div>'+
+      '<div style="display:flex;gap:4px;align-items:flex-start;min-width:1200px">'+
       '<div style="display:flex;flex-direction:column;gap:10px">'+regionLeft('East')+regionLeft('South')+'</div>'+
-      '<div style="display:flex;flex-direction:column;align-items:center;min-width:125px;padding-top:18px;gap:6px">'+
-        '<div style="font-size:8px;color:#445;text-transform:uppercase;letter-spacing:1px;text-align:center">Final Four<br><span style="font-size:7px;color:#334">April 4</span></div>'+
-        (ff[0]?box(ff[0],bw):box(null,bw))+(ff[1]?box(ff[1],bw):box(null,bw))+
-        '<div style="font-size:8px;color:#445;text-transform:uppercase;letter-spacing:1px;text-align:center;margin-top:4px">Championship<br><span style="font-size:7px;color:#334">April 6</span></div>'+
-        (ch[0]?box(ch[0],bw):box(null,bw))+
+      '<div style="display:flex;flex-direction:column;align-items:center;min-width:120px;padding-top:16px;gap:5px">'+
+        lbl('Final Four','April 4')+
+        ffBox(ffGames[0]||null)+'<div style="height:4px"></div>'+ffBox(ffGames[1]||null)+
+        '<div style="height:6px"></div>'+lbl('Championship','April 6')+
+        ffBox(chGames[0]||null)+
       '</div>'+
       '<div style="display:flex;flex-direction:column;gap:10px">'+regionRight('West')+regionRight('Midwest')+'</div>'+
       '</div></body></html>';
   }
 
-  function fetchGames(){
-    fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200')
-      .then(r=>r.json()).then(data=>{setHtml(build(data.events||[]));setLoading(false);}).catch(()=>setLoading(false));
-  }
-  React.useEffect(()=>{fetchGames();const t=setInterval(fetchGames,30000);return()=>clearInterval(t);},[]);
-
-  if(loading) return <div style={{textAlign:'center',padding:40,color:'#667'}}>Loading bracket...</div>;
+  if(!html) return <div style={{textAlign:'center',padding:40,color:'#667'}}>Loading bracket...</div>;
   return (
     <div>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
         <h2 style={{margin:0,fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}}>Live Bracket</h2>
-        <button onClick={fetchGames} style={{fontSize:11,background:'#1a2440',border:'1px solid #2a3a5a',color:'#8899cc',borderRadius:5,padding:'4px 12px',cursor:'pointer'}}>Refresh</button>
+        <button onClick={fetchLive} style={{fontSize:11,background:'#1a2440',border:'1px solid #2a3a5a',color:'#8899cc',borderRadius:5,padding:'4px 12px',cursor:'pointer'}}>Refresh</button>
       </div>
-      <iframe srcDoc={html} style={{width:'100%',height:'860px',border:'none',borderRadius:8}} title="Live Bracket"/>
+      <iframe srcDoc={html} style={{width:'100%',height:'900px',border:'none',borderRadius:8}} title="Live Bracket"/>
     </div>
   );
 }
