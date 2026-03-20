@@ -11,7 +11,7 @@ const FontLink = () => (
 //  Constants
 
 
-const REGION_COLORS = { South:'#f0c040', Midwest:'#2ecc71', East:'#ffffff', West:'#4a9eff' };
+const REGION_COLORS = { South:'#f0c040', Midwest:'#9b59b6', East:'#ffffff', West:'#4a9eff' };
 const REGION_MAP = {"Michigan Wolverines":"Midwest","Howard Bison":"West","North Carolina Tar Heels":"West","VCU Rams":"Midwest","BYU Cougars":"West","Texas Longhorns":"East","Saint Mary's Gaels":"East","Texas A&M Aggies":"South","Duke Blue Devils":"East","Siena Saints":"East","Michigan State Spartans":"Midwest","North Dakota State Bison":"West","Nebraska Cornhuskers":"Midwest","Troy Trojans":"West","Arkansas Razorbacks":"Midwest","Hawai'i Rainbow Warriors":"West","Wisconsin Badgers":"Midwest","High Point Panthers":"East","Vanderbilt Commodores":"South","McNeese Cowboys":"South","Louisville Cardinals":"East","South Florida Bulls":"West","Ohio State Buckeyes":"West","TCU Horned Frogs":"East","Illinois Fighting Illini":"Midwest","Pennsylvania Quakers":"East","Georgia Bulldogs":"West","Saint Louis Billikens":"Midwest","Gonzaga Bulldogs":"West","Kennesaw State Owls":"West","Houston Cougars":"West","Idaho Vandals":"West","Florida Gators":"South","Connecticut Huskies":"South","Oklahoma Sooners":"South","Memphis Tigers":"South","Colorado State Rams":"South","Missouri Tigers":"South","Drake Bulldogs":"South","Yale Bulldogs":"South","Akron Zips":"South","Clemson Tigers":"South","Alabama Crimson Tide":"South","Norfolk State Spartans":"South","Robert Morris Colonials":"South","Alabama State Hornets":"East","Mississippi State Bulldogs":"East","Boise State Broncos":"East","Oregon Ducks":"East","Liberty Flames":"East","Villanova Wildcats":"East","Tennessee Volunteers":"East","Auburn Tigers":"Midwest","New Mexico Lobos":"Midwest","Iowa State Cyclones":"Midwest","Kansas Jayhawks":"Midwest","UCLA Bruins":"West","Utah State Aggies":"West","Kentucky Wildcats":"West","California Baptist Lancers":"West","Tennessee State Tigers":"West","LIU Sharks":"West","Prairie View A&M Panthers":"West","Northern Iowa Panthers":"West","UCF Knights":"West","Texas Tech Red Raiders":"West","Iowa Hawkeyes":"West","Miami Hurricanes":"West","Miami (OH) RedHawks":"West","Santa Clara Broncos":"West","Queens Royals":"West","Purdue Boilermakers":"Midwest","Hofstra Pride":"East","UConn Huskies":"South","Wright State Raiders":"Midwest","Furman Paladins":"South","Virginia Cavaliers":"East","St. John's Red Storm":"East","Arizona Wildcats":"West"};
 const DEFAULT_ROUNDS = [
   { id: 0, label: "Round 1",      short: "R1",  dmg: 0.50 },
@@ -1886,7 +1886,7 @@ export default function App() {
           <div>
             <h2 style={{ margin:"0 0 20px", fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>Rosters</h2>
             <div style={{ display:"flex", gap:16, marginBottom:16, flexWrap:"wrap" }}>
-              {[['South','#f0c040'],['Midwest','#2ecc71'],['East','#ffffff'],['West','#4a9eff']].map(([region,color])=>(
+              {[['South','#f0c040'],['Midwest','#9b59b6'],['East','#ffffff'],['West','#4a9eff']].map(([region,color])=>(
                 <div key={region} style={{ display:"flex", alignItems:"center", gap:6, fontSize:13 }}>
                   <div style={{ width:12,height:12,borderRadius:2,background:color }}></div>
                   <span style={{ color:color,fontWeight:600 }}>{region}</span>
