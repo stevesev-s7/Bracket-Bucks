@@ -728,10 +728,10 @@ function LiveBracket(){
         (data.events||[]).forEach(function(g){
           var note=(g.competitions&&g.competitions[0]&&g.competitions[0].notes&&g.competitions[0].notes[0]&&g.competitions[0].notes[0].headline)||'';
           var rm=note.match(/(East|West|Midwest|South) Region/);
-          var rdm=note.match(/(1st Round|2nd Round|Sweet 16|Elite Eight|Final Four|Championship)/);
+          var rdm=note.match(/- (1st Round|2nd Round|Sweet 16|Elite Eight)$/)||note.match(/(Final Four|National Championship Game)/);
           if(!rdm) return;
           var round=rdm[1];
-          if(round==='Championship'&&rm) return;
+          
           var region=rm?rm[1]:'';
           var comps=(g.competitions[0].competitors)||[];
           var ss=comps.slice().sort(function(a,b){return ((a.curatedRank&&a.curatedRank.current)||99)-((b.curatedRank&&b.curatedRank.current)||99);});
