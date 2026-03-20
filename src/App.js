@@ -1401,7 +1401,12 @@ export default function App() {
             results.forEach(data=>{(data.events||[]).forEach(g=>{
               if(!g.status?.type?.completed) return;
               const loser=(g.competitions?.[0]?.competitors||[]).find(c=>!c.winner);
-              if(loser?.team?.displayName) elim.add(loser.team.displayName);
+              if(loser?.team?.displayName){
+              elim.add(loser.team.displayName);
+              // Add aliases for teams stored with shortened names in DB
+              const aliases={"Long Island University Sharks":"LIU Sharks","Queens University Royals":"Queens Royals","Miami (OH) RedHawks":"Miami (OH) RedHawks","Pennsylvania Quakers":"Penn Quakers"};
+              if(aliases[loser.team.displayName]) elim.add(aliases[loser.team.displayName]);
+            }
             });});
             setEliminatedTeams(elim);
           }).catch(()=>{});
