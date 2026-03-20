@@ -2225,7 +2225,7 @@ export default function App() {
                     const match = (() => {
                       for (const owner of owners) {
                         const idx = owner.teams.findIndex(t =>
-                          (t.name||"").toLowerCase().replace(/[^a-z0-9]/g,"").includes(teamNameNorm.slice(0,6)) ||
+                          return tn===teamNameNorm||teamNameNorm===tn;
                           teamNameNorm.includes((t.name||"").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,6))
                         );
                         if (idx >= 0) return { owner, teamIdx: idx, team: owner.teams[idx] };
