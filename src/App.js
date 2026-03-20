@@ -2224,10 +2224,10 @@ export default function App() {
                     const teamNameNorm = (c.name||"").toLowerCase().replace(/[^a-z0-9]/g,"");
                     const match = (() => {
                       for (const owner of owners) {
-                        const idx = owner.teams.findIndex(t =>
-                        const idx = owner.teams.findIndex(t => {
-                          const tn=(t.name||"").toLowerCase().replace(/[^a-z0-9]/g,"");
-                          return tn===teamNameNorm;
+                        const idx = owner.teams.findIndex(t => (t.name||"").toLowerCase().replace(/[^a-z0-9]/g,"")===teamNameNorm);
+
+
+
                         });
                       }
                       return null;
