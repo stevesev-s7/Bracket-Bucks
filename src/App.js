@@ -2471,7 +2471,7 @@ const regionColors = { South:"#f0c040", East:"#ffffff", Midwest:"#9b59b6", West:
                                     {pick?.name ? (
                                       <div>
                                         <div style={{ fontSize:9, color:o.color, fontWeight:700 }}>#{pick.seed}</div>
-                                        <div style={{ fontSize:9, color:(REGION_COLORS[REGION_MAP[pick.name]]||"#dce4f5"), lineHeight:1.2,
+                                        <div style={{ fontSize:9, color:(regionColors[REGION_MAP[pick.name]]||"#dce4f5"), lineHeight:1.2,
                                           overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:50 }}>
                                           {pick.name.split(" ").slice(-1)[0]}
                                         </div>
