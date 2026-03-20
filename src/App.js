@@ -1393,16 +1393,18 @@ export default function App() {
   // Fetch eliminated teams from ESPN
   React.useEffect(() => {
     function fetchElim() {
-      fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200')
-        .then(r=>r.json()).then(data=>{
-          const elim = new Set();
-          (data.events||[]).forEach(g=>{
-            if(!g.status?.type?.completed) return;
-            const loser = (g.competitions?.[0]?.competitors||[]).find(c=>!c.winner);
-            if(loser?.team?.displayName) elim.add(loser.team.displayName);
-          });
-          setEliminatedTeams(elim);
-        }).catch(()=>{});
+      const base='https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200';
+          const dates=['20260319','20260320','20260321','20260322','20260326','20260327','20260328','20260329','20260404','20260406'];
+          Promise.all(dates.map(dt=>fetch(base+'&dates='+dt).then(r=>r.json()).catch(()=>({events:[]}))))
+          .then(results=>{
+            const elim=new Set();
+            results.forEach(data=>{(data.events||[]).forEach(g=>{
+              if(!g.status?.type?.completed) return;
+              const loser=(g.competitions?.[0]?.competitors||[]).find(c=>!c.winner);
+              if(loser?.team?.displayName) elim.add(loser.team.displayName);
+            });});
+            setEliminatedTeams(elim);
+          }).catch(()=>{});
     }
     fetchElim();
     const t = setInterval(fetchElim, 60000);
