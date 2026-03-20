@@ -2225,10 +2225,10 @@ export default function App() {
                     const match = (() => {
                       for (const owner of owners) {
                         const idx = owner.teams.findIndex(t =>
-                          return tn===teamNameNorm||teamNameNorm===tn;
-                          teamNameNorm.includes((t.name||"").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,6))
-                        );
-                        if (idx >= 0) return { owner, teamIdx: idx, team: owner.teams[idx] };
+                        const idx = owner.teams.findIndex(t => {
+                          const tn=(t.name||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+                          return tn===teamNameNorm;
+                        });
                       }
                       return null;
                     })();
