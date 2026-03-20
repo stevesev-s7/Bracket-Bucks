@@ -667,6 +667,7 @@ function PaymentApprovals({ supabase }) {
 
 
 
+
 function LiveBracket(){
   var [liveData,setLiveData]=React.useState({});
   var [lastUpdate,setLastUpdate]=React.useState('');
@@ -714,39 +715,50 @@ function LiveBracket(){
       {t:{s:2,n:'Iowa State Cyclones'},b:{s:15,n:'Tennessee State Tigers'}}
     ]
   };
+
+  function processEvents(events, map){
+    (events||[]).forEach(function(g){
+      var note=(g.competitions&&g.competitions[0]&&g.competitions[0].notes&&g.competitions[0].notes[0]&&g.competitions[0].notes[0].headline)||'';
+      var rm=note.match(/(East|West|Midwest|South) Region/);
+      var rdm=note.match(/(1st Round|2nd Round|Sweet 16|Elite Eight|Final Four|Championship)/);
+      if(!rdm) return;
+      var round=rdm[1];
+      if(round==='Championship'&&rm) return;
+      var region=rm?rm[1]:'';
+      var comps=(g.competitions&&g.competitions[0]&&g.competitions[0].competitors)||[];
+      var ss=comps.slice().sort(function(a,b){return ((a.curatedRank&&a.curatedRank.current)||99)-((b.curatedRank&&b.curatedRank.current)||99);});
+      var ts=(ss[0]&&ss[0].curatedRank&&ss[0].curatedRank.current)||'X';
+      var key=region+'|'+round+'|'+ts;
+      var st=g.status&&g.status.type;
+      var done=!!(st&&st.completed);
+      var live=!!(st&&st.state==='in');
+      // Always update if done (don't skip existing)
+      if(!map[key]||done){
+        map[key]={
+          t:{s:(ss[0]&&ss[0].curatedRank&&ss[0].curatedRank.current)||'',n:(ss[0]&&ss[0].team&&ss[0].team.displayName)||'',sc:(ss[0]&&ss[0].score)||'',w:ss[0]&&ss[0].winner===true},
+          b:{s:(ss[1]&&ss[1].curatedRank&&ss[1].curatedRank.current)||'',n:(ss[1]&&ss[1].team&&ss[1].team.displayName)||'',sc:(ss[1]&&ss[1].score)||'',w:ss[1]&&ss[1].winner===true},
+          done:done,live:live
+        };
+      }
+    });
+  }
+
   function doFetch(){
+    // Fetch all tournament dates plus no-date (current/live games)
+    var base='https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200';
     var dates=['20260319','20260320','20260321','20260322','20260326','20260327','20260328','20260329','20260404','20260406'];
-    Promise.all(dates.map(function(dt){
-      return fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200&dates='+dt).then(function(r){return r.json();}).catch(function(){return {events:[]};});
-    })).then(function(days){
+    var urls=[base].concat(dates.map(function(dt){return base+'&dates='+dt;}));
+    Promise.all(urls.map(function(url){
+      return fetch(url).then(function(r){return r.json();}).catch(function(){return {events:[]};});
+    })).then(function(results){
       var map={};
-      days.forEach(function(data){
-        (data.events||[]).forEach(function(g){
-          var note=(g.competitions&&g.competitions[0]&&g.competitions[0].notes&&g.competitions[0].notes[0]&&g.competitions[0].notes[0].headline)||'';
-          var rm=note.match(/(East|West|Midwest|South) Region/);
-          var rdm=note.match(/(1st Round|2nd Round|Sweet 16|Elite Eight|Final Four|Championship)/);
-          if(!rdm) return;
-          var round=rdm[1];
-          if(round==='Championship'&&rm) return;
-          var region=rm?rm[1]:'';
-          var comps=(g.competitions&&g.competitions[0]&&g.competitions[0].competitors)||[];
-          var ss=comps.slice().sort(function(a,b){return ((a.curatedRank&&a.curatedRank.current)||99)-((b.curatedRank&&b.curatedRank.current)||99);});
-          var ts=(ss[0]&&ss[0].curatedRank&&ss[0].curatedRank.current)||'X';
-          var key=region+'|'+round+'|'+ts;
-          if(!map[key]){
-            var st=g.status&&g.status.type;
-            map[key]={
-              t:{s:(ss[0]&&ss[0].curatedRank&&ss[0].curatedRank.current)||'',n:(ss[0]&&ss[0].team&&ss[0].team.displayName)||'',sc:(ss[0]&&ss[0].score)||'',w:!!(ss[0]&&ss[0].winner)},
-              b:{s:(ss[1]&&ss[1].curatedRank&&ss[1].curatedRank.current)||'',n:(ss[1]&&ss[1].team&&ss[1].team.displayName)||'',sc:(ss[1]&&ss[1].score)||'',w:!!(ss[1]&&ss[1].winner)},
-              done:!!(st&&st.completed),live:!!(st&&st.state==='in')
-            };
-          }
-        });
-      });
+      results.forEach(function(data){processEvents(data.events,map);});
+      console.log('LiveBracket: loaded',Object.keys(map).length,'games, sample:',JSON.stringify(Object.entries(map).slice(0,2)));
       setLiveData(map);
       setLastUpdate(new Date().toLocaleTimeString());
     });
   }
+
   React.useEffect(function(){doFetch();var t=setInterval(doFetch,60000);return function(){clearInterval(t);};},[]);
   React.useEffect(function(){if(lastUpdate)setHtml(buildHtml());},[liveData,lastUpdate]);
 
