@@ -669,6 +669,7 @@ function PaymentApprovals({ supabase }) {
 
 
 
+
 function LiveBracket(){
   var [liveData,setLiveData]=React.useState({});
   var [lastUpdate,setLastUpdate]=React.useState('');
@@ -717,6 +718,21 @@ function LiveBracket(){
     ]
   };
 
+  function parseNote(note){
+    var parts=note.split(' - ');
+    var region='',round='';
+    parts.forEach(function(p){
+      if(/^(East|West|Midwest|South) Region$/.test(p)) region=p.split(' ')[0];
+      if(p==='1st Round') round='1st Round';
+      else if(p==='2nd Round') round='2nd Round';
+      else if(p==='Sweet 16') round='Sweet 16';
+      else if(p==='Elite 8') round='Elite 8';
+      else if(p==='Final Four') round='Final Four';
+      else if(p==='National Championship') round='National Championship';
+    });
+    return {region:region,round:round};
+  }
+
   function doFetch(){
     var base='https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200';
     var dates=['20260319','20260320','20260321','20260322','20260326','20260327','20260328','20260329','20260404','20260406'];
@@ -726,32 +742,28 @@ function LiveBracket(){
       var map={};
       results.forEach(function(data){
         (data.events||[]).forEach(function(g){
-          var note=(g.competitions&&g.competitions[0]&&g.competitions[0].notes&&g.competitions[0].notes[0]&&g.competitions[0].notes[0].headline)||'';
-          var rm=note.match(/(East|West|Midwest|South) Region/);
-          var rdm=note.match(/- (1st Round|2nd Round|Sweet 16|Elite Eight)$/)||note.match(/(Final Four|National Championship Game)/);
-          if(!rdm) return;
-          var round=rdm[1];
-          
-          var region=rm?rm[1]:'';
-          var comps=(g.competitions[0].competitors)||[];
+          var note=((g.competitions||[])[0]&&(g.competitions[0].notes||[])[0]&&g.competitions[0].notes[0].headline)||'';
+          var parsed=parseNote(note);
+          if(!parsed.round) return;
+          var comps=((g.competitions||[])[0]&&g.competitions[0].competitors)||[];
           var ss=comps.slice().sort(function(a,b){return ((a.curatedRank&&a.curatedRank.current)||99)-((b.curatedRank&&b.curatedRank.current)||99);});
           var s0=ss[0]||{},s1=ss[1]||{};
           var ts=(s0.curatedRank&&s0.curatedRank.current)||'X';
-          var key=region+'|'+round+'|'+ts;
-          var st=g.status&&g.status.type;
-          var done=!!(st&&st.completed);
-          var live=!!(st&&st.state==='in');
+          var key=parsed.region+'|'+parsed.round+'|'+ts;
+          var st=(g.status&&g.status.type)||{};
+          var done=!!st.completed,live=st.state==='in';
           if(!map[key]||done||live){
             map[key]={
-              t:{s:(s0.curatedRank&&s0.curatedRank.current)||'',n:(s0.team&&s0.team.displayName)||'',sc:s0.score||'',w:!!s0.winner},
+              t:{s:ts,n:(s0.team&&s0.team.displayName)||'',sc:s0.score||'',w:!!s0.winner},
               b:{s:(s1.curatedRank&&s1.curatedRank.current)||'',n:(s1.team&&s1.team.displayName)||'',sc:s1.score||'',w:!!s1.winner},
-              done:done,live:live
+              done:done,live:live,region:parsed.region,round:parsed.round
             };
           }
         });
       });
-      var keys=Object.keys(map);
-      console.log('LiveBracket: '+keys.length+' games loaded. Sample winners:',keys.filter(function(k){return map[k].done;}).slice(0,3).map(function(k){return k+' w:'+map[k].t.n+'('+map[k].t.w+')';}));
+      var doneGames=Object.entries(map).filter(function(e){return e[1].done;});
+      console.log('LiveBracket: '+Object.keys(map).length+' games, '+doneGames.length+' completed');
+      doneGames.slice(0,6).forEach(function(e){console.log(e[0],'W:'+(e[1].t.w?e[1].t.n:e[1].b.n),'Score:'+e[1].t.sc+'-'+e[1].b.sc);});
       setLiveData(map);
       setLastUpdate(new Date().toLocaleTimeString());
     });
@@ -775,20 +787,18 @@ function LiveBracket(){
     function getLater(region,round){
       return Object.keys(liveData).filter(function(k){return k.indexOf(region+'|'+round+'|')===0;}).map(function(k){return liveData[k];});
     }
-    function getFF(){return Object.keys(liveData).filter(function(k){return k.indexOf('Final Four')>=0;}).map(function(k){return liveData[k];});}
-    function getCH(){return Object.keys(liveData).filter(function(k){return k.indexOf('Championship')>=0&&k.indexOf('East')<0&&k.indexOf('West')<0&&k.indexOf('South')<0&&k.indexOf('Midwest')<0;}).map(function(k){return liveData[k];});}
-
-    function tr(name,seed,lg,done,live,regionColor){
+    function getFF(){return Object.keys(liveData).filter(function(k){return k.indexOf('|Final Four|')>=0;}).map(function(k){return liveData[k];});}
+    function getCH(){return Object.keys(liveData).filter(function(k){return k.indexOf('|National Championship|')>=0;}).map(function(k){return liveData[k];});}
+    function tr(name,seed,lg,done,live,rc){
       var w=done&&lg&&lg.w,l=done&&lg&&!lg.w;
+      var nc=w?'#2ecc71':l?'#252535':(rc||'#ccd');
       var disp=lg&&lg.n?lg.n:name;
-      var nameColor=w?'#2ecc71':l?'#252535':(regionColor||'#ccd');
       return '<div style="display:flex;align-items:center;gap:3px;height:18px">'+
         '<span style="font-size:8px;color:#556;width:12px;text-align:right;flex-shrink:0;font-weight:700">'+seed+'</span>'+
-        '<span style="font-size:9px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:'+nameColor+';font-weight:'+(w?700:400)+';text-decoration:'+(l?'line-through':'none')+'">'+disp+'</span>'+
+        '<span style="font-size:9px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:'+nc+';font-weight:'+(w?700:400)+';text-decoration:'+(l?'line-through':'none')+'">'+disp+'</span>'+
         ((done||live)?'<span style="font-size:9px;font-weight:700;min-width:22px;text-align:right;flex-shrink:0;color:'+(w?'#2ecc71':live?'#f0c040':'#556')+'">'+lg.sc+'</span>':'')+
       '</div>';
     }
-
     function r1box(base,region){
       var g=getR1(region,base.t.s,base.b.s);
       var c=RC[region]||'#ccd';
@@ -800,27 +810,21 @@ function LiveBracket(){
         tr(base.b.n,base.b.s,g?g.b:null,g?g.done:false,g?g.live:false,c)+
       '</div>';
     }
-
-    function lb(g,regionColor){
-      var c=regionColor||'#ccd';
+    function lb(g,c){
       if(!g)return '<div style="width:'+bw+'px;background:#0a0f1a;border:1px solid #181f2e;border-radius:4px;padding:4px 6px"><div style="height:18px;display:flex;align-items:center"><span style="font-size:8px;color:#222;margin-left:14px">TBD</span></div><div style="height:1px;background:#181f2e;margin:2px 0"></div><div style="height:18px;display:flex;align-items:center"><span style="font-size:8px;color:#222;margin-left:14px">TBD</span></div></div>';
       var bdr=g.live?'#e74c3c55':g.done?'#2ecc7122':'#1e2a3a';
       var bdg=g.live?'<div style="position:absolute;top:-7px;right:2px;background:#e74c3c;color:#fff;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">LIVE</div>':g.done?'<div style="position:absolute;top:-7px;right:2px;background:#1a3a1a;color:#2ecc71;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">F</div>':'';
       return '<div style="width:'+bw+'px;background:#0f1625;border:1px solid '+bdr+';border-radius:4px;padding:4px 6px;position:relative">'+bdg+
-        tr(g.t.n,g.t.s,g.t,g.done,g.live,c)+
+        tr(g.t.n,g.t.s,g.t,g.done,g.live,c||'#ccd')+
         '<div style="height:1px;background:#1e2a3a;margin:2px 0"></div>'+
-        tr(g.b.n,g.b.s,g.b,g.done,g.live,c)+
+        tr(g.b.n,g.b.s,g.b,g.done,g.live,c||'#ccd')+
       '</div>';
     }
-
     function sl(c,n){var h=Math.floor((TH+GP)/n)-GP;return '<div style="height:'+(h+GP)+'px;display:flex;align-items:center">'+c+'</div>';}
     function lbl(t,dt){return '<div style="font-size:7.5px;text-align:center;margin-bottom:4px;line-height:1.4"><span style="color:#778;font-weight:600">'+t+'</span><br><span style="color:#445;font-size:6.5px">'+dt+'</span></div>';}
-
     function rL(name){
-      var c=RC[name];
-      var r2=getLater(name,'2nd Round'),s16=getLater(name,'Sweet 16'),e8=getLater(name,'Elite Eight');
-      return '<div style="display:flex;flex-direction:column">'+
-        '<div style="font-size:11px;font-weight:700;color:'+c+';text-transform:uppercase;letter-spacing:2px;margin-bottom:5px">'+name+'</div>'+
+      var c=RC[name],r2=getLater(name,'2nd Round'),s16=getLater(name,'Sweet 16'),e8=getLater(name,'Elite 8');
+      return '<div style="display:flex;flex-direction:column"><div style="font-size:11px;font-weight:700;color:'+c+';text-transform:uppercase;letter-spacing:2px;margin-bottom:5px">'+name+'</div>'+
         '<div style="display:flex;gap:3px;align-items:flex-start">'+
         '<div>'+lbl('First Round','Mar 19-20')+'<div>'+B[name].map(function(g){return r1box(g,name);}).join('')+'</div></div>'+
         '<div>'+lbl('2nd Round','Mar 21-22')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+[0,1,2,3].map(function(i){return sl(lb(r2[i]||null,c),4);}).join('')+'</div></div>'+
@@ -828,12 +832,9 @@ function LiveBracket(){
         '<div>'+lbl('Elite 8','Mar 28-29')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+sl(lb(e8[0]||null,c),1)+'</div></div>'+
         '</div></div>';
     }
-
     function rR(name){
-      var c=RC[name];
-      var r2=getLater(name,'2nd Round'),s16=getLater(name,'Sweet 16'),e8=getLater(name,'Elite Eight');
-      return '<div style="display:flex;flex-direction:column">'+
-        '<div style="font-size:11px;font-weight:700;color:'+c+';text-transform:uppercase;letter-spacing:2px;margin-bottom:5px;text-align:right">'+name+'</div>'+
+      var c=RC[name],r2=getLater(name,'2nd Round'),s16=getLater(name,'Sweet 16'),e8=getLater(name,'Elite 8');
+      return '<div style="display:flex;flex-direction:column"><div style="font-size:11px;font-weight:700;color:'+c+';text-transform:uppercase;letter-spacing:2px;margin-bottom:5px;text-align:right">'+name+'</div>'+
         '<div style="display:flex;gap:3px;align-items:flex-start">'+
         '<div>'+lbl('Elite 8','Mar 28-29')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+sl(lb(e8[0]||null,c),1)+'</div></div>'+
         '<div>'+lbl('Sweet 16','Mar 26-27')+'<div style="height:'+TH+'px;display:flex;flex-direction:column">'+[0,1].map(function(i){return sl(lb(s16[i]||null,c),2);}).join('')+'</div></div>'+
@@ -841,7 +842,6 @@ function LiveBracket(){
         '<div>'+lbl('First Round','Mar 19-20')+'<div>'+B[name].map(function(g){return r1box(g,name);}).join('')+'</div></div>'+
         '</div></div>';
     }
-
     var ff=getFF(),ch=getCH();
     var key=Object.keys(RC).map(function(r){var c=RC[r];return '<div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:2px;background:'+c+'"></div><span style="color:'+c+';font-weight:600;font-size:10px">'+r+'</span></div>';}).join('');
     return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#060d1a;color:#dce4f5;font-family:-apple-system,sans-serif;padding:10px;overflow-x:auto}</style></head><body>'+
@@ -850,12 +850,11 @@ function LiveBracket(){
       '<div style="display:flex;flex-direction:column;gap:12px">'+rL('East')+rL('South')+'</div>'+
       '<div style="display:flex;flex-direction:column;align-items:center;min-width:165px;padding-top:18px;gap:6px">'+
         lbl('Final Four','April 4')+lb(ff[0]||null,'#ccd')+'<div style="height:5px"></div>'+lb(ff[1]||null,'#ccd')+
-        '<div style="height:8px"></div>'+lbl('Championship','April 6')+lb(ch[0]||null,'#ccd')+
+        '<div style="height:8px"></div>'+lbl('National Championship','April 6')+lb(ch[0]||null,'#ccd')+
       '</div>'+
       '<div style="display:flex;flex-direction:column;gap:12px">'+rR('West')+rR('Midwest')+'</div>'+
       '</div></body></html>';
   }
-
   if(!html)return React.createElement('div',{style:{textAlign:'center',padding:40,color:'#667'}},'Loading bracket...');
   return React.createElement('div',null,
     React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}},
