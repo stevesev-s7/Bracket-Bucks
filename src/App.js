@@ -750,17 +750,17 @@ function LiveBracket(){
   const getLatRound=round=>Object.values(G).filter(g=>g.round===round);
 
   function TR({name,seed,lg,done,live,rc}){
-    const w=done&&lg&&lg.w,l=done&&lg&&!lg.w,nc=w?'#2ecc71':l?'#252535':(rc||'#ccd'),disp=lg?.n||name;
+    const w=done&&lg&&lg.w,l=done&&lg&&!lg.w,nc=l?'#333':(rc||'#ccd'),disp=lg?.n||name;
     return <div style={{display:'flex',alignItems:'center',gap:3,height:18}}>
       <span style={{fontSize:8,color:'#556',width:12,textAlign:'right',flexShrink:0,fontWeight:700}}>{seed}</span>
       <span style={{fontSize:9,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:nc,fontWeight:w?700:400,textDecoration:l?'line-through':'none'}}>{disp}</span>
-      {(done||live)&&<span style={{fontSize:9,fontWeight:700,minWidth:22,textAlign:'right',flexShrink:0,color:w?'#2ecc71':live?'#f0c040':'#556'}}>{lg?.sc}</span>}
+      {(done||live)&&<span style={{fontSize:9,fontWeight:700,minWidth:22,textAlign:'right',flexShrink:0,color:live?'#f0c040':l?'#444':(rc||'#ccd')}}>{lg?.sc}</span>}
     </div>;
   }
 
   function GB({base,liveG,rc}){
     const c=rc||'#ccd',g=liveG,bdr=g?.live?'#e74c3c55':g?.done?'#2ecc7122':'#1e2a3a';
-    return <div style={{width:BW,background:g?.done?'#0d1a0d':'#0f1625',border:'1px solid '+bdr,borderRadius:4,padding:'4px 6px',position:'relative'}}>
+    return <div style={{width:BW,background:'#0f1625',border:'1px solid '+bdr,borderRadius:4,padding:'4px 6px',position:'relative'}}>
       {g?.live&&<div style={{position:'absolute',top:-7,right:2,background:'#e74c3c',color:'#fff',fontSize:6,fontWeight:700,padding:'0 2px',borderRadius:1}}>LIVE</div>}
       {g?.done&&<div style={{position:'absolute',top:-7,right:2,background:'#1a3a1a',color:'#2ecc71',fontSize:6,fontWeight:700,padding:'0 2px',borderRadius:1}}>F</div>}
       {base
