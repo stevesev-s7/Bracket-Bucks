@@ -1242,7 +1242,8 @@ export default function App() {
     {id:"payouts",     icon:"", label:"Payout Table"},
     {id:"bracket2025", icon:"", label:"2025 Bracket"},
     {id:"bracket2026", icon:"", label:"2026 Bracket"},
-    {id:"draft",       icon:"", label:"Draft"},
+    {id:"livebracket", icon:"", label:"Live Bracket"},
+  {id:"draft",       icon:"", label:"Draft"},
     {id:"profile",     icon:"", label:"My Profile"},
     {id:"admin",       icon:"",  label:"Admin"},
   ];
@@ -2229,6 +2230,10 @@ export default function App() {
 
 
         {/* DRAFT */}
+        
+        {!loading && tab==="livebracket" && (
+          <LiveBracket />
+        )}
         {!loading && tab==="draft" && (()=>{
           //  Draft helpers 
           const pickedNames = owners.flatMap(o => o.teams.map(t => (t.name||"").toLowerCase().trim()));
