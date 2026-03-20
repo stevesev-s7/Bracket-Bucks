@@ -663,201 +663,133 @@ function PaymentApprovals({ supabase }) {
 
 
 
+
 function LiveBracket() {
-  const [games,setGames]=React.useState([]);
-  const [lastUpdate,setLastUpdate]=React.useState('');
+  const [html,setHtml]=React.useState('');
   const [loading,setLoading]=React.useState(true);
+  const PAIRS=[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]];
+  const RC={South:'#f0c040',Midwest:'#9b59b6',East:'#dce4f5',West:'#4a9eff'};
 
-  function fetchGames(){
-    fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200')
-      .then(r=>r.json()).then(data=>{
-        setGames(data.events||[]);
-        setLastUpdate(new Date().toLocaleTimeString());
-        setLoading(false);
-      }).catch(()=>setLoading(false));
-  }
-  React.useEffect(()=>{fetchGames();const t=setInterval(fetchGames,30000);return()=>clearInterval(t);},[]);
-
-  function buildBracket(events){
-    // Parse all games into lookup by region+seeds
-    const lookup={};
+  function build(events){
+    const map={};
     events.forEach(g=>{
       const note=g.competitions?.[0]?.notes?.[0]?.headline||'';
       const rm=note.match(/(East|West|Midwest|South) Region/);
       const rdm=note.match(/(1st Round|2nd Round|Sweet 16|Elite Eight|Final Four|Championship)/);
-      if(!rm||!rdm) return;
-      const region=rm[1], round=rdm[1];
+      if(!rdm) return;
       const comps=g.competitions?.[0]?.competitors||[];
-      const sorted=[...comps].sort((a,b)=>(a.curatedRank?.current||99)-(b.curatedRank?.current||99));
-      const t=sorted[0]||{}, b=sorted[1]||{};
-      const key=region+'|'+round+'|'+(t.curatedRank?.current||'?');
-      lookup[key]={
-        top:{seed:t.curatedRank?.current||'',name:t.team?.shortDisplayName||'',score:t.score||'',win:t.winner},
-        bot:{seed:b.curatedRank?.current||'',name:b.team?.shortDisplayName||'',score:b.score||'',win:b.winner},
-        done:g.status?.type?.completed,
-        live:g.status?.type?.state==='in',
-        clock:g.status?.displayClock||''
-      };
+      const s=[...comps].sort((a,b)=>(a.curatedRank?.current||99)-(b.curatedRank?.current||99));
+      const region=rm?.[1]||'Late',round=rdm[1];
+      const key=region+'|'+round+'|'+(s[0]?.curatedRank?.current||'X');
+      map[key]={t:{s:s[0]?.curatedRank?.current||'',n:s[0]?.team?.shortDisplayName||'',sc:s[0]?.score||'',w:s[0]?.winner},
+        b:{s:s[1]?.curatedRank?.current||'',n:s[1]?.team?.shortDisplayName||'',sc:s[1]?.score||'',w:s[1]?.winner},
+        done:g.status?.type?.completed,live:g.status?.type?.state==='in'};
     });
-
-    // Find game by region, round, and one of the seeds
-    function findGame(region, round, seeds){
-      for(const s of seeds){
-        const k=region+'|'+round+'|'+s;
-        if(lookup[k]) return lookup[k];
+    function findR1(region,s1,s2){
+      for(const key of Object.keys(map)){
+        if(!key.startsWith(region+'|1st Round|')) continue;
+        const g=map[key];
+        if(g.t.s===s1||g.t.s===s2||g.b.s===s1||g.b.s===s2) return g;
       }
       return null;
     }
-
-    // Build team row HTML
-    function teamRow(t, isDone, isLive){
-      const win=isDone&&t.win, lose=isDone&&!t.win;
-      const nameColor=win?'#2ecc71':lose?'#3a3a50':'#ccd';
-      const scoreColor=win?'#2ecc71':isLive?'#f0c040':'#778';
-      return `<div style="display:flex;align-items:center;gap:4px;height:19px;overflow:hidden">
-        <span style="font-size:9px;color:#556;width:13px;text-align:right;flex-shrink:0;font-weight:700">${t.seed||''}</span>
-        <span style="font-size:10px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${nameColor};font-weight:${win?700:400};text-decoration:${lose?'line-through':'none'}">${t.name||'TBD'}</span>
-        ${(isDone||isLive)?'<span style="font-size:10px;font-weight:700;min-width:24px;text-align:right;color:'+scoreColor+'">'+t.score+'</span>':'<span style="min-width:24px"></span>'}
-      </div>`;
+    function getRound(region,round){
+      return Object.entries(map).filter(([k])=>k.startsWith(region+'|'+round+'|')).map(([,v])=>v);
     }
-
-    // Build a single matchup box
-    function gameBox(g, width){
-      const w=width||120;
-      const border=g?.live?'#e74c3c':g?.done?'#2ecc7133':'#1e2a40';
-      const badge=g?.live?'<div style="position:absolute;top:-8px;right:4px;background:#e74c3c;color:#fff;font-size:7px;font-weight:700;padding:1px 3px;border-radius:2px">LIVE</div>':g?.done?'<div style="position:absolute;top:-8px;right:4px;background:#1a3a1a;color:#2ecc71;font-size:7px;font-weight:700;padding:1px 3px;border-radius:2px">F</div>':'';
-      const top=g?.top||{seed:'',name:'',score:'',win:false};
-      const bot=g?.bot||{seed:'',name:'',score:'',win:false};
-      return `<div style="position:relative;width:${w}px;background:#0f1625;border:1px solid ${border};border-radius:5px;padding:5px 7px">
-        ${badge}
-        ${teamRow(top,g?.done,g?.live)}
-        <div style="height:1px;background:#1e2a40;margin:2px 0"></div>
-        ${teamRow(bot,g?.done,g?.live)}
-      </div>`;
+    function team(t,done,live){
+      const w=done&&t.w,l=done&&!t.w;
+      return '<div style="display:flex;align-items:center;gap:3px;height:17px">'+
+        '<span style="font-size:8px;color:#556;width:11px;text-align:right;flex-shrink:0;font-weight:700">'+t.s+'</span>'+
+        '<span style="font-size:9px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:'+(w?'#2ecc71':l?'#2a2a3a':'#bbc')+';font-weight:'+(w?700:400)+';text-decoration:'+(l?'line-through':'none')+'">'+t.n+'</span>'+
+        ((done||live)?'<span style="font-size:9px;font-weight:700;min-width:20px;text-align:right;color:'+(w?'#2ecc71':live?'#f0c040':'#556')+'">'+t.sc+'</span>':'')+
+      '</div>';
     }
-
-    // Build one full region (8 R1 + 4 R2 + 2 S16 + 1 E8) with connecting lines
-    // Standard matchup pairs: 1v16, 8v9, 5v12, 4v13, 6v11, 3v14, 7v10, 2v15
-    const PAIRS={
-      East:[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]],
-      West:[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]],
-      South:[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]],
-      Midwest:[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]]
-    };
-
-    function regionHtml(name, flip){
-      const color={South:'#f0c040',Midwest:'#9b59b6',East:'#e8e8e8',West:'#4a9eff'}[name]||'#dce4f5';
-      const pairs=PAIRS[name];
-      const GW=120; // game width
-      const GH=47;  // game height (2 rows + divider + padding)
-      const GAP=6;  // gap between games in same round
-      // R1: 8 games, each GH+GAP apart
-      // R2: 4 games, each centered between 2 R1 games: top = (GH+GAP)*1 + GH/2 - GH/2
-      // Distance from top of pair to center: (GH+GAP+GH)/2 = GH + GAP/2
-      // R2 top offset = GH/2 + GAP/2 from top of first game in pair
-      const R1_STEP = GH+GAP;
-      const ROUNDS=['1st Round','2nd Round','Sweet 16','Elite Eight'];
-      const ROUND_LABELS=['First Round','Second Round','Sweet 16','Elite Eight'];
-      const DATES=['Mar 19-20','Mar 21-22','Mar 26-27','Mar 28-29'];
-      const COL_W=GW+16; // column width including connector line space
-      const LINE_W=12; // connector line width
-
-      // Total height for all 8 R1 games
-      const totalH=8*GH+7*GAP+20; // 20 for label
-
-      // Build columns HTML
-      let cols='';
-      for(let ri=0;ri<4;ri++){
-        const numGames=Math.pow(2,3-ri); // 8,4,2,1
-        const round=ROUNDS[ri];
-        let gamesHtml='';
-        for(let gi=0;gi<numGames;gi++){
-          // Find the top seed for this slot
-          let g=null;
-          if(ri===0){
-            const pair=pairs[gi];
-            g=findGame(name,round,pair);
-          } else {
-            // Later rounds - find by whatever teams advanced
-            const roundGames=Object.entries(lookup).filter(([k])=>k.startsWith(name+'|'+round+'|'));
-            g=roundGames[gi]?roundGames[gi][1]:null;
-          }
-          gamesHtml+=gameBox(g,GW);
-          if(gi<numGames-1) gamesHtml+='<div style="height:'+GAP+'px"></div>';
-        }
-        // Connector lines between rounds (right side for left-flow, left side for right-flow)
-        const lineHtml=''; // simplified - no connector lines for now, focus on layout
-        cols+=`<div style="display:flex;flex-direction:column;align-items:center">
-          <div style="font-size:8px;color:#445;text-align:center;height:20px;line-height:1.2;margin-bottom:4px">
-            <div style="color:#667;font-weight:600">${ROUND_LABELS[ri]}</div>
-            <div style="color:#334">${DATES[ri]}</div>
-          </div>
-          <div style="display:flex;flex-direction:column;justify-content:space-around;height:${totalH-24}px">
-            ${gamesHtml}
-          </div>
-        </div>`;
-      }
-
-      const colsArr=flip?cols.split('</div><div style').reverse().join('</div><div style'):cols;
-
-      return `<div>
-        <div style="font-size:11px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;${flip?'text-align:right':''}">${name}</div>
-        <div style="display:flex;gap:6px;align-items:flex-start">${flip?cols.split('</div>').reverse().join('</div>'):cols}</div>
-      </div>`;
+    function box(g,w){
+      const bw=w||108;
+      const border=g?.live?'#e74c3c44':g?.done?'#2ecc7122':'#1e2a3a';
+      const badge=g?.live?'<div style="position:absolute;top:-7px;right:2px;background:#e74c3c;color:#fff;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">LIVE</div>':g?.done?'<div style="position:absolute;top:-7px;right:2px;background:#1a3a1a;color:#2ecc71;font-size:6px;font-weight:700;padding:0 2px;border-radius:1px">F</div>':'';
+      return '<div style="width:'+bw+'px;background:#0f1625;border:1px solid '+border+';border-radius:4px;padding:4px 5px;position:relative;flex-shrink:0">'+badge+
+        (g?team(g.t,g.done,g.live):'<div style="height:17px;display:flex;align-items:center"><span style="font-size:8px;color:#1e2a3a;margin-left:14px">TBD</span></div>')+
+        '<div style="height:1px;background:#1e2a3a;margin:2px 0"></div>'+
+        (g?team(g.b,g.done,g.live):'<div style="height:17px;display:flex;align-items:center"><span style="font-size:8px;color:#1e2a3a;margin-left:14px">TBD</span></div>')+
+      '</div>';
     }
-
-    const ffGames=events.filter(g=>{const note=g.competitions?.[0]?.notes?.[0]?.headline||'';return note.includes('Final Four');}).map(g=>{
-      const comps=g.competitions?.[0]?.competitors||[];
-      const sorted=[...comps].sort((a,b)=>(a.curatedRank?.current||99)-(b.curatedRank?.current||99));
-      const t=sorted[0]||{},b=sorted[1]||{};
-      return {top:{seed:t.curatedRank?.current||'',name:t.team?.shortDisplayName||'',score:t.score||'',win:t.winner},bot:{seed:b.curatedRank?.current||'',name:b.team?.shortDisplayName||'',score:b.score||'',win:b.winner},done:g.status?.type?.completed,live:g.status?.type?.state==='in'};
-    });
-    const champGame=events.filter(g=>{const note=g.competitions?.[0]?.notes?.[0]?.headline||'';return note.includes('Championship')&&!note.includes('Region');}).map(g=>{
-      const comps=g.competitions?.[0]?.competitors||[];
-      const sorted=[...comps].sort((a,b)=>(a.curatedRank?.current||99)-(b.curatedRank?.current||99));
-      const t=sorted[0]||{},b=sorted[1]||{};
-      return {top:{seed:t.curatedRank?.current||'',name:t.team?.shortDisplayName||'',score:t.score||'',win:t.winner},bot:{seed:b.curatedRank?.current||'',name:b.team?.shortDisplayName||'',score:b.score||'',win:b.winner},done:g.status?.type?.completed,live:g.status?.type?.state==='in'};
-    })[0]||null;
-
-    const RC={'South':'#f0c040','Midwest':'#9b59b6','East':'#e8e8e8','West':'#4a9eff'};
-    const keyHtml=Object.entries(RC).map(([r,c])=>'<div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:2px;background:'+c+'"></div><span style="color:'+c+';font-weight:600;font-size:11px">'+r+'</span></div>').join('');
-
-    return `<!DOCTYPE html><html><head><meta charset="utf-8">
-    <style>*{box-sizing:border-box;margin:0;padding:0}body{background:#060d1a;color:#dce4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:10px;overflow-x:auto}</style>
-    </head><body>
-    <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
-      ${keyHtml}
-      <span style="font-size:10px;color:#445;margin-left:auto">Updated: ${new Date().toLocaleTimeString()}</span>
-    </div>
-    <div style="display:flex;gap:8px;align-items:flex-start;min-width:1400px">
-      <div style="display:flex;flex-direction:column;gap:16px">
-        ${regionHtml('East',false)}
-        ${regionHtml('South',false)}
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:center;padding-top:24px;gap:10px;min-width:150px">
-        <div style="font-size:9px;color:#556;text-transform:uppercase;letter-spacing:1px;text-align:center">Final Four<br><span style="color:#334;font-size:8px">April 4</span></div>
-        ${ffGames[0]?gameBox(ffGames[0],130):gameBox(null,130)}
-        ${ffGames[1]?gameBox(ffGames[1],130):gameBox(null,130)}
-        <div style="font-size:9px;color:#556;text-transform:uppercase;letter-spacing:1px;text-align:center;margin-top:6px">Championship<br><span style="color:#334;font-size:8px">April 6</span></div>
-        ${gameBox(champGame,130)}
-      </div>
-      <div style="display:flex;flex-direction:column;gap:16px">
-        ${regionHtml('West',true)}
-        ${regionHtml('Midwest',true)}
-      </div>
-    </div>
-    </body></html>`;
+    // Each round slot height in px
+    const R=4,GH=43,GP=5; // rounds, game height, gap
+    const totalH=8*(GH+GP)-GP;
+    function slot(g,n,bw){
+      const h=Math.floor((totalH+GP)/n)-GP;
+      return '<div style="height:'+(h+GP)+'px;display:flex;align-items:center">'+box(g,bw)+'</div>';
+    }
+    function regionLeft(name){
+      const c=RC[name];
+      const r1=PAIRS.map(([s1,s2])=>findR1(name,s1,s2));
+      const r2=getRound(name,'2nd Round');
+      const s16=getRound(name,'Sweet 16');
+      const e8=getRound(name,'Elite Eight');
+      const bw=108;
+      const lbl=(t,d)=>'<div style="font-size:7px;color:#445;text-align:center;margin-bottom:3px;line-height:1.3"><b style="color:#556;font-size:7px">'+t+'</b><br><span style="color:#334">'+d+'</span></div>';
+      return '<div style="display:flex;flex-direction:column">'+
+        '<div style="font-size:10px;font-weight:700;color:'+c+';text-transform:uppercase;letter-spacing:2px;margin-bottom:4px">'+name+'</div>'+
+        '<div style="display:flex;gap:3px;align-items:flex-start">'+
+        '<div>'+lbl('First Round','Mar 19-20')+'<div style="display:flex;flex-direction:column">'+r1.map(g=>'<div style="margin-bottom:'+GP+'px">'+box(g,bw)+'</div>').join('')+'</div></div>'+
+        '<div>'+lbl('2nd Round','Mar 21-22')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+[0,1,2,3].map(i=>slot(r2[i]||null,4,bw)).join('')+'</div></div>'+
+        '<div>'+lbl('Sweet 16','Mar 26-27')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+[0,1].map(i=>slot(s16[i]||null,2,bw)).join('')+'</div></div>'+
+        '<div>'+lbl('Elite 8','Mar 28-29')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+slot(e8[0]||null,1,bw)+'</div></div>'+
+        '</div></div>';
+    }
+    function regionRight(name){
+      const c=RC[name];
+      const r1=PAIRS.map(([s1,s2])=>findR1(name,s1,s2));
+      const r2=getRound(name,'2nd Round');
+      const s16=getRound(name,'Sweet 16');
+      const e8=getRound(name,'Elite Eight');
+      const bw=108;
+      const lbl=(t,d)=>'<div style="font-size:7px;color:#445;text-align:center;margin-bottom:3px;line-height:1.3"><b style="color:#556;font-size:7px">'+t+'</b><br><span style="color:#334">'+d+'</span></div>';
+      return '<div style="display:flex;flex-direction:column">'+
+        '<div style="font-size:10px;font-weight:700;color:'+c+';text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;text-align:right">'+name+'</div>'+
+        '<div style="display:flex;gap:3px;align-items:flex-start">'+
+        '<div>'+lbl('Elite 8','Mar 28-29')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+slot(e8[0]||null,1,bw)+'</div></div>'+
+        '<div>'+lbl('Sweet 16','Mar 26-27')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+[0,1].map(i=>slot(s16[i]||null,2,bw)).join('')+'</div></div>'+
+        '<div>'+lbl('2nd Round','Mar 21-22')+'<div style="height:'+totalH+'px;display:flex;flex-direction:column">'+[0,1,2,3].map(i=>slot(r2[i]||null,4,bw)).join('')+'</div></div>'+
+        '<div>'+lbl('First Round','Mar 19-20')+'<div style="display:flex;flex-direction:column">'+r1.map(g=>'<div style="margin-bottom:'+GP+'px">'+box(g,bw)+'</div>').join('')+'</div></div>'+
+        '</div></div>';
+    }
+    const late=getRound('Late','Final Four').concat(Object.entries(map).filter(([k])=>k.startsWith('Late|Final Four')).map(([,v])=>v));
+    const ff=Object.entries(map).filter(([k])=>k.includes('|Final Four|')).map(([,v])=>v);
+    const ch=Object.entries(map).filter(([k])=>k.includes('|Championship|')).map(([,v])=>v);
+    const bw=108;
+    const keyHtml=Object.entries(RC).map(([r,c])=>'<div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:2px;background:'+c+'"></div><span style="color:'+c+';font-weight:600;font-size:10px">'+r+'</span></div>').join('');
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#060d1a;color:#dce4f5;font-family:-apple-system,sans-serif;padding:8px;overflow-x:auto}</style></head><body>'+
+      '<div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;flex-wrap:wrap">'+keyHtml+
+      '<span style="font-size:9px;color:#334;margin-left:auto">Updated: '+new Date().toLocaleTimeString()+'</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;min-width:1200px">'+
+      '<div style="display:flex;flex-direction:column;gap:10px">'+regionLeft('East')+regionLeft('South')+'</div>'+
+      '<div style="display:flex;flex-direction:column;align-items:center;min-width:125px;padding-top:18px;gap:6px">'+
+        '<div style="font-size:8px;color:#445;text-transform:uppercase;letter-spacing:1px;text-align:center">Final Four<br><span style="font-size:7px;color:#334">April 4</span></div>'+
+        (ff[0]?box(ff[0],bw):box(null,bw))+(ff[1]?box(ff[1],bw):box(null,bw))+
+        '<div style="font-size:8px;color:#445;text-transform:uppercase;letter-spacing:1px;text-align:center;margin-top:4px">Championship<br><span style="font-size:7px;color:#334">April 6</span></div>'+
+        (ch[0]?box(ch[0],bw):box(null,bw))+
+      '</div>'+
+      '<div style="display:flex;flex-direction:column;gap:10px">'+regionRight('West')+regionRight('Midwest')+'</div>'+
+      '</div></body></html>';
   }
 
-  if(loading) return React.createElement('div',{style:{textAlign:'center',padding:40,color:'#667'}},'Loading bracket...');
+  function fetchGames(){
+    fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200')
+      .then(r=>r.json()).then(data=>{setHtml(build(data.events||[]));setLoading(false);}).catch(()=>setLoading(false));
+  }
+  React.useEffect(()=>{fetchGames();const t=setInterval(fetchGames,30000);return()=>clearInterval(t);},[]);
 
-  const html=buildBracket(games);
-  return React.createElement('div',null,
-    React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}},
-      React.createElement('h2',{style:{margin:0,fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}},'Live Bracket'),
-      React.createElement('button',{onClick:fetchGames,style:{fontSize:11,background:'#1a2440',border:'1px solid #2a3a5a',color:'#8899cc',borderRadius:5,padding:'4px 12px',cursor:'pointer'}},'Refresh')
-    ),
-    React.createElement('iframe',{srcDoc:html,style:{width:'100%',height:'820px',border:'none',borderRadius:8},title:'Live Bracket'})
+  if(loading) return <div style={{textAlign:'center',padding:40,color:'#667'}}>Loading bracket...</div>;
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+        <h2 style={{margin:0,fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}}>Live Bracket</h2>
+        <button onClick={fetchGames} style={{fontSize:11,background:'#1a2440',border:'1px solid #2a3a5a',color:'#8899cc',borderRadius:5,padding:'4px 12px',cursor:'pointer'}}>Refresh</button>
+      </div>
+      <iframe srcDoc={html} style={{width:'100%',height:'860px',border:'none',borderRadius:8}} title="Live Bracket"/>
+    </div>
   );
 }
 export default function App() {
