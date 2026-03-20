@@ -659,6 +659,96 @@ function PaymentApprovals({ supabase }) {
   );
 }
 
+
+function LiveBracket() {
+  const [games,setGames]=React.useState([]);
+  const [loading,setLoading]=React.useState(true);
+  const [lastUpdate,setLastUpdate]=React.useState('');
+  const RC={South:'#f0c040',Midwest:'#9b59b6',East:'#ffffff',West:'#4a9eff'};
+  function fetchGames(){
+    fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200')
+      .then(r=>r.json()).then(data=>{
+        setGames(data.events||[]);
+        setLastUpdate(new Date().toLocaleTimeString());
+        setLoading(false);
+      }).catch(()=>setLoading(false));
+  }
+  React.useEffect(()=>{fetchGames();const t=setInterval(fetchGames,30000);return()=>clearInterval(t);},[]);
+  const regions=['East','West','Midwest','South'];
+  const byRegion={};regions.forEach(r=>{byRegion[r]=[];});
+  const lateGames=[];
+  games.forEach(g=>{
+    const note=g.competitions?.[0]?.notes?.[0]?.headline||'';
+    const m=note.match(/(East|West|Midwest|South) Region/);
+    if(m) byRegion[m[1]].push(g); else lateGames.push(g);
+  });
+  function GameCard({g}){
+    const comps=g.competitions?.[0]?.competitors||[];
+    const st=g.status?.type;
+    const isLive=st?.state==='in';
+    const isDone=st?.completed;
+    const note=g.competitions?.[0]?.notes?.[0]?.headline||'';
+    const rm=note.match(/(1st Round|2nd Round|Sweet 16|Elite Eight|Final Four|Championship)/);
+    return (
+      <div style={{background:'#0f1625',border:'1px solid #1a2440',borderRadius:8,padding:'8px 10px',marginBottom:6}}>
+        {comps.map((c,i)=>{
+          const win=isDone&&c.winner;
+          const lose=isDone&&!c.winner;
+          return <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'2px 0',opacity:lose?0.4:1}}>
+            <span style={{fontSize:10,color:'#445',width:16,textAlign:'right',fontWeight:700}}>{c.curatedRank?.current||''}</span>
+            <span style={{fontSize:12,flex:1,fontWeight:win?700:400,color:win?'#2ecc71':lose?'#555':'#dce4f5',textDecoration:lose?'line-through':'none'}}>{c.team?.shortDisplayName||c.team?.displayName||''}</span>
+            <span style={{fontSize:13,fontWeight:700,color:win?'#2ecc71':isLive?'#f0c040':'#dce4f5',minWidth:24,textAlign:'right'}}>{c.score||''}</span>
+          </div>;
+        })}
+        <div style={{display:'flex',justifyContent:'space-between',marginTop:3}}>
+          <span style={{fontSize:9,color:'#445'}}>{rm?.[1]||''}</span>
+          <span style={{fontSize:9,fontWeight:700,color:isLive?'#e74c3c':isDone?'#2ecc71':'#667'}}>{isLive?'LIVE - '+g.status?.displayClock:isDone?'FINAL':st?.shortDetail||'Scheduled'}</span>
+        </div>
+      </div>
+    );
+  }
+  if(loading) return <div style={{textAlign:'center',padding:40,color:'#667'}}>Loading bracket...</div>;
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20,flexWrap:'wrap',gap:10}}>
+        <h2 style={{margin:0,fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}}>Live Bracket</h2>
+        <div style={{display:'flex',gap:14,alignItems:'center',flexWrap:'wrap'}}>
+          {Object.entries(RC).map(([r,c])=>(
+            <div key={r} style={{display:'flex',alignItems:'center',gap:5,fontSize:12}}>
+              <div style={{width:10,height:10,borderRadius:2,background:c}}></div>
+              <span style={{color:c,fontWeight:600}}>{r}</span>
+            </div>
+          ))}
+          <span style={{fontSize:11,color:'#445'}}>Updated: {lastUpdate}</span>
+          <button onClick={fetchGames} style={{fontSize:11,background:'#1a2440',border:'1px solid #2a3a5a',color:'#8899cc',borderRadius:5,padding:'3px 10px',cursor:'pointer'}}>Refresh</button>
+        </div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(270px,1fr))',gap:18}}>
+        {regions.map(region=>{
+          const color=RC[region];
+          const rg=byRegion[region];
+          return (
+            <div key={region} style={{background:'#0a0f1a',border:`1px solid ${color}44`,borderRadius:12,padding:14}}>
+              <div style={{fontSize:12,fontWeight:700,color:color,marginBottom:10,textTransform:'uppercase',letterSpacing:2,borderBottom:`1px solid ${color}33`,paddingBottom:6}}>
+                {region} Region <span style={{fontSize:10,color:'#445',fontWeight:400}}>({rg.length} games)</span>
+              </div>
+              {rg.length===0?<div style={{color:'#445',fontSize:12,textAlign:'center',padding:16}}>No games scheduled</div>:rg.map(g=><GameCard key={g.id} g={g}/>)}
+            </div>
+          );
+        })}
+        {lateGames.length>0&&(
+          <div style={{background:'#0a0f1a',border:'1px solid #f0c04044',borderRadius:12,padding:14,gridColumn:'1/-1'}}>
+            <div style={{fontSize:12,fontWeight:700,color:'#f0c040',marginBottom:10,textTransform:'uppercase',letterSpacing:2,borderBottom:'1px solid #f0c04033',paddingBottom:6}}>Final Four / Championship</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(270px,1fr))',gap:18}}>
+              {lateGames.map(g=><GameCard key={g.id} g={g}/>)}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   // League state
   const [leagueCode, setLeagueCode] = useState(null);
