@@ -1917,7 +1917,7 @@ export default function App() {
                               border:`1px solid ${hasWin?"#27ae60":"#1a2440"}`,
                               borderRadius:7, padding:"6px 10px" }}>
                               <SeedBadge seed={team.seed} />
-                              <span style={{ fontSize:13, flex:1, textDecoration:eliminatedTeams.has(team.name)?'line-through':'none', color:eliminatedTeams.has(team.name)?'#e74c3c':"#dce4f5" }}>{team.name}</span>
+                              <span style={{ fontSize:13, flex:1, textDecoration:eliminatedTeams.has(team.name)?'line-through':'none', color:eliminatedTeams.has(team.name)?'#e74c3c':(REGION_COLORS[REGION_MAP[team.name]]||'#dce4f5') }}>{team.name}</span>
                               {hasWin&&<span style={{ fontSize:10, color:"#2ecc71" }}></span>}
                             </div>
                           );
