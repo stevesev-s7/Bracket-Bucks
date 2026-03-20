@@ -9,6 +9,47 @@ const FontLink = () => (
 );
 
 //  Constants
+
+const REGION_COLORS = {
+  South: '#f0c040',
+  Midwest: '#2ecc71',
+  East: '#e74c3c',
+  West: '#4a9eff',
+};
+const REGION_MAP = {
+  "Michigan Wolverines": "Midwest",
+  "Howard Bison": "Midwest",
+  "North Carolina Tar Heels": "South",
+  "VCU Rams": "South",
+  "BYU Cougars": "West",
+  "Texas Longhorns": "West",
+  "Saint Mary's Gaels": "South",
+  "Texas A&M Aggies": "South",
+  "Duke Blue Devils": "East",
+  "Siena Saints": "East",
+  "Michigan State Spartans": "East",
+  "North Dakota State Bison": "East",
+  "Nebraska Cornhuskers": "South",
+  "Troy Trojans": "South",
+  "Arkansas Razorbacks": "West",
+  "Hawai'i Rainbow Warriors": "West",
+  "Wisconsin Badgers": "West",
+  "High Point Panthers": "West",
+  "Vanderbilt Commodores": "South",
+  "McNeese Cowboys": "South",
+  "Louisville Cardinals": "East",
+  "South Florida Bulls": "East",
+  "Ohio State Buckeyes": "East",
+  "TCU Horned Frogs": "East",
+  "Illinois Fighting Illini": "South",
+  "Pennsylvania Quakers": "South",
+  "Georgia Bulldogs": "Midwest",
+  "Saint Louis Billikens": "Midwest",
+  "Gonzaga Bulldogs": "West",
+  "Kennesaw State Owls": "West",
+  "Houston Cougars": "South",
+  "Idaho Vandals": "South"
+};
 const DEFAULT_ROUNDS = [
   { id: 0, label: "Round 1",      short: "R1",  dmg: 0.50 },
   { id: 1, label: "Round of 32",  short: "R32", dmg: 1.00 },
@@ -1905,7 +1946,7 @@ export default function App() {
                               border:`1px solid ${hasWin?"#27ae60":"#1a2440"}`,
                               borderRadius:7, padding:"6px 10px" }}>
                               <SeedBadge seed={team.seed} />
-                              <span style={{ fontSize:13, flex:1, textDecoration:eliminatedTeams.has(team.name)?'line-through':'none', color:eliminatedTeams.has(team.name)?'#e74c3c':'inherit' }}>{team.name}</span>
+                              <span style={{ fontSize:13, flex:1, textDecoration:eliminatedTeams.has(team.name)?'line-through':'none', color:eliminatedTeams.has(team.name)?'#e74c3c':(REGION_COLORS[REGION_MAP[team.name]]||'#dce4f5') }}>{team.name}</span>
                               {hasWin&&<span style={{ fontSize:10, color:"#2ecc71" }}></span>}
                             </div>
                           );
