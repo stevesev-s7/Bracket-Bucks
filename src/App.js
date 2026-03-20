@@ -674,23 +674,30 @@ function PaymentApprovals({ supabase }) {
 
 
 
+
 function LiveBracket(){
   const RC={South:'#f0c040',Midwest:'#9b59b6',East:'#ffffff',West:'#4a9eff'};
+  // Bracket seed order: 1v16, 8v9, 5v12, 4v13, 6v11, 3v14, 7v10, 2v15
+  // R2 slot 0 = winners of matches 0+1 (seeds 1,16,8,9)
+  // R2 slot 1 = winners of matches 2+3 (seeds 5,12,4,13)
+  // R2 slot 2 = winners of matches 4+5 (seeds 6,11,3,14)
+  // R2 slot 3 = winners of matches 6+7 (seeds 7,10,2,15)
+  const R2P=[[1,16,8,9],[5,12,4,13],[6,11,3,14],[7,10,2,15]];
+  const S16P=[[1,16,8,9,5,12,4,13],[6,11,3,14,7,10,2,15]];
+  const E8P=[[1,16,8,9,5,12,4,13,6,11,3,14,7,10,2,15]];
+  const PAIRS=[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]];
   const BRACKET={East:[{t:{s:1,n:'Duke Blue Devils'},b:{s:16,n:'Siena Saints'}},{t:{s:8,n:'Ohio State Buckeyes'},b:{s:9,n:'TCU Horned Frogs'}},{t:{s:5,n:"St. John's Red Storm"},b:{s:12,n:'Northern Iowa Panthers'}},{t:{s:4,n:'Kansas Jayhawks'},b:{s:13,n:'California Baptist Lancers'}},{t:{s:6,n:'Louisville Cardinals'},b:{s:11,n:'South Florida Bulls'}},{t:{s:3,n:'Michigan State Spartans'},b:{s:14,n:'North Dakota State Bison'}},{t:{s:7,n:'UCLA Bruins'},b:{s:10,n:'UCF Knights'}},{t:{s:2,n:'UConn Huskies'},b:{s:15,n:'Furman Paladins'}}],West:[{t:{s:1,n:'Arizona Wildcats'},b:{s:16,n:'Long Island University Sharks'}},{t:{s:8,n:'Villanova Wildcats'},b:{s:9,n:'Utah State Aggies'}},{t:{s:5,n:'Wisconsin Badgers'},b:{s:12,n:'High Point Panthers'}},{t:{s:4,n:'Arkansas Razorbacks'},b:{s:13,n:"Hawai'i Rainbow Warriors"}},{t:{s:6,n:'BYU Cougars'},b:{s:11,n:'Texas Longhorns'}},{t:{s:3,n:'Gonzaga Bulldogs'},b:{s:14,n:'Kennesaw State Owls'}},{t:{s:7,n:'Miami Hurricanes'},b:{s:10,n:'Missouri Tigers'}},{t:{s:2,n:'Purdue Boilermakers'},b:{s:15,n:'Queens University Royals'}}],South:[{t:{s:1,n:'Florida Gators'},b:{s:16,n:'Prairie View A&M Panthers'}},{t:{s:8,n:'Clemson Tigers'},b:{s:9,n:'Iowa Hawkeyes'}},{t:{s:5,n:'Vanderbilt Commodores'},b:{s:12,n:'McNeese Cowboys'}},{t:{s:4,n:'Nebraska Cornhuskers'},b:{s:13,n:'Troy Trojans'}},{t:{s:6,n:'North Carolina Tar Heels'},b:{s:11,n:'VCU Rams'}},{t:{s:3,n:'Illinois Fighting Illini'},b:{s:14,n:'Pennsylvania Quakers'}},{t:{s:7,n:"Saint Mary's Gaels"},b:{s:10,n:'Texas A&M Aggies'}},{t:{s:2,n:'Houston Cougars'},b:{s:15,n:'Idaho Vandals'}}],Midwest:[{t:{s:1,n:'Michigan Wolverines'},b:{s:16,n:'Howard Bison'}},{t:{s:8,n:'Georgia Bulldogs'},b:{s:9,n:'Saint Louis Billikens'}},{t:{s:5,n:'Texas Tech Red Raiders'},b:{s:12,n:'Akron Zips'}},{t:{s:4,n:'Alabama Crimson Tide'},b:{s:13,n:'Hofstra Pride'}},{t:{s:6,n:'Tennessee Volunteers'},b:{s:11,n:'Miami (OH) RedHawks'}},{t:{s:3,n:'Virginia Cavaliers'},b:{s:14,n:'Wright State Raiders'}},{t:{s:7,n:'Kentucky Wildcats'},b:{s:10,n:'Santa Clara Broncos'}},{t:{s:2,n:'Iowa State Cyclones'},b:{s:15,n:'Tennessee State Tigers'}}]};
-  // R2 seed pools: which R1 seeds feed into each R2 slot
-  const R2_POOLS=[[1,16,8,9],[5,12,4,13],[6,11,3,14],[7,10,2,15]];
-  const S16_POOLS=[[1,16,8,9,5,12,4,13],[6,11,3,14,7,10,2,15]];
 
-  // Use ref + counter to force re-render with fresh data
-  const gamesRef=React.useRef({});
+  const gRef=React.useRef({});
   const [tick,setTick]=React.useState(0);
   const [lastUpdate,setLastUpdate]=React.useState('');
   const BW=148,GH=43,GP=5,TH=8*(GH+GP)-GP;
 
   function fetchGames(){
     const base='https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200';
-    const dates=['20260319','20260320','20260321','20260322','20260326','20260327','20260328','20260329','20260404','20260406'];
-    Promise.all(dates.map(dt=>fetch(base+'&dates='+dt).then(r=>r.json()).catch(()=>({events:[]})))).then(results=>{
+    Promise.all(['20260319','20260320','20260321','20260322','20260326','20260327','20260328','20260329','20260404','20260406'].map(dt=>
+      fetch(base+'&dates='+dt).then(r=>r.json()).catch(()=>({events:[]}))
+    )).then(results=>{
       const map={};
       results.forEach(data=>{
         (data.events||[]).forEach(g=>{
@@ -717,9 +724,9 @@ function LiveBracket(){
           }
         });
       });
-      gamesRef.current=map;
+      gRef.current=map;
       const nd=Object.values(map).filter(g=>g.done).length;
-      console.log('LiveBracket refresh:',Object.keys(map).length,'games,',nd,'completed');
+      console.log('LiveBracket:',Object.keys(map).length,'games',nd,'done. R1 sample:',Object.entries(map).filter(([,g])=>g.done&&g.round==='1st Round').slice(0,3).map(([k,g])=>'['+k+'=>'+(g.t.w?g.t.n:g.b.n)+']').join(' '));
       setLastUpdate(new Date().toLocaleTimeString());
       setTick(t=>t+1);
     });
@@ -727,17 +734,20 @@ function LiveBracket(){
 
   React.useEffect(()=>{fetchGames();const t=setInterval(fetchGames,60000);return()=>clearInterval(t);},[]);
 
-  const games=gamesRef.current;
+  const G=gRef.current;
 
-  function getR1(region,s1,s2){
-    return Object.values(games).find(g=>g.region===region&&g.round==='1st Round'&&((g.t.s===s1&&g.b.s===s2)||(g.t.s===s2&&g.b.s===s1)))||null;
-  }
-  function getByPool(region,round,pool){
-    return Object.values(games).find(g=>g.region===region&&g.round===round&&(pool.includes(g.t.s)||pool.includes(g.b.s)))||null;
-  }
-  function getLatRound(round){
-    return Object.values(games).filter(g=>g.round===round);
-  }
+  // Find R1 game by exact seed pair
+  const getR1=(region,s1,s2)=>Object.values(G).find(g=>
+    g.region===region&&g.round==='1st Round'&&
+    ((g.t.s===s1&&g.b.s===s2)||(g.t.s===s2&&g.b.s===s1))
+  )||null;
+
+  // Find game in a round where at least one team's seed is in the given pool
+  const getByPool=(region,round,pool)=>Object.values(G).find(g=>
+    g.region===region&&g.round===round&&(pool.includes(g.t.s)||pool.includes(g.b.s))
+  )||null;
+
+  const getLatRound=round=>Object.values(G).filter(g=>g.round===round);
 
   function TR({name,seed,lg,done,live,rc}){
     const w=done&&lg&&lg.w,l=done&&lg&&!lg.w,nc=w?'#2ecc71':l?'#252535':(rc||'#ccd'),disp=lg?.n||name;
@@ -753,15 +763,19 @@ function LiveBracket(){
     return <div style={{width:BW,background:g?.done?'#0d1a0d':'#0f1625',border:'1px solid '+bdr,borderRadius:4,padding:'4px 6px',position:'relative'}}>
       {g?.live&&<div style={{position:'absolute',top:-7,right:2,background:'#e74c3c',color:'#fff',fontSize:6,fontWeight:700,padding:'0 2px',borderRadius:1}}>LIVE</div>}
       {g?.done&&<div style={{position:'absolute',top:-7,right:2,background:'#1a3a1a',color:'#2ecc71',fontSize:6,fontWeight:700,padding:'0 2px',borderRadius:1}}>F</div>}
-      {base?<><TR name={base.t.n} seed={base.t.s} lg={g?.t||null} done={!!g?.done} live={!!g?.live} rc={c}/><div style={{height:1,background:'#1e2a3a',margin:'2px 0'}}/><TR name={base.b.n} seed={base.b.s} lg={g?.b||null} done={!!g?.done} live={!!g?.live} rc={c}/></>:g?<><TR name={g.t.n} seed={g.t.s} lg={g.t} done={g.done} live={g.live} rc={c}/><div style={{height:1,background:'#1e2a3a',margin:'2px 0'}}/><TR name={g.b.n} seed={g.b.s} lg={g.b} done={g.done} live={g.live} rc={c}/></>:<><div style={{height:18,display:'flex',alignItems:'center'}}><span style={{fontSize:8,color:'#1e2a3a',marginLeft:14}}>TBD</span></div><div style={{height:1,background:'#1e2a3a',margin:'2px 0'}}/><div style={{height:18,display:'flex',alignItems:'center'}}><span style={{fontSize:8,color:'#1e2a3a',marginLeft:14}}>TBD</span></div></>}
+      {base
+        ?<><TR name={base.t.n} seed={base.t.s} lg={g?.t||null} done={!!g?.done} live={!!g?.live} rc={c}/><div style={{height:1,background:'#1e2a3a',margin:'2px 0'}}/><TR name={base.b.n} seed={base.b.s} lg={g?.b||null} done={!!g?.done} live={!!g?.live} rc={c}/></>
+        :g
+          ?<><TR name={g.t.n} seed={g.t.s} lg={g.t} done={g.done} live={g.live} rc={c}/><div style={{height:1,background:'#1e2a3a',margin:'2px 0'}}/><TR name={g.b.n} seed={g.b.s} lg={g.b} done={g.done} live={g.live} rc={c}/></>
+          :<><div style={{height:18,display:'flex',alignItems:'center'}}><span style={{fontSize:8,color:'#1e2a3a',marginLeft:14}}>TBD</span></div><div style={{height:1,background:'#1e2a3a',margin:'2px 0'}}/><div style={{height:18,display:'flex',alignItems:'center'}}><span style={{fontSize:8,color:'#1e2a3a',marginLeft:14}}>TBD</span></div></>
+      }
     </div>;
   }
 
   function Lbl({t,dt}){return <div style={{fontSize:7.5,textAlign:'center',marginBottom:4,lineHeight:1.4}}><span style={{color:'#778',fontWeight:600}}>{t}</span><br/><span style={{color:'#445',fontSize:6.5}}>{dt}</span></div>;}
 
-  function SlotCol({region,round,pool,n,rc}){
+  function SlotCol({region,round,pools,n,rc}){
     const h=Math.floor((TH+GP)/n)-GP;
-    const pools=n===4?R2_POOLS:n===2?S16_POOLS:[[...R2_POOLS.flat()]];
     return <div style={{height:TH,display:'flex',flexDirection:'column'}}>
       {Array.from({length:n}).map((_,i)=>(
         <div key={i} style={{height:h+GP,display:'flex',alignItems:'center'}}>
@@ -771,34 +785,33 @@ function LiveBracket(){
     </div>;
   }
 
-  function RegionLeft({name}){
-    const c=RC[name],pairs=[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]];
+  function RL({name}){
+    const c=RC[name];
     return <div style={{display:'flex',flexDirection:'column'}}>
       <div style={{fontSize:11,fontWeight:700,color:c,textTransform:'uppercase',letterSpacing:2,marginBottom:5}}>{name}</div>
       <div style={{display:'flex',gap:3,alignItems:'flex-start'}}>
-        <div><Lbl t="First Round" dt="Mar 19-20"/><div>{BRACKET[name].map((base,i)=><div key={i} style={{marginBottom:GP}}><GB base={base} liveG={getR1(name,pairs[i][0],pairs[i][1])} rc={c}/></div>)}</div></div>
-        <div><Lbl t="2nd Round" dt="Mar 21-22"/><SlotCol region={name} round="2nd Round" n={4} rc={c}/></div>
-        <div><Lbl t="Sweet 16" dt="Mar 26-27"/><SlotCol region={name} round="Sweet 16" n={2} rc={c}/></div>
-        <div><Lbl t="Elite 8" dt="Mar 28-29"/><SlotCol region={name} round="Elite 8" n={1} rc={c}/></div>
+        <div><Lbl t="First Round" dt="Mar 19-20"/><div>{PAIRS.map(([s1,s2],i)=><div key={i} style={{marginBottom:GP}}><GB base={BRACKET[name][i]} liveG={getR1(name,s1,s2)} rc={c}/></div>)}</div></div>
+        <div><Lbl t="2nd Round" dt="Mar 21-22"/><SlotCol region={name} round="2nd Round" pools={R2P} n={4} rc={c}/></div>
+        <div><Lbl t="Sweet 16" dt="Mar 26-27"/><SlotCol region={name} round="Sweet 16" pools={S16P} n={2} rc={c}/></div>
+        <div><Lbl t="Elite 8" dt="Mar 28-29"/><SlotCol region={name} round="Elite 8" pools={E8P} n={1} rc={c}/></div>
       </div>
     </div>;
   }
 
-  function RegionRight({name}){
-    const c=RC[name],pairs=[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]];
+  function RR({name}){
+    const c=RC[name];
     return <div style={{display:'flex',flexDirection:'column'}}>
       <div style={{fontSize:11,fontWeight:700,color:c,textTransform:'uppercase',letterSpacing:2,marginBottom:5,textAlign:'right'}}>{name}</div>
       <div style={{display:'flex',gap:3,alignItems:'flex-start'}}>
-        <div><Lbl t="Elite 8" dt="Mar 28-29"/><SlotCol region={name} round="Elite 8" n={1} rc={c}/></div>
-        <div><Lbl t="Sweet 16" dt="Mar 26-27"/><SlotCol region={name} round="Sweet 16" n={2} rc={c}/></div>
-        <div><Lbl t="2nd Round" dt="Mar 21-22"/><SlotCol region={name} round="2nd Round" n={4} rc={c}/></div>
-        <div><Lbl t="First Round" dt="Mar 19-20"/><div>{BRACKET[name].map((base,i)=><div key={i} style={{marginBottom:GP}}><GB base={base} liveG={getR1(name,pairs[i][0],pairs[i][1])} rc={c}/></div>)}</div></div>
+        <div><Lbl t="Elite 8" dt="Mar 28-29"/><SlotCol region={name} round="Elite 8" pools={E8P} n={1} rc={c}/></div>
+        <div><Lbl t="Sweet 16" dt="Mar 26-27"/><SlotCol region={name} round="Sweet 16" pools={S16P} n={2} rc={c}/></div>
+        <div><Lbl t="2nd Round" dt="Mar 21-22"/><SlotCol region={name} round="2nd Round" pools={R2P} n={4} rc={c}/></div>
+        <div><Lbl t="First Round" dt="Mar 19-20"/><div>{PAIRS.map(([s1,s2],i)=><div key={i} style={{marginBottom:GP}}><GB base={BRACKET[name][i]} liveG={getR1(name,s1,s2)} rc={c}/></div>)}</div></div>
       </div>
     </div>;
   }
 
   const ff=getLatRound('Final Four'),ch=getLatRound('National Championship');
-
   return <div>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:8}}>
       <h2 style={{margin:0,fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}}>Live Bracket</h2>
@@ -810,7 +823,7 @@ function LiveBracket(){
     </div>
     <div style={{overflowX:'auto'}}>
       <div style={{display:'flex',gap:6,alignItems:'flex-start',minWidth:1400}}>
-        <div style={{display:'flex',flexDirection:'column',gap:12}}><RegionLeft name="East"/><RegionLeft name="South"/></div>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}><RL name="East"/><RL name="South"/></div>
         <div style={{display:'flex',flexDirection:'column',alignItems:'center',minWidth:160,paddingTop:20,gap:8}}>
           <div style={{fontSize:8,color:'#556',textTransform:'uppercase',letterSpacing:1,textAlign:'center'}}>Final Four<br/><span style={{fontSize:7,color:'#334'}}>April 4</span></div>
           <GB liveG={ff[0]||null}/><div style={{height:4}}/><GB liveG={ff[1]||null}/>
@@ -818,7 +831,7 @@ function LiveBracket(){
           <div style={{fontSize:8,color:'#556',textTransform:'uppercase',letterSpacing:1,textAlign:'center'}}>Championship<br/><span style={{fontSize:7,color:'#334'}}>April 6</span></div>
           <GB liveG={ch[0]||null}/>
         </div>
-        <div style={{display:'flex',flexDirection:'column',gap:12}}><RegionRight name="West"/><RegionRight name="Midwest"/></div>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}><RR name="West"/><RR name="Midwest"/></div>
       </div>
     </div>
   </div>;
