@@ -703,7 +703,7 @@ function TopTeams({owners,leagueCode,rounds}){
     const rv=RV[w.round_id]||0;
     const profit=team.seed*rv*(numOwners-1);
     const key=owner.id+'-'+w.team_index;
-    if(!teamMap[key]) teamMap[key]={name:team.name,seed:team.seed,teamIndex:w.team_index,owner:owner.name,ownerId:owner.id,profit:0,wins:0};
+    if(!teamMap[key]) teamMap[key]={name:team.name,seed:team.seed,teamIndex:w.team_index,ownerNum:owner.num,owner:owner.name,profit:0,wins:0};
     teamMap[key].profit+=profit;
     teamMap[key].wins++;
   });
@@ -742,7 +742,7 @@ function TopTeams({owners,leagueCode,rounds}){
                 </div>
                 <div style={{display:'flex',gap:16,flexWrap:'wrap',fontSize:12,color:'#778'}}>
                   <span>Owner: <span style={{color:'#dce4f5',fontWeight:600}}>{t.owner}</span></span>
-                  <span>Draft: <span style={{color:'#dce4f5',fontWeight:600}}>{(()=>{const rd=Math.floor(t.teamIndex/numOwners);const pos=t.teamIndex%numOwners;const pick=rd%2===0?pos+1:numOwners-pos;return 'Rd '+(rd+1)+', Pick '+pick;})()}</span></span>
+                  <span>Draft: <span style={{color:'#dce4f5',fontWeight:600}}>{(()=>{const rd=t.teamIndex+1;const pick=rd%2===1?t.ownerNum:numOwners-t.ownerNum+1;return 'Rd '+rd+', Pick '+pick;})()}</span></span>
                   <span>Wins: <span style={{color:'#2ecc71',fontWeight:600}}>{t.wins}</span></span>
                 </div>
               </div>
