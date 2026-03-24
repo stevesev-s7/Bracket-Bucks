@@ -675,8 +675,20 @@ function PaymentApprovals({ supabase }) {
 
 
 
-function TopTeams({owners,wins,rounds}){
+function TopTeams({owners,leagueCode,rounds}){
   const RV=[0.50,1.00,1.50,2.00,2.50,3.00];
+  const [wins,setWins]=React.useState([]);
+  const [lastUpdate,setLastUpdate]=React.useState('');
+  React.useEffect(()=>{
+    function fetchWins(){
+      if(!leagueCode) return;
+      fetch('https://cxkqkmakwynpgqpfzvtp.supabase.co/rest/v1/wins?league_code=eq.'+leagueCode,{headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4a3FrbWFrd3lucGdxcGZ6dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1ODEwMDIsImV4cCI6MjA4ODE1NzAwMn0.biNsjhSH3HcuWG9q25XO5CRpiTkdmpF59iLAOCk8yUE','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4a3FrbWFrd3lucGdxcGZ6dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1ODEwMDIsImV4cCI6MjA4ODE1NzAwMn0.biNsjhSH3HcuWG9q25XO5CRpiTkdmpF59iLAOCk8yUE'}})
+        .then(r=>r.json()).then(w=>{if(Array.isArray(w)){setWins(w);setLastUpdate(new Date().toLocaleTimeString());}}).catch(()=>{});
+    }
+    fetchWins();
+    const t=setInterval(fetchWins,60000);
+    return()=>clearInterval(t);
+  },[leagueCode]);
   const ownerMap={};
   owners.forEach(o=>ownerMap[o.id]=o);
   const numOwners=owners.length||1;
@@ -714,7 +726,7 @@ function TopTeams({owners,wins,rounds}){
 
   return (
     <div>
-      <h2 style={{margin:'0 0 20px',fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}}>Top Teams</h2>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}><h2 style={{margin:0,fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}}>Top Teams</h2>{lastUpdate&&<span style={{fontSize:11,color:'#445'}}>Updated {lastUpdate}</span>}</div>
       <div style={{display:'flex',flexDirection:'column',gap:10}}>
         {sorted.map((t,i)=>{
           const region=REGION_MAP[t.name]||'East';
@@ -2486,7 +2498,7 @@ export default function App() {
         {/* DRAFT */}
         
         {!loading && tab==="topteams" && (
-          <TopTeams owners={owners} wins={wins} rounds={rounds}/>
+          <TopTeams owners={owners} leagueCode={leagueCode} rounds={rounds}/>
         )}
 
         {!loading && tab==="livebracket" && (
