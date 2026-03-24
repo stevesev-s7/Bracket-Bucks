@@ -742,7 +742,7 @@ function TopTeams({owners,leagueCode,rounds}){
                 </div>
                 <div style={{display:'flex',gap:16,flexWrap:'wrap',fontSize:12,color:'#778'}}>
                   <span>Owner: <span style={{color:'#dce4f5',fontWeight:600}}>{t.owner}</span></span>
-                  <span>Draft: <span style={{color:'#dce4f5',fontWeight:600}}>Rd {Math.floor(t.teamIndex/numOwners)+1}, Pick {(t.teamIndex%numOwners)+1}</span></span>
+                  <span>Draft: <span style={{color:'#dce4f5',fontWeight:600}}>{(()=>{const rd=Math.floor(t.teamIndex/numOwners);const pos=t.teamIndex%numOwners;const pick=rd%2===0?pos+1:numOwners-pos;return 'Rd '+(rd+1)+', Pick '+pick;})()}</span></span>
                   <span>Wins: <span style={{color:'#2ecc71',fontWeight:600}}>{t.wins}</span></span>
                 </div>
               </div>
