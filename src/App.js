@@ -1477,7 +1477,7 @@ export default function App() {
   React.useEffect(() => {
     function fetchElim() {
       const base='https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200';
-          const dates=['20260319','20260320','20260321','20260322','20260326','20260327','20260328','20260329','20260404','20260406'];
+          const dates=['20260318','20260319','20260320','20260321','20260322','20260326','20260327','20260328','20260329','20260404','20260406'];
           Promise.all(dates.map(dt=>fetch(base+'&dates='+dt).then(r=>r.json()).catch(()=>({events:[]}))))
           .then(results=>{
             const elim=new Set();
