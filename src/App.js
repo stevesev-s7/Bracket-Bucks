@@ -675,6 +675,77 @@ function PaymentApprovals({ supabase }) {
 
 
 
+function TopTeams({owners,wins,rounds}){
+  const RV=[0.50,1.00,1.50,2.00,2.50,3.00];
+  const ownerMap={};
+  owners.forEach(o=>ownerMap[o.id]=o);
+  const numOwners=owners.length||1;
+
+  // Build profit per team
+  const teamMap={};
+  wins.forEach(w=>{
+    const owner=ownerMap[w.owner_id];
+    if(!owner) return;
+    const team=owner.teams[w.team_index];
+    if(!team) return;
+    const rv=RV[w.round_id]||0;
+    const profit=team.seed*rv*(numOwners-1);
+    const key=owner.id+'-'+w.team_index;
+    if(!teamMap[key]) teamMap[key]={name:team.name,seed:team.seed,draftRound:w.team_index+1,owner:owner.name,profit:0,wins:0};
+    teamMap[key].profit+=profit;
+    teamMap[key].wins++;
+  });
+
+  const sorted=Object.values(teamMap).sort((a,b)=>b.profit-a.profit).slice(0,5);
+
+  const RC={South:'#f0c040',Midwest:'#9b59b6',East:'#ffffff',West:'#4a9eff'};
+  const REGION_MAP={
+    'Duke Blue Devils':'East','Siena Saints':'East','Ohio State Buckeyes':'East','TCU Horned Frogs':'East',"St. John's Red Storm":'East','Northern Iowa Panthers':'East','Kansas Jayhawks':'East','California Baptist Lancers':'East','Louisville Cardinals':'East','South Florida Bulls':'East','Michigan State Spartans':'East','North Dakota State Bison':'East','UCLA Bruins':'East','UCF Knights':'East','UConn Huskies':'East','Furman Paladins':'East',
+    'Arizona Wildcats':'West','Long Island University Sharks':'West','Villanova Wildcats':'West','Utah State Aggies':'West','Wisconsin Badgers':'West','High Point Panthers':'West','Arkansas Razorbacks':'West',"Hawai'i Rainbow Warriors":'West','BYU Cougars':'West','Texas Longhorns':'West','Gonzaga Bulldogs':'West','Kennesaw State Owls':'West','Miami Hurricanes':'West','Missouri Tigers':'West','Purdue Boilermakers':'West','Queens University Royals':'West',
+    'Florida Gators':'South','Prairie View A&M Panthers':'South','Clemson Tigers':'South','Iowa Hawkeyes':'South','Vanderbilt Commodores':'South','McNeese Cowboys':'South','Nebraska Cornhuskers':'South','Troy Trojans':'South','North Carolina Tar Heels':'South','VCU Rams':'South','Illinois Fighting Illini':'South','Pennsylvania Quakers':'South',"Saint Mary's Gaels":'South','Texas A&M Aggies':'South','Houston Cougars':'South','Idaho Vandals':'South',
+    'Michigan Wolverines':'Midwest','Howard Bison':'Midwest','Georgia Bulldogs':'Midwest','Saint Louis Billikens':'Midwest','Texas Tech Red Raiders':'Midwest','Akron Zips':'Midwest','Alabama Crimson Tide':'Midwest','Hofstra Pride':'Midwest','Tennessee Volunteers':'Midwest','Miami (OH) RedHawks':'Midwest','Virginia Cavaliers':'Midwest','Wright State Raiders':'Midwest','Kentucky Wildcats':'Midwest','Santa Clara Broncos':'Midwest','Iowa State Cyclones':'Midwest','Tennessee State Tigers':'Midwest'
+  };
+
+  const medals=['1st','2nd','3rd','4th','5th'];
+  const medalColors=['#f0c040','#aab4c8','#cd7f32','#6677aa','#6677aa'];
+
+  if(!owners.length) return React.createElement('div',{style:{textAlign:'center',padding:40,color:'#556'}},'No league data loaded.');
+  if(!sorted.length) return React.createElement('div',{style:{textAlign:'center',padding:40,color:'#556'}},'No wins recorded yet.');
+
+  return (
+    <div>
+      <h2 style={{margin:'0 0 20px',fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}}>Top Teams</h2>
+      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        {sorted.map((t,i)=>{
+          const region=REGION_MAP[t.name]||'East';
+          const rc=RC[region]||'#ccd';
+          return (
+            <div key={i} style={{background:'#0f1625',border:'1px solid #1e2840',borderRadius:10,padding:'16px 20px',display:'flex',alignItems:'center',gap:16}}>
+              <div style={{fontSize:22,fontWeight:900,fontFamily:"'Bebas Neue',sans-serif",color:medalColors[i],minWidth:40,textAlign:'center'}}>{medals[i]}</div>
+              <div style={{flex:1}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                  <span style={{fontSize:11,fontWeight:700,background:'#1a2440',color:'#6677aa',borderRadius:4,padding:'2px 7px',flexShrink:0}}>Seed {t.seed}</span>
+                  <span style={{fontSize:16,fontWeight:700,color:rc}}>{t.name}</span>
+                  <span style={{fontSize:12,color:'#556',marginLeft:4}}>{region}</span>
+                </div>
+                <div style={{display:'flex',gap:16,flexWrap:'wrap',fontSize:12,color:'#778'}}>
+                  <span>Owner: <span style={{color:'#dce4f5',fontWeight:600}}>{t.owner}</span></span>
+                  <span>Draft Round: <span style={{color:'#dce4f5',fontWeight:600}}>{t.draftRound}</span></span>
+                  <span>Wins: <span style={{color:'#2ecc71',fontWeight:600}}>{t.wins}</span></span>
+                </div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <div style={{fontSize:24,fontWeight:900,fontFamily:"'DM Mono',monospace",color:'#2ecc71'}}>${t.profit.toFixed(2)}</div>
+                <div style={{fontSize:10,color:'#445'}}>earned</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function LiveBracket(){
   const RC={South:'#f0c040',Midwest:'#9b59b6',East:'#ffffff',West:'#4a9eff'};
   // Bracket seed order: 1v16, 8v9, 5v12, 4v13, 6v11, 3v14, 7v10, 2v15
@@ -1428,6 +1499,7 @@ export default function App() {
     {id:"bracket2025", icon:"", label:"2025 Bracket"},
     {id:"bracket2026", icon:"", label:"Schedule"},
     {id:"livebracket", icon:"", label:"Live Bracket"},
+    {id:"topteams",     icon:"", label:"Top Teams"},
   {id:"draft",       icon:"", label:"Draft"},
     {id:"profile",     icon:"", label:"My Profile"},
     {id:"admin",       icon:"",  label:"Admin"},
@@ -2413,6 +2485,10 @@ export default function App() {
 
         {/* DRAFT */}
         
+        {!loading && tab==="topteams" && (
+          <TopTeams owners={owners} wins={wins} rounds={rounds}/>
+        )}
+
         {!loading && tab==="livebracket" && (
           <LiveBracket />
         )}
