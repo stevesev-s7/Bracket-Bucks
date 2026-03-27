@@ -414,52 +414,49 @@ function Bracket2026Tab({ owners }) {
   const REGION_COLORS = { South:"#e74c3c", East:"#3498db", West:"#2ecc71", Midwest:"#f39c12" };
 
   const load = () => {
-    fetch("https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=100&dates=20260317-20260407")
-      .then(r => r.json())
-      .then(d => {
-        const mapped = (d.events||[]).map(ev => {
-          const comp = ev.competitions[0];
-          const teams = comp.competitors.map(c => ({
-            name: c.team.displayName,
-            abbr: c.team.abbreviation,
-            seed: c.curatedRank?.current || null,
-            score: c.score,
-            winner: c.winner,
-            logo: c.team.logo,
-          }));
-          const note = comp.notes?.[0]?.headline || "";
-          // Parse region from note
-          let region = "Unknown";
-          ["South","East","West","Midwest"].forEach(r => { if(note.includes(r)) region=r; });
-          let round = "First Round";
-          if(note.includes("First Four")) round="First Four";
-          else if(note.includes("1st Round")) round="First Round";
-          else if(note.includes("2nd Round")) round="Second Round";
-          else if(note.includes("Sweet 16")||note.includes("Sweet 16")) round="Sweet 16";
-          else if(note.includes("Elite 8")||note.includes("Elite Eight")||note.includes("Regional")) round="Elite Eight";
-          else if(note.includes("Final Four")) round="Final Four";
-          else if(note.includes("National Championship")||note.includes("Championship")) round="Championship";
-          return {
-            id: ev.id,
-            name: ev.name,
-            date: ev.date,
-            status: comp.status?.type?.description || "Scheduled",
-            statusDetail: comp.status?.type?.detail || "",
-            completed: comp.status?.type?.completed || false,
-              isLive: comp.status?.type?.state==="in",
-            venue: comp.venue?.fullName || "",
-            broadcast: comp.broadcasts?.[0]?.names?.[0] || "",
-            teams,
-            region,
-            round,
-            note,
-          };
-        });
+      const mapEv = (ev) => {
+        const comp = ev.competitions[0];
+        const teams = comp.competitors.map(c => ({
+          name: c.team.displayName,
+          abbr: c.team.abbreviation,
+          seed: c.curatedRank?.current || null,
+          score: c.score,
+          winner: c.winner,
+          logo: c.team.logo,
+        }));
+        const note = comp.notes?.[0]?.headline || "";
+        let region = "Unknown";
+        ["South","East","West","Midwest"].forEach(r => { if(note.includes(r)) region=r; });
+        let round = "First Round";
+        if(note.includes("First Four")) round="First Four";
+        else if(note.includes("1st Round")) round="First Round";
+        else if(note.includes("2nd Round")) round="Second Round";
+        else if(note.includes("Sweet 16")) round="Sweet 16";
+        else if(note.includes("Elite 8")||note.includes("Elite Eight")||note.includes("Regional")) round="Elite Eight";
+        else if(note.includes("Final Four")) round="Final Four";
+        else if(note.includes("National Championship")||note.includes("Championship")) round="Championship";
+        return {
+          id: ev.id, name: ev.name, date: ev.date,
+          status: comp.status?.type?.description || "Scheduled",
+          statusDetail: comp.status?.type?.detail || "",
+          completed: comp.status?.type?.completed || false,
+          isLive: comp.status?.type?.state==="in",
+          venue: comp.venue?.fullName || "",
+          broadcast: comp.broadcasts?.[0]?.names?.[0] || "",
+          teams, region, round, note,
+        };
+      };
+      const base='https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200';
+      const dates=['20260318','20260319','20260320','20260321','20260322','20260326','20260327','20260328','20260329','20260404','20260406'];
+      Promise.all(dates.map(dt=>fetch(base+'&dates='+dt).then(r=>r.json()).catch(()=>({events:[]}))))
+      .then(results=>{
+        const seen=new Set();
+        const mapped=[];
+        results.forEach(data=>{(data.events||[]).forEach(ev=>{if(!seen.has(ev.id)){seen.add(ev.id);mapped.push(mapEv(ev));}});});
         setGames(mapped);
         setLoading(false);
         setLastUpdated(new Date());
-      })
-      .catch(e => { setError("Failed to load bracket data"); setLoading(false); });
+      }).catch(e=>{setError("Failed to load bracket data");setLoading(false);});
   };
   React.useEffect(() => {
     load();
