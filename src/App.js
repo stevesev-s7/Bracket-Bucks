@@ -483,6 +483,11 @@ function Bracket2026Tab({ owners }) {
     const rg = filteredGames.filter(g=>g.round===r);
     if(rg.length>0) grouped[r]=rg;
   });
+  const roundOrder=["Championship","Final Four","Elite Eight","Sweet 16","Second Round","First Round","First Four"];
+  const sortedRounds=[
+    ...roundOrder.filter(r=>grouped[r]&&grouped[r].some(g=>!g.completed)),
+    ...roundOrder.filter(r=>grouped[r]&&grouped[r].every(g=>g.completed))
+  ];
 
   if(loading) return (
     <div style={{textAlign:"center",padding:60,color:"#6677aa"}}>
@@ -512,7 +517,7 @@ function Bracket2026Tab({ owners }) {
       </div>
 
       {/* Games by round */}
-      {rounds.map(round => {
+      {sortedRounds.map(round => {
         const rGames = grouped[round];
         if (!rGames) return null;
         return (
