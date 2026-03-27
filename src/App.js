@@ -530,7 +530,7 @@ function Bracket2026Tab({ owners }) {
               {round}
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {rGames.map(game => {
+              {[...rGames].sort((a,b)=>a.completed-b.completed).map(game => {
                 const [t1,t2]=game.teams;
                 const rc=REGION_COLORS[game.region]||"#445";
                 const isTBD=game.statusDetail&&game.statusDetail.includes("TBD");
