@@ -446,6 +446,7 @@ function Bracket2026Tab({ owners }) {
             status: comp.status?.type?.description || "Scheduled",
             statusDetail: comp.status?.type?.detail || "",
             completed: comp.status?.type?.completed || false,
+              isLive: comp.status?.type?.state==="in",
             venue: comp.venue?.fullName || "",
             broadcast: comp.broadcasts?.[0]?.names?.[0] || "",
             teams,
@@ -548,7 +549,7 @@ function Bracket2026Tab({ owners }) {
                       </div>
                       <div style={{display:"flex",gap:8,alignItems:"center"}}>
                         <span style={{color:game.completed?"#2ecc71":game.status==="In Progress"?"#f39c12":"#6677aa",fontSize:11}}>
-                          {game.completed?"Final":game.status==="In Progress"?" LIVE":dateStr}
+                          {game.completed?"Final":game.isLive?"LIVE - "+game.statusDetail:dateStr}
                         </span>
                       </div>
                     </div>
@@ -573,8 +574,8 @@ function Bracket2026Tab({ owners }) {
                               border:"1px solid "+(owner.color||"#d4af37")+"44"}}>
                               {owner.name}
                             </span>}
-                            {game.completed&&<span style={{fontSize:15,fontWeight:800,minWidth:24,textAlign:"right",
-                              color:team.winner?"#2ecc71":"#556"}}>
+                            {(game.completed||game.isLive)&&<span style={{fontSize:15,fontWeight:800,minWidth:24,textAlign:"right",
+                              color:team.winner?"#2ecc71":game.isLive?"#f0c040":"#556"}}>
                               {team.score}
                             </span>}
                           </div>
