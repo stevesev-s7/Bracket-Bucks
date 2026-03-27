@@ -1506,15 +1506,15 @@ export default function App() {
     {id:"leaderboard", icon:"", label:"Leaderboard"},
     {id:"wins",        icon:"", label:"Win Tracker"},
     {id:"espn",        icon:"", label:"Live Scores"},
+    {id:"livebracket", icon:"", label:"Live Bracket"},
+    {id:"bracket2026", icon:"", label:"Schedule"},
     {id:"roster",      icon:"", label:"Rosters"},
+    {id:"topteams",    icon:"", label:"Top Teams"},
     {id:"payouts",     icon:"", label:"Payout Table"},
     {id:"bracket2025", icon:"", label:"2025 Bracket"},
-    {id:"bracket2026", icon:"", label:"Schedule"},
-    {id:"livebracket", icon:"", label:"Live Bracket"},
-    {id:"topteams",     icon:"", label:"Top Teams"},
-  {id:"draft",       icon:"", label:"Draft"},
+    {id:"draft",       icon:"", label:"Draft"},
     {id:"profile",     icon:"", label:"My Profile"},
-    {id:"admin",       icon:"",  label:"Admin"},
+    {id:"admin",       icon:"", label:"Admin"},
   ];
 
   //  Auth screen 
