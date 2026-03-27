@@ -483,11 +483,14 @@ function Bracket2026Tab({ owners }) {
     const rg = filteredGames.filter(g=>g.round===r);
     if(rg.length>0) grouped[r]=rg;
   });
-  const roundOrder=["Championship","Final Four","Elite Eight","Sweet 16","Second Round","First Round","First Four"];
-  const sortedRounds=[
-    ...roundOrder.filter(r=>grouped[r]&&grouped[r].some(g=>!g.completed)),
-    ...roundOrder.filter(r=>grouped[r]&&grouped[r].every(g=>g.completed))
-  ];
+  const roundOrderAsc=["First Four","First Round","Second Round","Sweet 16","Elite Eight","Final Four","Championship"];
+  // Group 1: rounds with live or scheduled games (earliest round first)
+  const activeRounds=roundOrderAsc.filter(r=>grouped[r]&&grouped[r].some(g=>!g.completed));
+  // Group 2: rounds fully completed (most recently completed round first)
+  const doneRounds=[...roundOrderAsc].reverse().filter(r=>grouped[r]&&grouped[r].every(g=>g.completed));
+  // Group 3: future rounds with no games yet (earliest first)
+  const futureRounds=roundOrderAsc.filter(r=>!grouped[r]);
+  const sortedRounds=[...activeRounds,...doneRounds,...futureRounds];
 
   if(loading) return (
     <div style={{textAlign:"center",padding:60,color:"#6677aa"}}>
