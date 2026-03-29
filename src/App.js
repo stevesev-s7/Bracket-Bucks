@@ -1390,13 +1390,17 @@ export default function App() {
 
   //  ESPN round mapping 
   const ESPN_ROUND_MAP = {
-    "First Round": "r1",
-    "Second Round": "r2",
-    "Sweet 16": "r3",
-    "Elite Eight": "r4",
-    "Final Four": "r5",
-    "National Championship": "r6",
-    "First Four": null, // play-in, no payout
+    "1st Round": 0,
+    "First Round": 0,
+    "2nd Round": 1,
+    "Second Round": 1,
+    "Sweet 16": 2,
+    "Elite 8": 3,
+    "Elite Eight": 3,
+    "Final Four": 4,
+    "National Championship": 5,
+    "Championship": 5,
+    "First Four": null,
   };
 
   //  Auto-sync ESPN wins 
