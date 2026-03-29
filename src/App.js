@@ -1399,7 +1399,6 @@ export default function App() {
     "Elite Eight": 3,
     "Final Four": 4,
     "National Championship": 5,
-    "Championship": 5,
     "First Four": null,
   };
 
@@ -1416,7 +1415,7 @@ export default function App() {
       for (const game of games) {
         if (!game.status?.type?.completed) continue;
         const roundName = game.competitions?.[0]?.notes?.[0]?.headline || "";
-        const roundId = Object.entries(ESPN_ROUND_MAP).find(([k]) => roundName.includes(k))?.[1];
+        const noteParts=roundName.split(" - ");const roundId=Object.entries(ESPN_ROUND_MAP).find(([k])=>noteParts.some(p=>p.trim()===k))?.[1];
         if (!roundId) continue; // skip First Four or unknown rounds
 
         const competitors = game.competitions?.[0]?.competitors || [];
