@@ -1416,7 +1416,8 @@ export default function App() {
         if (!game.status?.type?.completed) continue;
         const roundName = game.competitions?.[0]?.notes?.[0]?.headline || "";
         const noteParts=roundName.split(" - ");const roundId=Object.entries(ESPN_ROUND_MAP).find(([k])=>noteParts.some(p=>p.trim()===k))?.[1];
-        if (!roundId) continue; // skip First Four or unknown rounds
+        if (roundId===null||roundId===undefined) continue;
+    if (roundId===5 && new Date()<new Date("2026-04-06T00:00:00")) continue; // skip First Four or unknown rounds
 
         const competitors = game.competitions?.[0]?.competitors || [];
         const winner = competitors.find(c => c.winner);
