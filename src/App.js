@@ -1133,7 +1133,7 @@ export default function App() {
 
       // Load wins
       const { data: winsData } = await supabase
-        .from("wins").select("*").eq("league_code", code);
+        .from("wins").select("*").eq("league_code", code).lt("round_id", new Date()<new Date("2026-04-06")?5:6);
 
       setLeague(lg);
       setOwners(ownersData || []);
@@ -1164,7 +1164,7 @@ export default function App() {
     if (!leagueCode) return;
     const channel = supabase.channel(`league_${leagueCode}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "wins", filter: `league_code=eq.${leagueCode}` },
-        () => supabase.from("wins").select("*").eq("league_code", leagueCode).then(({ data }) => data && setWins(data)))
+        () => supabase.from("wins").select("*").eq("league_code", leagueCode).lt("round_id", new Date()<new Date("2026-04-06")?5:6).lt("round_id", new Date()<new Date("2026-04-06")?5:6).then(({ data }) => data && setWins(data)))
       .on("postgres_changes", { event: "*", schema: "public", table: "owners", filter: `league_code=eq.${leagueCode}` },
         () => supabase.from("owners").select("*").eq("league_code", leagueCode).order("num").then(({ data }) => data && setOwners(data)))
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "leagues", filter: `code=eq.${leagueCode}` },
