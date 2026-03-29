@@ -1449,6 +1449,10 @@ export default function App() {
         );
         if (alreadyExists) continue;
 
+    // Date gate: cap auto-sync round based on tournament calendar
+    const _today=new Date();
+    const _maxRound=_today<new Date('2026-04-04')?3:_today<new Date('2026-04-06')?4:5;
+    if(w.roundId>_maxRound){console.log('Auto-sync blocked: roundId',w.roundId,'> max',_maxRound,'for',winnerName);continue;}
         const { error } = await supabase.from("wins").insert({
           league_code: leagueCode,
           owner_id: w.owner.id,
