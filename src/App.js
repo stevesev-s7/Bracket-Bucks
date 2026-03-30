@@ -434,7 +434,7 @@ function Bracket2026Tab({ owners }) {
         else if(note.includes("Sweet 16")) round="Sweet 16";
         else if(note.includes("Elite 8")||note.includes("Elite Eight")||note.includes("Regional")) round="Elite Eight";
         else if(note.includes("Final Four")) round="Final Four";
-        else if(note.includes("National Championship")||note.includes("Championship")) round="Championship";
+        else if(note.split(" - ").pop().trim()==="National Championship") round="Championship";
         return {
           id: ev.id, name: ev.name, date: ev.date,
           status: comp.status?.type?.description || "Scheduled",
