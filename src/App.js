@@ -2060,6 +2060,7 @@ export default function App() {
                   const team = owner?.teams[w.team_index];
                   if (!owner||!team) return null;
                   const round = rounds[w.round_id];
+                  if (!round) return null;
                   const perOwner = team.seed * round.dmg;
                   const total = perOwner * (owners.length-1);
                   return (
