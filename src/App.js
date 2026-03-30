@@ -1076,7 +1076,8 @@ export default function App() {
 
       setLeague(lg);
       setOwners(ownersData || []);
-      setWins(winsData || []);
+      if (winsData && winsData.length > 0) setWins(winsData);
+      else if (!winsData) setWins([]);
       setLeagueCode(code);
       sessionStorage.setItem("bb_league_code", code);
     if (authUser) localStorage.setItem(`bb_league_${authUser.id}`, code);
