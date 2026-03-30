@@ -1,7 +1,7 @@
 // v1773286522751
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
-const _APP_BUILD = "1774832891647";
+const _APP_BUILD = "1773204216116";
 
 //  Fonts
 const FontLink = () => (
@@ -19,7 +19,7 @@ const DEFAULT_ROUNDS = [
   { id: 2, label: "Sweet 16",     short: "S16", dmg: 1.50 },
   { id: 3, label: "Elite Eight",  short: "E8",  dmg: 2.00 },
   { id: 4, label: "Final Four",   short: "FF",  dmg: 2.50 },
-  { id: 5, label: "National Championship", short: "NCG", dmg: 3.00 },
+  { id: 5, label: "Championship", short: "NCG", dmg: 3.00 },
 ];
 
 
@@ -434,7 +434,7 @@ function Bracket2026Tab({ owners }) {
         else if(note.includes("Sweet 16")) round="Sweet 16";
         else if(note.includes("Elite 8")||note.includes("Elite Eight")||note.includes("Regional")) round="Elite Eight";
         else if(note.includes("Final Four")) round="Final Four";
-        else if(note.split(" - ").pop().trim()==="National Championship") round="Championship";
+        else if(note.includes("National Championship")||note.includes("Championship")) round="Championship";
         return {
           id: ev.id, name: ev.name, date: ev.date,
           status: comp.status?.type?.description || "Scheduled",
@@ -473,7 +473,7 @@ function Bracket2026Tab({ owners }) {
   };
 
   const regions = ["All","South","East","West","Midwest"];
-  const rounds = ["First Four","First Round","Second Round","Sweet 16","Elite Eight","Final Four","National Championship"];
+  const rounds = ["First Four","First Round","Second Round","Sweet 16","Elite Eight","Final Four","Championship"];
 
   const filteredGames = activeRegion==="All" ? games : games.filter(g=>g.region===activeRegion);
   const grouped = {};
@@ -481,7 +481,7 @@ function Bracket2026Tab({ owners }) {
     const rg = filteredGames.filter(g=>g.round===r);
     if(rg.length>0) grouped[r]=rg;
   });
-  const roundOrderAsc=["First Four","First Round","Second Round","Sweet 16","Elite Eight","Final Four","National Championship"];
+  const roundOrderAsc=["First Four","First Round","Second Round","Sweet 16","Elite Eight","Final Four","Championship"];
   // Group 1: rounds with live or scheduled games (earliest round first)
   const activeRounds=roundOrderAsc.filter(r=>grouped[r]&&grouped[r].some(g=>!g.completed));
   // Group 2: rounds fully completed (most recently completed round first)
@@ -1410,15 +1410,13 @@ export default function App() {
       const _dates=["20260318","20260319","20260320","20260321","20260322","20260326","20260327","20260328","20260329","20260404","20260406"];
       const _results=await Promise.all(_dates.map(dt=>fetch(_base+"&dates="+dt).then(r=>r.json()).catch(()=>({events:[]}))));
       const _seen=new Set();const games=[];_results.forEach(d=>(d.events||[]).forEach(ev=>{if(!_seen.has(ev.id)){_seen.add(ev.id);games.push(ev);}}));
-      const newWins = []; // reset each sync run
 
 
       for (const game of games) {
         if (!game.status?.type?.completed) continue;
         const roundName = game.competitions?.[0]?.notes?.[0]?.headline || "";
-      const lastPart=roundName.split(" - ").pop().trim();const roundId=ESPN_ROUND_MAP.hasOwnProperty(lastPart)?ESPN_ROUND_MAP[lastPart]:undefined;
+        const lastPart=roundName.split(" - ").pop().trim();const roundId=ESPN_ROUND_MAP.hasOwnProperty(lastPart)?ESPN_ROUND_MAP[lastPart]:undefined;
         if (roundId===null||roundId===undefined) continue;
-
     if (roundId===5 && new Date()<new Date("2026-04-06T00:00:00")) continue; // skip First Four or unknown rounds
 
         const competitors = game.competitions?.[0]?.competitors || [];
@@ -1433,8 +1431,8 @@ export default function App() {
             const teamName = (typeof team === 'string' ? team : team?.name || '').toLowerCase().trim();
             if (!teamName) return;
             // Fuzzy match - check if ESPN name contains team name or vice versa
-            if (winnerName === teamName) {
-
+            if (winnerName.includes(teamName) || teamName.includes(winnerName) ||
+                winnerName.split(' ').some(w => w.length > 3 && teamName.includes(w))) {
               newWins.push({owner, teamIdx, roundId, teamName, winnerName, roundName});
             }
           });
