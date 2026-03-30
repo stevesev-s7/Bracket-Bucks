@@ -2053,7 +2053,7 @@ export default function App() {
             </div>
             {wins.length===0 ? <Empty text="No wins recorded yet." /> : (
               <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                {wins.map(w=>{
+                {[...wins].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).map(w=>{
                   const owner = owners.find(o=>o.id===w.owner_id);
                   const team = owner?.teams[w.team_index];
                   if (!owner||!team) return null;
