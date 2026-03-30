@@ -1352,8 +1352,10 @@ export default function App() {
       for (const game of games) {
         if (!game.status?.type?.completed) continue;
         const roundName = game.competitions?.[0]?.notes?.[0]?.headline || "";
-        const roundId = Object.entries(ESPN_ROUND_MAP).find(([k]) => roundName.includes(k))?.[1];
-        if (!roundId) continue; // skip First Four or unknown rounds
+        const lastPart = roundName.split(" - ").pop().trim();
+        const roundId = ESPN_ROUND_MAP.hasOwnProperty(lastPart) ? ESPN_ROUND_MAP[lastPart] : undefined;
+        if (roundId === null || roundId === undefined) continue;
+        if (roundId === 5 && new Date() < new Date("2026-04-06T00:00:00")) continue;
 
         const competitors = game.competitions?.[0]?.competitors || [];
         const winner = competitors.find(c => c.winner);
