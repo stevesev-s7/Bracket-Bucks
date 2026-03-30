@@ -1410,6 +1410,7 @@ export default function App() {
       const _dates=["20260318","20260319","20260320","20260321","20260322","20260326","20260327","20260328","20260329","20260404","20260406"];
       const _results=await Promise.all(_dates.map(dt=>fetch(_base+"&dates="+dt).then(r=>r.json()).catch(()=>({events:[]}))));
       const _seen=new Set();const games=[];_results.forEach(d=>(d.events||[]).forEach(ev=>{if(!_seen.has(ev.id)){_seen.add(ev.id);games.push(ev);}}));
+      const newWins = []; // reset each sync run
 
 
       for (const game of games) {
