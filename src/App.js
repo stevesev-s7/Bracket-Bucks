@@ -1,4 +1,4 @@
-// v1774848506934
+// v1774850018070
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 const _APP_BUILD = "1773204216116";
@@ -2115,7 +2115,7 @@ export default function App() {
             </div>
             {wins.length===0 ? <Empty text="No wins recorded yet." /> : (
               <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                {[...wins].reverse().map(w=>{
+                {[...wins].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).map(w=>{
                   const owner = owners.find(o=>o.id===w.owner_id);
                   const team = owner?.teams[w.team_index];
                   if (!owner||!team) return null;
