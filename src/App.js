@@ -19,7 +19,7 @@ const DEFAULT_ROUNDS = [
   { id: 2, label: "Sweet 16",     short: "S16", dmg: 1.50 },
   { id: 3, label: "Elite Eight",  short: "E8",  dmg: 2.00 },
   { id: 4, label: "Final Four",   short: "FF",  dmg: 2.50 },
-  { id: 5, label: "Championship", short: "NCG", dmg: 3.00 },
+  { id: 5, label: "National Championship", short: "NCG", dmg: 3.00 },
 ];
 
 
@@ -473,7 +473,7 @@ function Bracket2026Tab({ owners }) {
   };
 
   const regions = ["All","South","East","West","Midwest"];
-  const rounds = ["First Four","First Round","Second Round","Sweet 16","Elite Eight","Final Four","Championship"];
+  const rounds = ["First Four","First Round","Second Round","Sweet 16","Elite Eight","Final Four","National Championship"];
 
   const filteredGames = activeRegion==="All" ? games : games.filter(g=>g.region===activeRegion);
   const grouped = {};
@@ -481,7 +481,7 @@ function Bracket2026Tab({ owners }) {
     const rg = filteredGames.filter(g=>g.round===r);
     if(rg.length>0) grouped[r]=rg;
   });
-  const roundOrderAsc=["First Four","First Round","Second Round","Sweet 16","Elite Eight","Final Four","Championship"];
+  const roundOrderAsc=["First Four","First Round","Second Round","Sweet 16","Elite Eight","Final Four","National Championship"];
   // Group 1: rounds with live or scheduled games (earliest round first)
   const activeRounds=roundOrderAsc.filter(r=>grouped[r]&&grouped[r].some(g=>!g.completed));
   // Group 2: rounds fully completed (most recently completed round first)
