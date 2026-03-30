@@ -1417,7 +1417,7 @@ export default function App() {
         const roundName = game.competitions?.[0]?.notes?.[0]?.headline || "";
       const lastPart=roundName.split(" - ").pop().trim();const roundId=ESPN_ROUND_MAP.hasOwnProperty(lastPart)?ESPN_ROUND_MAP[lastPart]:undefined;
         if (roundId===null||roundId===undefined) continue;
-      if (roundId===5 && new Date()<new Date("2026-04-06")) { console.log("Blocked NCG win before April 6 for",winnerName||""); continue; }
+
     if (roundId===5 && new Date()<new Date("2026-04-06T00:00:00")) continue; // skip First Four or unknown rounds
 
         const competitors = game.competitions?.[0]?.competitors || [];
@@ -1432,8 +1432,8 @@ export default function App() {
             const teamName = (typeof team === 'string' ? team : team?.name || '').toLowerCase().trim();
             if (!teamName) return;
             // Fuzzy match - check if ESPN name contains team name or vice versa
-            if (winnerName.includes(teamName) || teamName.includes(winnerName) ||
-                winnerName.split(' ').some(w => w.length > 3 && teamName.includes(w))) {
+            if (winnerName === teamName) {
+
               newWins.push({owner, teamIdx, roundId, teamName, winnerName, roundName});
             }
           });
