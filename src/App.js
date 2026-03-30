@@ -14,10 +14,10 @@ const FontLink = () => (
 const REGION_COLORS = { South:'#f0c040', Midwest:'#9b59b6', East:'#ffffff', West:'#4a9eff' };
 const REGION_MAP = {"Duke Blue Devils":"East","Arizona Wildcats":"West","Michigan Wolverines":"Midwest","Florida Gators":"South","UConn Huskies":"East","Purdue Boilermakers":"West","Iowa State Cyclones":"Midwest","Houston Cougars":"South","Michigan State Spartans":"East","Gonzaga Bulldogs":"West","Virginia Cavaliers":"Midwest","Illinois Fighting Illini":"South","Kansas Jayhawks":"East","Arkansas Razorbacks":"West","Alabama Crimson Tide":"Midwest","Nebraska Cornhuskers":"South","St. John's Red Storm":"East","Wisconsin Badgers":"West","Texas Tech Red Raiders":"Midwest","Vanderbilt Commodores":"South","Louisville Cardinals":"East","BYU Cougars":"West","Tennessee Volunteers":"Midwest","North Carolina Tar Heels":"South","UCLA Bruins":"East","Miami Hurricanes":"West","Kentucky Wildcats":"Midwest","Saint Mary's Gaels":"South","Ohio State Buckeyes":"East","Villanova Wildcats":"West","Georgia Bulldogs":"Midwest","Clemson Tigers":"South","TCU Horned Frogs":"East","Utah State Aggies":"West","Saint Louis Billikens":"Midwest","Troy Trojans":"South","UCF Knights":"East","Missouri Tigers":"West","Howard Bison":"Midwest","VCU Rams":"South","South Florida Bulls":"East","High Point Panthers":"West","Hofstra Pride":"Midwest","Idaho Vandals":"South","California Baptist Lancers":"East","Kennesaw State Owls":"West","Tennessee State Tigers":"Midwest","Prairie View A&M Panthers":"South","Siena Saints":"East","Queens University Royals":"West","Wright State Raiders":"Midwest","McNeese Cowboys":"South","North Dakota State Bison":"East","Hawai'i Rainbow Warriors":"West","Santa Clara Broncos":"Midwest","Texas A&M Aggies":"South","Northern Iowa Panthers":"East","Long Island University Sharks":"West","Akron Zips":"Midwest","Iowa Hawkeyes":"South","Furman Paladins":"East","NC State Wolfpack":"West","Penn Quakers":"South","Texas Longhorns":"West","SMU Mustangs":"Midwest","Lehigh Mountain Hawks":"South","UMBC Retrievers":"Midwest","Miami (Ohio) RedHawks":"Midwest"};
 const DEFAULT_ROUNDS = [
-  { id: 0, label: "Round 1",      short: "R1",  dmg: 0.50 },
-  { id: 1, label: "Round of 32",  short: "R32", dmg: 1.00 },
+  { id: 0, label: "1st Round",   short: "R1",  dmg: 0.50 },
+  { id: 1, label: "2nd Round",   short: "R32", dmg: 1.00 },
   { id: 2, label: "Sweet 16",     short: "S16", dmg: 1.50 },
-  { id: 3, label: "Elite Eight",  short: "E8",  dmg: 2.00 },
+  { id: 3, label: "Elite 8",     short: "E8",  dmg: 2.00 },
   { id: 4, label: "Final Four",   short: "FF",  dmg: 2.50 },
   { id: 5, label: "National Championship", short: "NCG", dmg: 3.00 },
 ];
@@ -432,9 +432,9 @@ function Bracket2026Tab({ owners }) {
         else if(note.includes("1st Round")) round="First Round";
         else if(note.includes("2nd Round")) round="Second Round";
         else if(note.includes("Sweet 16")) round="Sweet 16";
-        else if(note.includes("Elite 8")||note.includes("Elite Eight")||note.includes("Regional")) round="Elite Eight";
+        else if(note.includes("Elite 8")||note.includes("Elite 8")||note.includes("Regional")) round="Elite 8";
         else if(note.includes("Final Four")) round="Final Four";
-        else if(note.split(" - ").pop().trim()==="National Championship") round="Championship";
+        else if(note.split(" - ").pop().trim()==="National Championship") round="National Championship";
         return {
           id: ev.id, name: ev.name, date: ev.date,
           status: comp.status?.type?.description || "Scheduled",
@@ -473,7 +473,7 @@ function Bracket2026Tab({ owners }) {
   };
 
   const regions = ["All","South","East","West","Midwest"];
-  const rounds = ["First Four","First Round","Second Round","Sweet 16","Elite Eight","Final Four","National Championship"];
+  const rounds = ["First Four","1st Round","2nd Round","Sweet 16","Elite 8","Final Four","National Championship"];
 
   const filteredGames = activeRegion==="All" ? games : games.filter(g=>g.region===activeRegion);
   const grouped = {};
@@ -481,7 +481,7 @@ function Bracket2026Tab({ owners }) {
     const rg = filteredGames.filter(g=>g.round===r);
     if(rg.length>0) grouped[r]=rg;
   });
-  const roundOrderAsc=["First Four","First Round","Second Round","Sweet 16","Elite Eight","Final Four","National Championship"];
+  const roundOrderAsc=["First Four","First Round","Second Round","Sweet 16","Elite 8","Final Four","National Championship"];
   // Group 1: rounds with live or scheduled games (earliest round first)
   const activeRounds=roundOrderAsc.filter(r=>grouped[r]&&grouped[r].some(g=>!g.completed));
   // Group 2: rounds fully completed (most recently completed round first)
@@ -1396,7 +1396,7 @@ export default function App() {
     "Second Round": 1,
     "Sweet 16": 2,
     "Elite 8": 3,
-    "Elite Eight": 3,
+    "Elite 8": 3,
     "Final Four": 4,
     "National Championship": 5,
     "First Four": null,
@@ -2447,7 +2447,7 @@ export default function App() {
                 );
               };
 
-              const ROUND_LABELS = { r64:"Round of 64", r32:"Round of 32", s16:"Sweet 16", e8:"Elite Eight" };
+              const ROUND_LABELS = { r64:"Round of 64", r32:"Round of 32", s16:"Sweet 16", e8:"Elite 8" };
 
               return (
                 <div>
