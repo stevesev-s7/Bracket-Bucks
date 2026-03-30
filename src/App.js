@@ -1406,11 +1406,11 @@ export default function App() {
   async function autoSyncESPN() {
     if (!leagueCode || !owners.length) return;
     try {
-      const res = await fetch("https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200");
-      if (!res.ok) return;
-      const data = await res.json();
-      const games = data.events || [];
-      const newWins = [];
+      const _base="https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200";
+      const _dates=["20260318","20260319","20260320","20260321","20260322","20260326","20260327","20260328","20260329","20260404","20260406"];
+      const _results=await Promise.all(_dates.map(dt=>fetch(_base+"&dates="+dt).then(r=>r.json()).catch(()=>({events:[]}))));
+      const _seen=new Set();const games=[];_results.forEach(d=>(d.events||[]).forEach(ev=>{if(!_seen.has(ev.id)){_seen.add(ev.id);games.push(ev);}}));
+
 
       for (const game of games) {
         if (!game.status?.type?.completed) continue;
