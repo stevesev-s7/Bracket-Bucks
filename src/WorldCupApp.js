@@ -589,9 +589,14 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert }) {
 }
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
+
+function genCode() {
+  return Math.random().toString(36).substring(2,8).toUpperCase();
+}
+
 export default function WorldCupApp() {
   const [tab, setTab] = useState("leaderboard");
-  const [leagueCode] = useState(LEAGUE_CODE);
+  const [leagueCode, setLeagueCode] = useState(LEAGUE_CODE);
   const [owners, setOwners] = useState([]);
   const [wins, setWins] = useState([]);
   const [draws, setDraws] = useState([]);
@@ -602,6 +607,17 @@ export default function WorldCupApp() {
   const [toast, setToast] = useState(null);
   const [modal, setModal] = useState(null);
   const [stats, setStats] = useState([]);
+
+  // League management
+  const [myLeagues, setMyLeagues] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("wc_my_leagues") || "[]"); } catch { return []; }
+  });
+  const [joinCode, setJoinCode] = useState("");
+  const [joinErr, setJoinErr] = useState("");
+  const [newLeagueName, setNewLeagueName] = useState("");
+  const [paymentStep, setPaymentStep] = useState("instructions"); // instructions | pending | approved | error
+  const [venmoUsername, setVenmoUsername] = useState("");
+  const [paymentVerifyErr, setPaymentVerifyErr] = useState("");
 
   // Admin modal fields
   const [pinInput, setPinInput] = useState("");
@@ -616,6 +632,87 @@ export default function WorldCupApp() {
   const [authName, setAuthName] = useState("");
 
   const isAdmin = adminUnlocked;
+
+  function saveToMyLeagues(code, name) {
+    setMyLeagues(prev => {
+      const filtered = prev.filter(l => l.code !== code);
+      const updated = [...filtered, { code, name }];
+      localStorage.setItem("wc_my_leagues", JSON.stringify(updated));
+      return updated;
+    });
+  }
+
+  function removeFromMyLeagues(code) {
+    setMyLeagues(prev => {
+      const updated = prev.filter(l => l.code !== code);
+      localStorage.setItem("wc_my_leagues", JSON.stringify(updated));
+      return updated;
+    });
+  }
+
+  async function switchLeague(code) {
+    setLeagueCode(code);
+    localStorage.setItem("wc_active_league", code);
+    setTab("leaderboard");
+  }
+
+  async function joinLeague() {
+    const code = joinCode.trim().toUpperCase();
+    if (!code) return;
+    const { data, error } = await supabase.from("leagues").select("*").eq("code", code).single();
+    if (error || !data) { setJoinErr("No league found with that code."); return; }
+    saveToMyLeagues(code, data.name || code);
+    switchLeague(code);
+    setJoinCode(""); setJoinErr("");
+    setModal(null);
+    alert(`✅ Joined league: ${data.name || code}!`);
+  }
+
+  async function createLeague() {
+    if (!newLeagueName.trim()) return;
+    const code = genCode();
+    const blank = Array.from({length:6}, (_,i) => ({seed:i+1, name:"", group:""}));
+    const { error: lgErr } = await supabase.from("leagues").insert({ code, name: newLeagueName.trim() });
+    if (lgErr) { alert("Failed to create league: " + lgErr.message, "error"); return; }
+    saveToMyLeagues(code, newLeagueName.trim());
+    switchLeague(code);
+    setNewLeagueName("");
+    setPaymentStep("instructions");
+    setModal(null);
+    alert(`✅ League created! Invite code: ${code}`);
+  }
+
+  async function checkPaymentApproval() {
+    const userEmail = authUser?.email;
+    if (!userEmail) { setPaymentVerifyErr("Sign in first to verify payment."); return; }
+    setPaymentStep("verifying");
+    setPaymentVerifyErr("");
+    try {
+      const { data: existing } = await supabase.from("payments").select("id,status").eq("email", userEmail).maybeSingle();
+      if (existing?.status === "approved") {
+        setPaymentStep("approved");
+      } else if (existing) {
+        setPaymentStep("pending");
+      } else {
+        const { error: insErr } = await supabase.from("payments").insert({
+          email: userEmail, status: "pending", venmo_username: venmoUsername.trim()
+        });
+        if (insErr) throw insErr;
+        fetch("https://formsubmit.co/ajax/stephen.sevenich@gmail.com", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({
+            subject: "[Bracket Bucks WC] New Payment Request",
+            message: `Payment request from: ${userEmail}\nVenmo: ${venmoUsername.trim() || "(not provided)"}\nApprove at: https://bracket-bucks.com`
+          })
+        }).catch(() => {});
+        setPaymentStep("pending");
+      }
+    } catch(e) {
+      setPaymentStep("error");
+      setPaymentVerifyErr("Something went wrong: " + e.message);
+    }
+  }
 
   function alert(msg, type="success") {
     setToast({ msg, type });
@@ -1123,7 +1220,7 @@ export default function WorldCupApp() {
 
                   {/* Round Breakdown */}
                   {myStats&&(
-                    <div style={{ ...S.card }}>
+                    <div style={{ ...S.card,marginBottom:20 }}>
                       <SecTitle>Round-by-Round Breakdown</SecTitle>
                       <div style={{ overflowX:"auto" }}>
                         <table style={{ width:"100%",borderCollapse:"collapse",fontSize:13 }}>
@@ -1151,9 +1248,141 @@ export default function WorldCupApp() {
                       </div>
                     </div>
                   )}
+
+                  {/* My Leagues */}
+                  <div style={{ ...S.card,marginBottom:20 }}>
+                    <SecTitle>🌍 My Leagues</SecTitle>
+                    {myLeagues.length===0&&<p style={{color:"#445",fontSize:13,marginBottom:12}}>No leagues joined yet.</p>}
+                    <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+                      {[...myLeagues].reverse().map(l=>(
+                        <button key={l.code} onClick={()=>switchLeague(l.code)}
+                          style={{...S.btn(l.code===leagueCode?"#0a2a14":"#0f1625","#dce4f5"),
+                            padding:"12px 16px",fontSize:14,borderRadius:10,textAlign:"left",
+                            border:`1px solid ${l.code===leagueCode?"#f4c430":"#1e2840"}`,
+                            display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                          <div>
+                            <div style={{fontWeight:700}}>{l.name}</div>
+                            <div style={{fontSize:11,color:"#6677aa",marginTop:2}}>
+                              Code: <span style={{fontFamily:"'DM Mono',monospace",color:"#f4c430"}}>{l.code}</span>
+                              {l.code===leagueCode&&<span style={{color:"#2ecc71",marginLeft:8}}>✓ Active</span>}
+                            </div>
+                          </div>
+                          <span style={{color:"#f4c430"}}>→</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                      <button onClick={()=>setModal("joinLeague")} style={{...S.btn("#1a2440","#f4c430"),border:"1px solid #f4c430",fontSize:13,padding:"9px 18px"}}>
+                        + Join a League
+                      </button>
+                      <button onClick={()=>{setPaymentStep("instructions");setModal("createLeague");}} style={{...S.btn("#0a2a14","#2ecc71"),border:"1px solid #27ae60",fontSize:13,padding:"9px 18px"}}>
+                        + Create a League
+                      </button>
+                    </div>
+                  </div>
+
                 </div>
               );
             })()}
+
+            {/* JOIN LEAGUE MODAL */}
+            {modal==="joinLeague"&&(
+              <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+                <div style={{...S.card,width:"100%",maxWidth:400,padding:28}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,letterSpacing:2,marginBottom:20}}>🌍 Join a League</div>
+                  <label style={{fontSize:11,color:"#6677aa",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>Invite Code</label>
+                  <input value={joinCode} onChange={e=>{setJoinCode(e.target.value);setJoinErr("");}}
+                    placeholder="e.g. CHI2025" onKeyDown={e=>e.key==="Enter"&&joinLeague()}
+                    style={{width:"100%",background:"#0f1625",border:"1px solid #1a2440",borderRadius:8,color:"#dce4f5",fontFamily:"inherit",fontSize:16,padding:"10px 14px",outline:"none",marginBottom:8}} />
+                  {joinErr&&<p style={{color:"#e74c3c",fontSize:13,marginBottom:8}}>{joinErr}</p>}
+                  <div style={{display:"flex",gap:8,marginTop:8}}>
+                    <button onClick={joinLeague} style={{...S.btn(),flex:1,padding:"11px"}}>Join</button>
+                    <button onClick={()=>setModal(null)} style={{...S.btn("#1a2440","#6677aa"),flex:1,padding:"11px"}}>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CREATE LEAGUE MODAL */}
+            {modal==="createLeague"&&(
+              <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+                <div style={{...S.card,width:"100%",maxWidth:460,padding:28}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,letterSpacing:2,marginBottom:20}}>🏆 Create a League</div>
+
+                  {/* Admin skips payment */}
+                  {isAdmin?(
+                    <div>
+                      <div style={{background:"#0a2a14",border:"1px solid #27ae60",borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:13,color:"#2ecc71"}}>
+                        ✓ Admin — no payment required
+                      </div>
+                      <label style={{fontSize:11,color:"#6677aa",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>League Name</label>
+                      <input value={newLeagueName} onChange={e=>setNewLeagueName(e.target.value)}
+                        placeholder="e.g. Office World Cup 2026" onKeyDown={e=>e.key==="Enter"&&createLeague()}
+                        style={{width:"100%",background:"#0f1625",border:"1px solid #1a2440",borderRadius:8,color:"#dce4f5",fontFamily:"inherit",fontSize:15,padding:"10px 14px",outline:"none",marginBottom:12}} />
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={createLeague} style={{...S.btn(),flex:1,padding:"11px",fontSize:15}}>Create League</button>
+                        <button onClick={()=>setModal(null)} style={{...S.btn("#1a2440","#6677aa"),flex:1,padding:"11px"}}>Cancel</button>
+                      </div>
+                    </div>
+
+                  ) : paymentStep==="approved"?(
+                    /* Payment approved — name the league */
+                    <div>
+                      <div style={{background:"#0a2a14",border:"1px solid #27ae60",borderRadius:8,padding:"12px 16px",marginBottom:16,color:"#2ecc71",fontWeight:700}}>
+                        ✅ Payment approved! Name your league below.
+                      </div>
+                      <label style={{fontSize:11,color:"#6677aa",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>League Name</label>
+                      <input value={newLeagueName} onChange={e=>setNewLeagueName(e.target.value)}
+                        placeholder="e.g. Office World Cup 2026" onKeyDown={e=>e.key==="Enter"&&createLeague()}
+                        style={{width:"100%",background:"#0f1625",border:"1px solid #1a2440",borderRadius:8,color:"#dce4f5",fontFamily:"inherit",fontSize:15,padding:"10px 14px",outline:"none",marginBottom:12}} />
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={createLeague} style={{...S.btn(),flex:1,padding:"11px",fontSize:15}}>Create League</button>
+                        <button onClick={()=>setModal(null)} style={{...S.btn("#1a2440","#6677aa"),flex:1,padding:"11px"}}>Cancel</button>
+                      </div>
+                    </div>
+
+                  ) : paymentStep==="pending"?(
+                    /* Awaiting admin approval */
+                    <div style={{textAlign:"center",padding:"20px 0"}}>
+                      <div style={{fontSize:40,marginBottom:12}}>⏳</div>
+                      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,letterSpacing:2,color:"#f4c430",marginBottom:8}}>Payment Under Review</div>
+                      <p style={{color:"#6677aa",fontSize:13}}>Your payment request has been submitted. Stephen will approve it shortly — check back soon!</p>
+                      <button onClick={checkPaymentApproval} style={{...S.btn(),marginTop:16,padding:"10px 24px"}}>🔄 Check Again</button>
+                      <button onClick={()=>setModal(null)} style={{...S.btn("#1a2440","#6677aa"),marginTop:8,display:"block",width:"100%",padding:"10px"}}>Close</button>
+                    </div>
+
+                  ) : (
+                    /* Step 1: Payment instructions */
+                    <div>
+                      <div style={{background:"#0a1428",border:"1px solid #1e3a5a",borderRadius:10,padding:"16px 18px",marginBottom:18}}>
+                        <div style={{fontWeight:700,color:"#f4c430",marginBottom:8}}>💳 Payment Required</div>
+                        <p style={{fontSize:13,color:"#8899cc",margin:"0 0 10px"}}>Send <strong style={{color:"#fff"}}>$10</strong> to <strong style={{color:"#f4c430"}}>@bracket-bucks-app</strong> on Venmo with your email in the note.</p>
+                        <a href="https://venmo.com/u/bracket-bucks-app" target="_blank" rel="noreferrer"
+                          style={{display:"inline-block",background:"#3d95ce",color:"#fff",fontWeight:700,padding:"9px 20px",borderRadius:8,textDecoration:"none",fontSize:14}}>
+                          Open Venmo →
+                        </a>
+                      </div>
+                      <label style={{fontSize:11,color:"#6677aa",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>Your Venmo Username</label>
+                      <input value={venmoUsername} onChange={e=>setVenmoUsername(e.target.value)}
+                        placeholder="@yourname"
+                        style={{width:"100%",background:"#0f1625",border:"1px solid #1a2440",borderRadius:8,color:"#dce4f5",fontFamily:"inherit",fontSize:14,padding:"9px 12px",outline:"none",marginBottom:12}} />
+                      {!authUser&&(
+                        <p style={{color:"#e74c3c",fontSize:13,marginBottom:12}}>⚠ Sign in first (My Profile tab) so we can match your payment.</p>
+                      )}
+                      {paymentVerifyErr&&<p style={{color:"#e74c3c",fontSize:13,marginBottom:8}}>{paymentVerifyErr}</p>}
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={checkPaymentApproval} disabled={!authUser||paymentStep==="verifying"}
+                          style={{...S.btn("#f4c430","#0a0a0a"),flex:1,padding:"11px",fontSize:14,opacity:(!authUser||paymentStep==="verifying")?0.5:1}}>
+                          {paymentStep==="verifying"?"Checking…":"✓ I Sent It — Verify"}
+                        </button>
+                        <button onClick={()=>setModal(null)} style={{...S.btn("#1a2440","#6677aa"),flex:1,padding:"11px"}}>Cancel</button>
+                      </div>
+                      <p style={{fontSize:11,color:"#445",marginTop:10,textAlign:"center"}}>A 6-character invite code is generated automatically after approval.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* ADMIN */}
             {tab==="admin"&&(
