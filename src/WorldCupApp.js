@@ -339,10 +339,10 @@ function ScheduleTab({ owners }) {
       <div style={{ ...S.card,marginBottom:20,background:"linear-gradient(135deg,#0a1a2e,#111827)",border:"2px solid #f4c430" }}>
         <SecTitle>Tournament Structure</SecTitle>
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:12 }}>
-          {[["⚽ Pool Play","Jun 11 – Jul 2","48 teams, 12 groups"],
-            ["🔄 Round of 32","Jul 4 – 9","Top 2 per group + 8 best 3rd"],
-            ["🔄 Round of 16","Jul 11 – 14","Knockout"],
-            ["🏆 QF / SF / Final","Jul 16 – 19","Champion crowned Jul 19"]].map(([title,date,sub])=>(
+          {[["⚽ Pool Play","Jun 11 – Jul 2","48 teams · Top 2 per group + 8 best 3rd advance"],
+            ["🔄 Round of 32","Jul 4 – 9","32 teams · Single elimination begins"],
+            ["🔄 Round of 16","Jul 11 – 14","16 teams · Single elimination"],
+            ["🏆 QF / SF / Final","Jul 16 – 19","8→4→2→Champion · Final Jul 19"]].map(([title,date,sub])=>(
             <div key={title} style={{ background:"#0f1625",border:"1px solid #1a2440",borderRadius:10,padding:"12px 14px" }}>
               <div style={{ fontWeight:700,marginBottom:4 }}>{title}</div>
               <div style={{ fontSize:12,color:"#f4c430",marginBottom:2 }}>{date}</div>
