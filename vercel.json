@@ -1,5 +1,1 @@
-{
-  "buildCommand": "CI=false npm run build",
-  "outputDirectory": "build",
-  "framework": "create-react-app"
-}
+{"buildCommand":"CI=false npm run build","outputDirectory":"build","framework":"create-react-app"}
