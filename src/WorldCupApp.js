@@ -591,6 +591,171 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert }) {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 
+
+// ─── OWNER MANAGER COMPONENT ─────────────────────────────────────────────────
+function OwnerManager({ owners, stats, leagueCode, onRefresh, alertFn }) {
+  const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editColor, setEditColor] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newColor, setNewColor] = useState(OWNER_COLORS[0]);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+
+  const inp = { background:"#0a0f1a", border:"1px solid #1a2440", borderRadius:8,
+    color:"#dce4f5", fontFamily:"inherit", fontSize:13, padding:"7px 10px",
+    outline:"none", width:"100%" };
+
+  async function saveEdit(id) {
+    if (!editName.trim()) return;
+    const { error } = await supabase.from("owners")
+      .update({ name: editName.trim(), color: editColor })
+      .eq("id", id);
+    if (error) { alertFn("Error: " + error.message, "error"); return; }
+    alertFn("✅ Owner updated!");
+    setEditingId(null);
+    onRefresh();
+  }
+
+  async function addOwner() {
+    if (!newName.trim()) return;
+    if (owners.length >= 12) { alertFn("Max 12 owners per league.", "error"); return; }
+    const blank = Array.from({length:6}, (_,i) => ({seed:i+1, name:"", group:""}));
+    const { error } = await supabase.from("owners").insert({
+      league_code: leagueCode,
+      name: newName.trim(),
+      color: newColor,
+      num: owners.length + 1,
+      teams: blank,
+    });
+    if (error) { alertFn("Error: " + error.message, "error"); return; }
+    alertFn(`✅ ${newName.trim()} added!`);
+    setNewName("");
+    onRefresh();
+  }
+
+  async function deleteOwner(id, name) {
+    // Also remove their wins and draws
+    await supabase.from("wins").delete().eq("owner_id", id);
+    await supabase.from("draws").delete().eq("owner_id", id);
+    const { error } = await supabase.from("owners").delete().eq("id", id);
+    if (error) { alertFn("Error: " + error.message, "error"); return; }
+    alertFn(`✅ ${name} removed.`);
+    setConfirmDelete(null);
+    onRefresh();
+  }
+
+  async function loadDefaults() {
+    for (let i = 0; i < CHI2025_OWNERS.length; i++) {
+      const o = CHI2025_OWNERS[i];
+      const blank = Array.from({length:6}, (_,j) => ({seed:j+1, name:"", group:""}));
+      await supabase.from("owners").insert({
+        league_code: leagueCode, name: o.name, color: o.color, num: i+1, teams: blank
+      });
+    }
+    onRefresh();
+    alertFn("✅ Default 8 owners loaded!");
+  }
+
+  return (
+    <div style={S.card}>
+      <SecTitle>👥 Manage Owners</SecTitle>
+
+      {/* Owner list */}
+      <div style={{ display:"flex", flexDirection:"column", gap:6, marginBottom:16 }}>
+        {owners.length === 0 && <Empty text="No owners yet." />}
+        {owners.map(o => {
+          const s = stats.find(x => x.id === o.id);
+          const isEditing = editingId === o.id;
+          return (
+            <div key={o.id} style={{ background:"#0a0f1a", border:`1px solid ${o.color}44`,
+              borderLeft:`3px solid ${o.color}`, borderRadius:10, padding:"10px 14px" }}>
+              {isEditing ? (
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                    <input value={editColor} onChange={e => setEditColor(e.target.value)}
+                      type="color" style={{ width:32, height:32, borderRadius:6, border:"none",
+                        background:"none", cursor:"pointer", padding:0 }} />
+                    <input value={editName} onChange={e => setEditName(e.target.value)}
+                      placeholder="Owner name" style={{ ...inp, flex:1 }}
+                      onKeyDown={e => e.key==="Enter" && saveEdit(o.id)} />
+                  </div>
+                  <div style={{ display:"flex", gap:6 }}>
+                    <button onClick={() => saveEdit(o.id)}
+                      style={{ ...S.btn(), flex:1, fontSize:12, padding:"7px" }}>✓ Save</button>
+                    <button onClick={() => setEditingId(null)}
+                      style={{ ...S.btn("#1a2440","#6677aa"), flex:1, fontSize:12, padding:"7px" }}>Cancel</button>
+                  </div>
+                </div>
+              ) : confirmDelete === o.id ? (
+                <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
+                  <span style={{ flex:1, fontSize:13, color:"#e74c3c", fontWeight:700 }}>
+                    Delete {o.name}? This removes all their wins/draws too.
+                  </span>
+                  <button onClick={() => deleteOwner(o.id, o.name)}
+                    style={{ ...S.btn("#3a0a0a","#e74c3c"), border:"1px solid #e74c3c", fontSize:12, padding:"6px 12px" }}>
+                    ✕ Delete
+                  </button>
+                  <button onClick={() => setConfirmDelete(null)}
+                    style={{ ...S.btn("#1a2440","#6677aa"), fontSize:12, padding:"6px 12px" }}>Cancel</button>
+                </div>
+              ) : (
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <div style={{ width:10, height:10, borderRadius:"50%", background:o.color, flexShrink:0 }} />
+                  <span style={{ fontWeight:700, flex:1 }}>{o.name}</span>
+                  <span style={{ fontSize:11, color:"#6677aa" }}>{(o.teams||[]).filter(t=>t.name).length}/6 teams</span>
+                  {s && <span style={{ fontSize:12, fontFamily:"'DM Mono',monospace",
+                    color:s.net>0?"#2ecc71":s.net<0?"#e74c3c":"#667" }}>
+                    {s.net>=0?"+":""}${s.net.toFixed(2)}
+                  </span>}
+                  <button onClick={() => { setEditingId(o.id); setEditName(o.name); setEditColor(o.color); }}
+                    style={{ ...S.btn("#1a2440","#f4c430"), fontSize:11, padding:"5px 10px" }}>✏ Edit</button>
+                  <button onClick={() => setConfirmDelete(o.id)}
+                    style={{ background:"none", border:"1px solid #3a1820", borderRadius:6,
+                      color:"#e74c3c", padding:"5px 8px", cursor:"pointer", fontSize:12 }}>✕</button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Add new owner */}
+      <div style={{ background:"#080e1a", border:"1px solid #1e2d4a", borderRadius:10, padding:"14px 16px", marginBottom:14 }}>
+        <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:1.5,
+          fontWeight:700, marginBottom:10 }}>+ Add Owner</div>
+        <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:10 }}>
+          <input value={newColor} onChange={e => setNewColor(e.target.value)}
+            type="color" style={{ width:36, height:36, borderRadius:8, border:"none",
+              background:"none", cursor:"pointer", padding:0, flexShrink:0 }} />
+          <input value={newName} onChange={e => setNewName(e.target.value)}
+            placeholder="Owner name" style={{ ...inp, flex:1 }}
+            onKeyDown={e => e.key==="Enter" && addOwner()} />
+          <button onClick={addOwner} style={{ ...S.btn(), padding:"8px 16px", fontSize:13, flexShrink:0 }}>Add</button>
+        </div>
+        {/* Color presets */}
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+          {OWNER_COLORS.map(c => (
+            <button key={c} onClick={() => setNewColor(c)}
+              style={{ width:20, height:20, borderRadius:"50%", background:c, border:
+                newColor===c?"2px solid #fff":"2px solid transparent", cursor:"pointer", padding:0 }} />
+          ))}
+        </div>
+      </div>
+
+      {/* Load defaults */}
+      {owners.length === 0 && (
+        <div>
+          <button onClick={loadDefaults}
+            style={{ ...S.btn("#1a2440","#f4c430"), border:"1px solid #f4c430", fontSize:13, padding:"10px 20px", width:"100%" }}>
+            Load Default 8 Owners (CHI2025)
+          </button>
+          <p style={{ fontSize:11, color:"#445", marginTop:6, textAlign:"center" }}>Only use when table is empty.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function genCode() {
   return Math.random().toString(36).substring(2,8).toUpperCase();
 }
@@ -1428,38 +1593,13 @@ export default function WorldCupApp() {
                     </div>
 
                     {/* Manage Owners */}
-                    <div style={S.card}>
-                      <SecTitle>👥 Manage Owners</SecTitle>
-                      <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
-                        {owners.map(o=>(
-                          <div key={o.id} style={{ background:"#0f1625",border:`1px solid ${o.color}33`,borderLeft:`3px solid ${o.color}`,borderRadius:8,padding:"10px 14px",display:"flex",alignItems:"center",gap:12 }}>
-                            <div style={{ width:8,height:8,borderRadius:"50%",background:o.color }} />
-                            <span style={{ fontWeight:600,flex:1 }}>{o.name}</span>
-                            <span style={{ fontSize:12,color:"#6677aa" }}>{(o.teams||[]).filter(t=>t.name).length}/6 teams</span>
-                            <span style={{ fontSize:12,color:"#f4c430",fontFamily:"'DM Mono',monospace" }}>
-                              {(()=>{ const s=stats.find(x=>x.id===o.id); return s?`${s.net>=0?"+":""}$${s.net.toFixed(2)}`:"$0"; })()}
-                            </span>
-                          </div>
-                        ))}
-                        {owners.length===0&&<Empty text="No owners yet." />}
-                      </div>
-
-                      {/* Add owner button — uses CHI2025_OWNERS defaults */}
-                      <div style={{ marginTop:14 }}>
-                        <SecTitle>Load Default Owners (CHI2025)</SecTitle>
-                        <button onClick={async()=>{
-                          for (let i=0;i<CHI2025_OWNERS.length;i++) {
-                            const o=CHI2025_OWNERS[i];
-                            const blank=Array.from({length:6},(_,j)=>({seed:j+1,name:"",group:""}));
-                            await supabase.from("owners").insert({league_code:leagueCode,name:o.name,color:o.color,num:i+1,teams:blank});
-                          }
-                          loadData(); alert("✅ Default owners loaded!");
-                        }} style={{ ...S.btn("#1a2440","#f4c430"),border:"1px solid #f4c430",fontSize:13,padding:"10px 20px" }}>
-                          Load 8 Default Owners
-                        </button>
-                        <p style={{ fontSize:11,color:"#445",marginTop:6 }}>Only click if owners table is empty.</p>
-                      </div>
-                    </div>
+                    <OwnerManager
+                      owners={owners}
+                      stats={stats}
+                      leagueCode={leagueCode}
+                      onRefresh={loadData}
+                      alertFn={alert}
+                    />
 
                     {/* Result Log */}
                     <div style={S.card}>
