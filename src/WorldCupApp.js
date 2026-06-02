@@ -1,3 +1,4 @@
+// v2-league-management-2026
 // eslint-disable-next-line
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "./lib/supabase";
