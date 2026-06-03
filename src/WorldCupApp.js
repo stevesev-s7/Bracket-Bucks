@@ -14,14 +14,31 @@ const GROUP_COLORS = {
   "Group I":"#ff5722","Group J":"#00bcd4","Group K":"#8bc34a","Group L":"#ff9800",
 };
 
-const ROUNDS = [
-  { id:"Pool Play",      short:"PP",  dmg:0.50, hasDraw:true  },
-  { id:"Round of 32",   short:"R32", dmg:1.00, hasDraw:false },
-  { id:"Round of 16",   short:"R16", dmg:1.50, hasDraw:false },
-  { id:"Round of 8",    short:"QF",  dmg:2.00, hasDraw:false },
-  { id:"Round of 4",    short:"SF",  dmg:2.50, hasDraw:false },
-  { id:"Championship",  short:"F",   dmg:3.00, hasDraw:false },
+const DEFAULT_ROUND_VALUES = {
+  "Pool Play": 0.50,
+  "Round of 32": 1.00,
+  "Round of 16": 1.50,
+  "Round of 8": 2.00,
+  "Round of 4": 2.50,
+  "Championship": 3.00,
+};
+
+const ROUND_DEFS = [
+  { id:"Pool Play",     short:"PP",  hasDraw:true  },
+  { id:"Round of 32",  short:"R32", hasDraw:false },
+  { id:"Round of 16",  short:"R16", hasDraw:false },
+  { id:"Round of 8",   short:"QF",  hasDraw:false },
+  { id:"Round of 4",   short:"SF",  hasDraw:false },
+  { id:"Championship", short:"F",   hasDraw:false },
 ];
+
+function getRounds(leagueSettings) {
+  const rv = leagueSettings?.round_values || {};
+  return ROUND_DEFS.map(r => ({ ...r, dmg: rv[r.id] ?? DEFAULT_ROUND_VALUES[r.id] }));
+}
+
+// Default ROUNDS for backward compat (replaced with getRounds(league?.settings) in component)
+const ROUNDS = getRounds({});
 
 const WC_TEAMS = [
   {name:"Mexico",group:"Group A",seed:4},{name:"South Africa",group:"Group A",seed:10},
@@ -74,7 +91,8 @@ const TH={ padding:"9px 12px", textAlign:"left", color:"#6677aa", fontSize:11, f
   textTransform:"uppercase", letterSpacing:1, borderBottom:"1px solid #1a2440" };
 const TD={ padding:"9px 12px", verticalAlign:"middle" };
 
-function calcStats(owners, wins, draws) {
+function calcStats(owners, wins, draws, roundsArg) {
+  const ROUNDS = roundsArg || getRounds({});
   const numOwners = owners.length || 1;
   const others = Math.max(numOwners - 1, 1);
 
@@ -790,6 +808,9 @@ export default function WorldCupApp() {
   const [wins, setWins] = useState([]);
   const [draws, setDraws] = useState([]);
   const [league, setLeague] = useState(null);
+  const [rounds, setRounds] = useState(getRounds({}));
+  const [editingRounds, setEditingRounds] = useState(false);
+  const [roundDraft, setRoundDraft] = useState({});
   const [loading, setLoading] = useState(true);
   const [authUser, setAuthUser] = useState(null);
   const [adminUnlocked, setAdminUnlocked] = useState(false);
@@ -923,7 +944,10 @@ export default function WorldCupApp() {
     setOwners(ownersData);
     setWins(winsData);
     setDraws(drawsData);
-    setStats(calcStats(ownersData, winsData, drawsData));
+    const lgData = lg || {};
+    const computedRounds = getRounds(lgData?.settings);
+    setRounds(computedRounds);
+    setStats(calcStats(ownersData, winsData, drawsData, computedRounds));
     setLoading(false);
   }, [leagueCode]);
 
@@ -1618,6 +1642,52 @@ export default function WorldCupApp() {
                           <div key={l}>
                             <div style={{ fontSize:10,color:"#445",textTransform:"uppercase",letterSpacing:1,marginBottom:4 }}>{l}</div>
                             <div style={{ fontWeight:600 }}>{v}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Round Values Editor */}
+                    <div style={S.card}>
+                      <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:8 }}>
+                        <SecTitle style={{margin:0}}>⚙️ Round Values</SecTitle>
+                        {!editingRounds?(
+                          <button onClick={()=>{ setRoundDraft(Object.fromEntries(rounds.map(r=>[r.id,r.dmg]))); setEditingRounds(true); }}
+                            style={{ ...S.btn("#1a2440","#f4c430"),border:"1px solid #f4c430",fontSize:12,padding:"6px 14px" }}>✏ Edit</button>
+                        ):(
+                          <div style={{display:"flex",gap:6}}>
+                            <button onClick={async()=>{
+                              const newSettings = { ...(league?.settings||{}), round_values: roundDraft };
+                              const { error } = await supabase.from("leagues").update({ settings: newSettings }).eq("code", leagueCode);
+                              if (error) { alert("Error: "+error.message,"error"); return; }
+                              setEditingRounds(false);
+                              loadData();
+                              alert("✅ Round values saved!");
+                            }} style={{ ...S.btn(),fontSize:12,padding:"6px 14px" }}>✓ Save</button>
+                            <button onClick={()=>setEditingRounds(false)}
+                              style={{ ...S.btn("#1a2440","#6677aa"),fontSize:12,padding:"6px 14px" }}>Cancel</button>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10 }}>
+                        {rounds.map(r=>(
+                          <div key={r.id} style={{ background:"#0a0f1a",border:"1px solid #1a2440",borderRadius:8,padding:"10px 12px" }}>
+                            <div style={{ fontSize:11,color:"#6677aa",marginBottom:6,fontWeight:700 }}>{r.short} — {r.id}</div>
+                            {editingRounds?(
+                              <div style={{ display:"flex",alignItems:"center",gap:6 }}>
+                                <span style={{ color:"#f4c430",fontSize:13 }}>$</span>
+                                <input
+                                  type="number" step="0.25" min="0.25"
+                                  value={roundDraft[r.id]??r.dmg}
+                                  onChange={e=>setRoundDraft(prev=>({...prev,[r.id]:parseFloat(e.target.value)||r.dmg}))}
+                                  style={{ background:"#111827",border:"1px solid #f4c430",borderRadius:6,color:"#f4c430",
+                                    fontFamily:"'DM Mono',monospace",fontSize:15,fontWeight:700,padding:"5px 8px",width:"80px",outline:"none" }}
+                                />
+                              </div>
+                            ):(
+                              <div style={{ fontFamily:"'DM Mono',monospace",fontSize:18,fontWeight:700,color:"#f4c430" }}>${r.dmg.toFixed(2)}</div>
+                            )}
+                            {r.hasDraw&&<div style={{ fontSize:10,color:"#f39c12",marginTop:4 }}>Draw: ${(editingRounds?(roundDraft[r.id]??r.dmg):r.dmg/2).toFixed(2)}/2</div>}
                           </div>
                         ))}
                       </div>
