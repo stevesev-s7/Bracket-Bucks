@@ -77,22 +77,38 @@ const TD={ padding:"9px 12px", verticalAlign:"middle" };
 function calcStats(owners, wins, draws) {
   const numOwners = owners.length || 1;
   const others = Math.max(numOwners - 1, 1);
-  return owners.map(owner => {
-    const roundWins  = ROUNDS.map(r => wins.filter(w => w.owner_id===owner.id && w.round_id===r.id).length);
-    const roundDraws = ROUNDS.map(r => draws.filter(d => d.owner_id===owner.id && d.round_id===r.id).length);
 
-    // Earned = my wins × point value × number of other owners paying me
+  // Build team seed lookup: team_name -> seed
+  const seedOf = {};
+  owners.forEach(o => {
+    (o.teams||[]).forEach(t => {
+      if (t.name) seedOf[t.name] = t.seed || 1;
+    });
+  });
+
+  // Also pull seeds from WC_TEAMS constant as fallback
+  WC_TEAMS.forEach(t => { if (!seedOf[t.name]) seedOf[t.name] = t.seed; });
+
+  return owners.map(owner => {
+    const myWins  = ROUNDS.map(r => wins.filter(w  => w.owner_id===owner.id && w.round_id===r.id));
+    const myDraws = ROUNDS.map(r => draws.filter(d => d.owner_id===owner.id && d.round_id===r.id));
+    const roundWins  = myWins.map(ws => ws.length);
+    const roundDraws = myDraws.map(ds => ds.length);
+
+    // Earned: for each of MY wins, payout = round_dmg × seed × (numOwners-1)
     const roundEarned = ROUNDS.map((r,i) => {
-      const wAmt = roundWins[i] * r.dmg * others;
-      const dAmt = r.hasDraw ? roundDraws[i] * (r.dmg/2) * others : 0;
-      return wAmt + dAmt;
+      const winAmt  = myWins[i].reduce((sum, w) => sum + r.dmg * (seedOf[w.team_name]||1) * others, 0);
+      const drawAmt = r.hasDraw ? myDraws[i].reduce((sum, d) => sum + (r.dmg/2) * (seedOf[d.team_name]||1) * others, 0) : 0;
+      return winAmt + drawAmt;
     });
 
-    // Cost = I pay dmg for every OTHER owner's win (once per win)
+    // Cost: for each OTHER owner's win, I pay round_dmg × seed (once)
+    const otherWins  = ROUNDS.map(r => wins.filter(w  => w.owner_id!==owner.id && w.round_id===r.id));
+    const otherDraws = ROUNDS.map(r => draws.filter(d => d.owner_id!==owner.id && d.round_id===r.id));
     const roundCost = ROUNDS.map((r,i) => {
-      const otherWins  = wins.filter(w => w.owner_id!==owner.id && w.round_id===r.id).length;
-      const otherDraws = draws.filter(d => d.owner_id!==owner.id && d.round_id===r.id).length;
-      return otherWins*r.dmg + (r.hasDraw ? otherDraws*(r.dmg/2) : 0);
+      const wCost = otherWins[i].reduce((sum, w) => sum + r.dmg * (seedOf[w.team_name]||1), 0);
+      const dCost = r.hasDraw ? otherDraws[i].reduce((sum, d) => sum + (r.dmg/2) * (seedOf[d.team_name]||1), 0) : 0;
+      return wCost + dCost;
     });
 
     const totalEarned = roundEarned.reduce((a,b)=>a+b,0);
