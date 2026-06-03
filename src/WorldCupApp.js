@@ -75,19 +75,26 @@ const TH={ padding:"9px 12px", textAlign:"left", color:"#6677aa", fontSize:11, f
 const TD={ padding:"9px 12px", verticalAlign:"middle" };
 
 function calcStats(owners, wins, draws) {
+  const numOwners = owners.length || 1;
+  const others = Math.max(numOwners - 1, 1);
   return owners.map(owner => {
     const roundWins  = ROUNDS.map(r => wins.filter(w => w.owner_id===owner.id && w.round_id===r.id).length);
     const roundDraws = ROUNDS.map(r => draws.filter(d => d.owner_id===owner.id && d.round_id===r.id).length);
+
+    // Earned = my wins × point value × number of other owners paying me
     const roundEarned = ROUNDS.map((r,i) => {
-      const wAmt = roundWins[i] * r.dmg;
-      const dAmt = r.hasDraw ? roundDraws[i] * (r.dmg/2) : 0;
+      const wAmt = roundWins[i] * r.dmg * others;
+      const dAmt = r.hasDraw ? roundDraws[i] * (r.dmg/2) * others : 0;
       return wAmt + dAmt;
     });
+
+    // Cost = I pay dmg for every OTHER owner's win (once per win)
     const roundCost = ROUNDS.map((r,i) => {
       const otherWins  = wins.filter(w => w.owner_id!==owner.id && w.round_id===r.id).length;
       const otherDraws = draws.filter(d => d.owner_id!==owner.id && d.round_id===r.id).length;
       return otherWins*r.dmg + (r.hasDraw ? otherDraws*(r.dmg/2) : 0);
     });
+
     const totalEarned = roundEarned.reduce((a,b)=>a+b,0);
     const totalCost   = roundCost.reduce((a,b)=>a+b,0);
     const net = totalEarned - totalCost;
