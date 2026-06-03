@@ -1272,20 +1272,27 @@ export default function WorldCupApp() {
             {tab==="payouts"&&(
               <div>
                 <h2 style={{ margin:"0 0 6px",fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2 }}>💰 Payout Reference</h2>
-                <p style={{ color:"#6677aa",fontSize:13,marginBottom:20 }}>
-                  Win payout = Round Value × Seed # × (owners − 1). Draw payout = (Round Value ÷ 2) × Seed # × (owners − 1). Pool Play draws count.
+                <p style={{ color:"#6677aa",fontSize:13,marginBottom:4 }}>
+                  Total payout formula: <strong style={{color:"#dce4f5"}}>Seed × Round Value × {owners.length>1?owners.length-1:7} owners</strong>. Smaller number shows cost per owner.
+                </p>
+                <p style={{ color:"#6677aa",fontSize:12,marginBottom:20 }}>
+                  Pool Play column shows Win / <span style={{color:"#f39c12"}}>Draw</span> totals. All other rounds are win-only.
                 </p>
                 <div style={{ overflowX:"auto" }}>
                   <table style={{ width:"100%",borderCollapse:"collapse",fontSize:13 }}>
                     <thead>
                       <tr style={{ background:"#141d38" }}>
                         <th style={TH}>Seed</th>
-                        {ROUNDS.map(r=>(
-                          <th key={r.id} style={TH}>
-                            {r.short}
-                            <div style={{ fontSize:10,color:"#f4c430",fontWeight:400,marginTop:2 }}>{r.hasDraw?"W/D":""}</div>
-                          </th>
-                        ))}
+                        {ROUNDS.map(r=>{
+                          const n = owners.length > 1 ? owners.length - 1 : 7;
+                          const perWin = r.dmg * n;
+                          return (
+                            <th key={r.id} style={{ ...TH, textAlign:"center" }}>
+                              <div>{r.short}</div>
+                              <div style={{ fontSize:10,color:"#f4c430",fontWeight:600,marginTop:2 }}>${perWin.toFixed(2)} per win</div>
+                            </th>
+                          );
+                        })}
                       </tr>
                     </thead>
                     <tbody>
@@ -1293,12 +1300,21 @@ export default function WorldCupApp() {
                         <tr key={seed} style={{ borderBottom:"1px solid #131929" }}>
                           <td style={{ ...TD,fontWeight:700 }}><SeedBadge seed={seed} /></td>
                           {ROUNDS.map(r=>{
-                            const winAmt = r.dmg * seed * (owners.length > 1 ? owners.length - 1 : 7);
-                            const drawAmt = r.hasDraw ? (r.dmg/2) * seed * (owners.length > 1 ? owners.length - 1 : 7) : null;
+                            const n = owners.length > 1 ? owners.length - 1 : 7;
+                            const winTotal  = r.dmg * seed * n;
+                            const winPer    = r.dmg * seed;
+                            const drawTotal = r.hasDraw ? (r.dmg/2) * seed * n : null;
+                            const drawPer   = r.hasDraw ? (r.dmg/2) * seed : null;
                             return (
-                              <td key={r.id} style={{ ...TD,textAlign:"center" }}>
-                                <div style={{ fontWeight:700,color:"#2ecc71",fontFamily:"'DM Mono',monospace" }}>${winAmt.toFixed(2)}</div>
-                                {drawAmt!==null&&<div style={{ fontSize:10,color:"#f39c12" }}>D: ${drawAmt.toFixed(2)}</div>}
+                              <td key={r.id} style={{ ...TD, textAlign:"center", padding:"10px 8px" }}>
+                                <div style={{ fontWeight:700,color:"#2ecc71",fontFamily:"'DM Mono',monospace",fontSize:14 }}>${winTotal.toFixed(2)}</div>
+                                <div style={{ fontSize:10,color:"#445",marginTop:1 }}>${winPer.toFixed(2)}/owner</div>
+                                {drawTotal!==null&&(
+                                  <div style={{ marginTop:5,borderTop:"1px solid #1a2440",paddingTop:4 }}>
+                                    <div style={{ fontWeight:700,color:"#f39c12",fontFamily:"'DM Mono',monospace",fontSize:12 }}>${drawTotal.toFixed(2)}</div>
+                                    <div style={{ fontSize:10,color:"#445" }}>${drawPer.toFixed(2)}/owner draw</div>
+                                  </div>
+                                )}
                               </td>
                             );
                           })}
