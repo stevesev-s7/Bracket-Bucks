@@ -1273,7 +1273,7 @@ export default function WorldCupApp() {
               <div>
                 <h2 style={{ margin:"0 0 6px",fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2 }}>💰 Payout Reference</h2>
                 <p style={{ color:"#6677aa",fontSize:13,marginBottom:20 }}>
-                  Win payout = Round Value × (owners − 1). Draw payout = (Round Value ÷ 2) × (owners − 1). Pool Play draws count.
+                  Win payout = Round Value × Seed # × (owners − 1). Draw payout = (Round Value ÷ 2) × Seed # × (owners − 1). Pool Play draws count.
                 </p>
                 <div style={{ overflowX:"auto" }}>
                   <table style={{ width:"100%",borderCollapse:"collapse",fontSize:13 }}>
@@ -1293,8 +1293,8 @@ export default function WorldCupApp() {
                         <tr key={seed} style={{ borderBottom:"1px solid #131929" }}>
                           <td style={{ ...TD,fontWeight:700 }}><SeedBadge seed={seed} /></td>
                           {ROUNDS.map(r=>{
-                            const winAmt = r.dmg*(owners.length-1||7);
-                            const drawAmt = r.hasDraw?(r.dmg/2)*(owners.length-1||7):null;
+                            const winAmt = r.dmg * seed * (owners.length > 1 ? owners.length - 1 : 7);
+                            const drawAmt = r.hasDraw ? (r.dmg/2) * seed * (owners.length > 1 ? owners.length - 1 : 7) : null;
                             return (
                               <td key={r.id} style={{ ...TD,textAlign:"center" }}>
                                 <div style={{ fontWeight:700,color:"#2ecc71",fontFamily:"'DM Mono',monospace" }}>${winAmt.toFixed(2)}</div>
