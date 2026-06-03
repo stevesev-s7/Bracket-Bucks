@@ -1072,7 +1072,7 @@ export default function WorldCupApp() {
                 <label style={{ fontSize:11,color:"#6677aa",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4 }}>Round</label>
                 <select value={winRound} onChange={e=>setWinRound(e.target.value)}
                   style={{ width:"100%",background:"#0f1625",border:"1px solid #1a2440",borderRadius:8,color:"#dce4f5",fontFamily:"inherit",fontSize:14,padding:"9px 12px",outline:"none" }}>
-                  {ROUNDS.map(r=><option key={r.id} value={r.id}>{r.id}</option>)}
+                  {rounds.map(r=><option key={r.id} value={r.id}>{r.id}</option>)}
                 </select>
               </div>
               <div>
@@ -1124,7 +1124,7 @@ export default function WorldCupApp() {
                             <span style={{ fontWeight:700,fontSize:15 }}>{s.name}</span>
                           </div>
                           <div style={{ display:"flex",gap:5,flexWrap:"wrap",flex:1 }}>
-                            {ROUNDS.map((r,ri)=>(
+                            {rounds.map((r,ri)=>(
                               <span key={ri} style={{ background:s.roundWins[ri]>0?"#1a3a28":"#131929",
                                 border:`1px solid ${s.roundWins[ri]>0?"#27ae60":"#1e2840"}`,
                                 borderRadius:6,padding:"3px 7px",fontSize:11,
@@ -1150,7 +1150,7 @@ export default function WorldCupApp() {
                           <thead>
                             <tr style={{ background:"#1a2040" }}>
                               <th style={TH}>Owner</th>
-                              {ROUNDS.map(r=><th key={r.id} style={TH}>{r.short}</th>)}
+                              {rounds.map(r=><th key={r.id} style={TH}>{r.short}</th>)}
                               <th style={TH}>Net</th>
                             </tr>
                           </thead>
@@ -1195,7 +1195,7 @@ export default function WorldCupApp() {
                   <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
                     {[...wins.map(w=>({...w,type:"win"})),...draws.map(d=>({...d,type:"draw"}))].map(r=>{
                       const owner = owners.find(o=>o.id===r.owner_id);
-                      const round = ROUNDS.find(rd=>rd.id===r.round_id);
+                      const round = rounds.find(rd=>rd.id===r.round_id);
                       if (!owner||!round) return null;
                       return (
                         <div key={`${r.type}-${r.id}`} style={{ background:"#111827",border:"1px solid #1a2440",
@@ -1307,7 +1307,7 @@ export default function WorldCupApp() {
                     <thead>
                       <tr style={{ background:"#141d38" }}>
                         <th style={TH}>Seed</th>
-                        {ROUNDS.map(r=>{
+                        {rounds.map(r=>{
                           const n = owners.length > 1 ? owners.length - 1 : 7;
                           const perWin = r.dmg * n;
                           return (
@@ -1323,7 +1323,7 @@ export default function WorldCupApp() {
                       {Array.from({length:12},(_,i)=>i+1).map(seed=>(
                         <tr key={seed} style={{ borderBottom:"1px solid #131929" }}>
                           <td style={{ ...TD,fontWeight:700 }}><SeedBadge seed={seed} /></td>
-                          {ROUNDS.map(r=>{
+                          {rounds.map(r=>{
                             const n = owners.length > 1 ? owners.length - 1 : 7;
                             const winTotal  = r.dmg * seed * n;
                             const winPer    = r.dmg * seed;
@@ -1459,7 +1459,7 @@ export default function WorldCupApp() {
                             </tr>
                           </thead>
                           <tbody>
-                            {ROUNDS.map((r,i)=>{
+                            {rounds.map((r,i)=>{
                               const net=myStats.roundEarned[i]-myStats.roundCost[i];
                               return (
                                 <tr key={r.id} style={{ borderBottom:"1px solid #131929" }}>
@@ -1657,11 +1657,28 @@ export default function WorldCupApp() {
                         ):(
                           <div style={{display:"flex",gap:6}}>
                             <button onClick={async()=>{
-                              const newSettings = { ...(league?.settings||{}), round_values: roundDraft };
-                              const { error } = await supabase.from("leagues").update({ settings: newSettings }).eq("code", leagueCode);
-                              if (error) { alert("Error: "+error.message,"error"); return; }
+                              // Ensure values are valid numbers
+                              const cleanDraft = {};
+                              ROUND_DEFS.forEach(r => {
+                                const v = parseFloat(roundDraft[r.id]);
+                                cleanDraft[r.id] = isNaN(v) ? DEFAULT_ROUND_VALUES[r.id] : v;
+                              });
+                              const existingSettings = league?.settings || {};
+                              const newSettings = { ...existingSettings, round_values: cleanDraft };
+                              // Upsert the league row to ensure settings column gets updated
+                              const { error } = await supabase.from("leagues")
+                                .update({ settings: newSettings })
+                                .eq("code", leagueCode);
+                              if (error) {
+                                alert("Save error: " + error.message, "error");
+                                return;
+                              }
+                              // Apply immediately without waiting for full reload
+                              const newRounds = getRounds({ round_values: cleanDraft });
+                              setRounds(newRounds);
+                              setStats(calcStats(owners, wins, draws, newRounds));
+                              setLeague(prev => ({ ...(prev||{}), settings: newSettings }));
                               setEditingRounds(false);
-                              loadData();
                               alert("✅ Round values saved!");
                             }} style={{ ...S.btn(),fontSize:12,padding:"6px 14px" }}>✓ Save</button>
                             <button onClick={()=>setEditingRounds(false)}
@@ -1687,7 +1704,7 @@ export default function WorldCupApp() {
                             ):(
                               <div style={{ fontFamily:"'DM Mono',monospace",fontSize:18,fontWeight:700,color:"#f4c430" }}>${r.dmg.toFixed(2)}</div>
                             )}
-                            {r.hasDraw&&<div style={{ fontSize:10,color:"#f39c12",marginTop:4 }}>Draw: ${(editingRounds?(roundDraft[r.id]??r.dmg):r.dmg/2).toFixed(2)}/2</div>}
+                            {r.hasDraw&&<div style={{ fontSize:10,color:"#f39c12",marginTop:4 }}>Draw: ${((editingRounds?(roundDraft[r.id]??r.dmg):r.dmg)/2).toFixed(2)}</div>}
                           </div>
                         ))}
                       </div>
