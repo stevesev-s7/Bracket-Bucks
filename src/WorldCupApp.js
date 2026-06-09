@@ -1324,6 +1324,7 @@ export default function WorldCupApp() {
     {id:"topteams",   label:"⭐ Top Teams"},
     {id:"payouts",    label:"💰 Payouts"},
     {id:"draft",      label:"🐍 Draft"},
+    {id:"howtoplay",  label:"📖 How to Play"},
     {id:"profile",    label:"👤 My Profile"},
     {id:"admin",      label:"🔒 Admin"},
   ];
@@ -1848,6 +1849,147 @@ export default function WorldCupApp() {
 
             {/* DRAFT */}
             <div style={{display:tab==="draft"?"block":"none"}}><DraftTab owners={owners} setOwners={setOwners} isAdmin={isAdmin} authUser={authUser} alert={alert} leagueCode={leagueCode} onRefresh={loadData} /></div>
+
+            {/* HOW TO PLAY */}
+            {tab==="howtoplay"&&(
+              <div>
+                <h2 style={{margin:"0 0 6px",fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}}>📖 How to Play</h2>
+                <p style={{color:"#6677aa",fontSize:13,marginBottom:24}}>Everything you need to know about Bracket Bucks 2026 World Cup.</p>
+
+                {/* Overview */}
+                <div style={{...S.card,marginBottom:16,background:"linear-gradient(135deg,#0a2e1a,#111827)",border:"2px solid #f4c430"}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:2,color:"#f4c430",marginBottom:10}}>🌍 What is Bracket Bucks?</div>
+                  <p style={{color:"#dce4f5",fontSize:14,lineHeight:1.7}}>
+                    Bracket Bucks is a fantasy-style game built around the 2026 FIFA World Cup. Each player drafts a set of national teams. 
+                    Every time one of your teams wins or draws a match, the other players pay you based on the team's seed number and the round. 
+                    The player who earns the most money over the entire tournament wins!
+                  </p>
+                </div>
+
+                {/* Step by step */}
+                {[
+                  {
+                    num:"1", icon:"👤", title:"Create an Account & Join a League",
+                    color:"#3498db",
+                    steps:[
+                      "Sign up with your email and password on the login screen.",
+                      "Enter a league invite code (e.g. CHI2025) to join your group. You'll be automatically added as an owner.",
+                      "If you already have a March Madness account, your leagues will appear automatically — just tap ⚽ Join.",
+                      "Each league is independent — you can be in multiple leagues with different friends.",
+                    ]
+                  },
+                  {
+                    num:"2", icon:"🐍", title:"The Snake Draft",
+                    color:"#2ecc71",
+                    steps:[
+                      "Before the tournament, all players participate in a snake draft to pick their teams.",
+                      "The draft order is randomly shuffled by the admin. In a snake draft, if you pick 1st in Round 1, you pick last in Round 2, then 1st again in Round 3, and so on.",
+                      "Each player drafts 6 teams total (one per draft round).",
+                      "Teams are organized by group (A–L) and seed (#1 through #12). Seed #1 is the strongest team in a group, #12 is the weakest.",
+                      "Drafting a high seed (like #12) is risky — they're less likely to win — but the payout is much higher if they do!",
+                      "Once the draft is complete, all picks are locked in.",
+                    ]
+                  },
+                  {
+                    num:"3", icon:"💰", title:"How Scoring & Payouts Work",
+                    color:"#f4c430",
+                    steps:[
+                      "Every time one of your teams wins a match, each other player pays you: Round Value × Seed Number.",
+                      "Example: Mexico is Seed #4. They win a Pool Play match (value $0.50). Each of the other 7 owners pays you $0.50 × 4 = $2.00. You earn $14.00 total.",
+                      "In Pool Play only, draws also count. A draw pays half the win amount.",
+                      "The round values increase each round — Pool Play $0.50, Round of 32 $1.00, Round of 16 $1.50, Quarterfinals $2.00, Semifinals $2.50, Final $3.00.",
+                      "Your NET is Earned minus Owed. You want a positive net!",
+                      "See the 💰 Payouts tab for a full reference table of every seed × round combination.",
+                    ]
+                  },
+                  {
+                    num:"4", icon:"📅", title:"Tournament Structure",
+                    color:"#9b59b6",
+                    steps:[
+                      "Pool Play (Jun 11 – Jul 2): 48 teams play in 12 groups of 4. Each team plays 3 matches. Wins and draws both earn points.",
+                      "Round of 32 (Jul 4–9): Top 2 teams from each group + 8 best 3rd-place teams advance. Single elimination — draws go to extra time/penalties, no draw payout.",
+                      "Round of 16, Quarterfinals, Semifinals, Final: Pure single elimination. Only wins count from here.",
+                      "Champion is crowned July 19, 2026.",
+                    ]
+                  },
+                  {
+                    num:"5", icon:"⚽", title:"Live Scores & Auto-Sync",
+                    color:"#e74c3c",
+                    steps:[
+                      "The ⚽ Live Scores tab shows live match scores pulled from ESPN.",
+                      "Turn on Auto-Sync in the Win Tracker tab — the app will check ESPN every 60 seconds and automatically log wins and draws for your teams.",
+                      "You can also hit ⚽ Sync Now to force an immediate update.",
+                      "Admins can always manually add or remove results in the Win Tracker or Admin tab.",
+                    ]
+                  },
+                ].map(section=>(
+                  <div key={section.num} style={{...S.card,marginBottom:14,borderLeft:`3px solid ${section.color}`}}>
+                    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+                      <div style={{width:36,height:36,borderRadius:"50%",background:section.color,
+                        display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
+                        {section.icon}
+                      </div>
+                      <div>
+                        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:1.5,color:section.color}}>
+                          Step {section.num}: {section.title}
+                        </div>
+                      </div>
+                    </div>
+                    <ul style={{paddingLeft:0,margin:0,listStyle:"none",display:"flex",flexDirection:"column",gap:8}}>
+                      {section.steps.map((step,i)=>(
+                        <li key={i} style={{display:"flex",gap:10,fontSize:13,color:"#dce4f5",lineHeight:1.6}}>
+                          <span style={{color:section.color,fontWeight:800,flexShrink:0,marginTop:1}}>→</span>
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+
+                {/* Tab guide */}
+                <div style={{...S.card,marginBottom:14}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:1.5,color:"#f4c430",marginBottom:14}}>🗂 What Each Tab Does</div>
+                  {[
+                    {icon:"🏆",name:"Leaderboard",desc:"Live standings showing each player's total earned, total owed, and net P&L. Expands to show round-by-round breakdown. Updates in real-time."},
+                    {icon:"📋",name:"Win Tracker",desc:"Log of every win and draw recorded. Use Auto-Sync to pull results from ESPN automatically, or + Manual Result to add one yourself."},
+                    {icon:"⚽",name:"Live Scores",desc:"Live match scores from ESPN's FIFA World Cup feed. Shows which owner drafted each team and lets admins record wins directly from the score card."},
+                    {icon:"📅",name:"Schedule",desc:"Full tournament structure and group stage breakdown. Shows all 12 groups, each team's seed, and which owner drafted them."},
+                    {icon:"👥",name:"Rosters",desc:"Each owner's full team roster with win/draw indicators. Tap an owner to see their detailed earnings and round-by-round breakdown."},
+                    {icon:"⭐",name:"Top Teams",desc:"Ranking of all teams that have earned points, sorted by total payout generated. Great for tracking which picks are paying off."},
+                    {icon:"💰",name:"Payouts",desc:"Reference table showing the exact payout for every seed × round combination. Big number = total earned by winner. Small number = cost per other owner."},
+                    {icon:"🐍",name:"Draft",desc:"Live snake draft board. Picks update in real-time for all players. Shows draft order, available teams by group, and the full draft grid."},
+                    {icon:"👤",name:"My Profile",desc:"Your personal stats, your teams, earnings breakdown, and league management. Join or create new leagues and switch between them here."},
+                    {icon:"🔒",name:"Admin",desc:"PIN-protected admin controls. Record results, manage owners, edit round values, and view league summary. PIN: 1234."},
+                  ].map((t,i)=>(
+                    <div key={i} style={{display:"flex",gap:12,padding:"10px 0",
+                      borderBottom:i<9?"1px solid #1a2440":"none",alignItems:"flex-start"}}>
+                      <div style={{fontSize:20,flexShrink:0,width:28,textAlign:"center"}}>{t.icon}</div>
+                      <div>
+                        <div style={{fontWeight:700,fontSize:14,marginBottom:3}}>{t.name}</div>
+                        <div style={{fontSize:12,color:"#6677aa",lineHeight:1.6}}>{t.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Quick tips */}
+                <div style={{...S.card,background:"#080e1a",border:"1px solid #1e2d4a"}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:1.5,color:"#f4c430",marginBottom:12}}>💡 Quick Tips</div>
+                  {[
+                    "High seeds (#10–12) pay massive amounts if they pull off upsets — but they rarely advance far.",
+                    "Pool Play draws can add up — a #8 seed getting 3 draws earns you $12.00 per draw × 7 owners.",
+                    "The Final pays 6× more than Pool Play per win — getting a team to the Final is the jackpot.",
+                    "Keep Auto-Sync ON during match days so your wins are logged the moment the final whistle blows.",
+                    "Check the Leaderboard after each round to see if you need to make up ground or are in the lead.",
+                  ].map((tip,i)=>(
+                    <div key={i} style={{display:"flex",gap:10,marginBottom:10,fontSize:13,color:"#dce4f5",lineHeight:1.6}}>
+                      <span style={{color:"#f4c430",fontWeight:800,flexShrink:0}}>💡</span>
+                      <span>{tip}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* PROFILE */}
             {tab==="profile"&&(()=>{
