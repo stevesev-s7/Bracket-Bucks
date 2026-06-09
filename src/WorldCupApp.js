@@ -927,12 +927,31 @@ export default function WorldCupApp() {
     setTab("leaderboard");
   }
 
+  async function autoAddUserAsOwner(code) {
+    if (!authUser) return;
+    const userName = authUser.user_metadata?.name || authUser.email;
+    const { data: existingOwners } = await supabase
+      .from("owners").select("name,id").eq("league_code", code);
+    const alreadyOwner = existingOwners?.some(o =>
+      o.name.toLowerCase().trim() === userName.toLowerCase().trim()
+    );
+    if (!alreadyOwner) {
+      const color = OWNER_COLORS[(existingOwners?.length || 0) % OWNER_COLORS.length];
+      const num = (existingOwners?.length || 0) + 1;
+      const blankTeams = Array.from({length:6}, (_,i) => ({ seed:i+1, name:"", group:"" }));
+      await supabase.from("owners").insert({
+        league_code: code, name: userName, color, num, teams: blankTeams
+      });
+    }
+  }
+
   async function joinLeague() {
     const code = joinCode.trim().toUpperCase();
     if (!code) return;
     const { data, error } = await supabase.from("leagues").select("*").eq("code", code).single();
     if (error || !data) { setJoinErr("No league found with that code."); return; }
     saveToMyLeagues(code, data.name || code);
+    await autoAddUserAsOwner(code);
     switchLeague(code);
     setJoinCode(""); setJoinErr("");
     setModal(null);
@@ -1205,6 +1224,7 @@ export default function WorldCupApp() {
                     const {data,error}=await supabase.from("leagues").select("*").eq("code",l.code).single();
                     if(error||!data){alert("No World Cup league with code "+l.code+". Ask the creator to set it up.","error");return;}
                     saveToMyLeagues(l.code,data.name||l.name||l.code);
+                    await autoAddUserAsOwner(l.code);
                     switchLeague(l.code);
                   }} style={{ ...S.btn("#0a2a14","#f4c430"), border:"1px solid #f4c430", fontSize:12, padding:"7px 14px", flexShrink:0 }}>
                     ⚽ Join
@@ -1744,6 +1764,7 @@ export default function WorldCupApp() {
                                   const {data,error}=await supabase.from("leagues").select("*").eq("code",l.code).single();
                                   if(error||!data){alert("No World Cup league found with code "+l.code+". Ask the league creator to set it up.","error");return;}
                                   saveToMyLeagues(l.code,data.name||l.name||l.code);
+                                  await autoAddUserAsOwner(l.code);
                                   switchLeague(l.code);
                                   alert("✅ Joined "+( data.name||l.code)+"!");
                                 }} style={{...S.btn("#1a3a5a","#f4c430"),border:"1px solid #f4c430",fontSize:12,padding:"6px 14px",flexShrink:0}}>
