@@ -878,6 +878,11 @@ export default function WorldCupApp() {
   const [modal, setModal] = useState(null);
   const [stats, setStats] = useState([]);
 
+  // Auto-sync ESPN
+  const [autoSync, setAutoSync] = useState(false);
+  const [lastSync, setLastSync] = useState(null);
+  const [syncLog, setSyncLog] = useState([]);
+
   // League management
   const [myLeagues, setMyLeagues] = useState(() => {
     try { return JSON.parse(localStorage.getItem("wc_my_leagues") || "[]"); } catch { return []; }
@@ -1089,6 +1094,177 @@ export default function WorldCupApp() {
     return () => { subscription.unsubscribe(); supabase.removeChannel(channel); };
   }, [loadData, leagueCode]);
 
+  // ── ESPN World Cup Auto-Sync ──────────────────────────────────────────────
+  // Round name → round_id mapping for FIFA World Cup 2026
+  const ESPN_WC_ROUND_MAP = {
+    "Group Stage":    "Pool Play",
+    "Group Play":     "Pool Play",
+    "Round of 32":    "Round of 32",
+    "Round of 16":    "Round of 16",
+    "Quarterfinals":  "Round of 8",
+    "Quarterfinal":   "Round of 8",
+    "Semifinals":     "Round of 4",
+    "Semifinal":      "Round of 4",
+    "Third Place":    null, // skip 3rd place match
+    "Final":          "Championship",
+    "World Cup Final":"Championship",
+  };
+
+  const normTeamName = s => (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+
+  async function fetchESPNGames() {
+    // FIFA World Cup 2026 dates on ESPN soccer API
+    const dates = [
+      "20260611","20260612","20260613","20260614","20260615","20260616",
+      "20260617","20260618","20260619","20260620","20260621","20260622",
+      "20260623","20260624","20260625","20260626","20260627","20260628",
+      "20260629","20260630","20260701","20260702","20260703","20260704",
+      "20260705","20260706","20260707","20260708","20260709","20260710",
+      "20260711","20260712","20260713","20260714","20260715","20260716",
+      "20260717","20260718","20260719",
+    ];
+    const today = new Date();
+    // Only fetch dates up to today + 1
+    const todayStr = today.toISOString().split("T")[0].replace(/-/g,"");
+    const toFetch = dates.filter(d => d <= String(parseInt(todayStr)+1));
+    if (!toFetch.length) return [];
+
+    const base = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
+    const seen = new Set(); const allGames = [];
+    await Promise.all(toFetch.map(async d => {
+      try {
+        const res = await fetch(`${base}?dates=${d}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        for (const ev of (data.events||[])) {
+          if (seen.has(ev.id)) continue;
+          seen.add(ev.id);
+          const comp = ev.competitions?.[0];
+          allGames.push({
+            id: ev.id,
+            completed: comp?.status?.type?.completed,
+            isLive: comp?.status?.type?.state === "in",
+            roundName: comp?.notes?.[0]?.headline || ev.name || "",
+            competitors: (comp?.competitors||[]).map(c=>({
+              name: c.team?.displayName,
+              score: c.score,
+              winner: c.winner,
+            })),
+            date: ev.date,
+          });
+        }
+      } catch {}
+    }));
+    return allGames;
+  }
+
+  async function autoSyncESPN() {
+    if (!leagueCode || !owners.length) return;
+    try {
+      const games = await fetchESPNGames();
+      const completedGames = games.filter(g => g.completed);
+      let inserted = 0;
+
+      for (const game of completedGames) {
+        // Map round
+        const rl = game.roundName.toLowerCase();
+        let roundId = null;
+        for (const [key, val] of Object.entries(ESPN_WC_ROUND_MAP)) {
+          if (rl.includes(key.toLowerCase())) { roundId = val; break; }
+        }
+        if (!roundId) {
+          // Fallback: detect by round keywords
+          if (rl.includes("group") || rl.includes("pool")) roundId = "Pool Play";
+          else if (rl.includes("round of 32")) roundId = "Round of 32";
+          else if (rl.includes("round of 16")) roundId = "Round of 16";
+          else if (rl.includes("quarter")) roundId = "Round of 8";
+          else if (rl.includes("semi")) roundId = "Round of 4";
+          else if (rl.includes("final") && !rl.includes("semi") && !rl.includes("quarter")) roundId = "Championship";
+        }
+        if (!roundId) continue;
+
+        const winner = game.competitors.find(c => c.winner);
+        const isDraw = !winner && game.competitors.length === 2 &&
+          game.competitors[0]?.score === game.competitors[1]?.score;
+
+        if (!winner && !isDraw) continue;
+
+        // Match winning/drawing team(s) to owners
+        const teamsToCheck = isDraw ? game.competitors : [winner];
+
+        for (const comp of teamsToCheck) {
+          const espnName = normTeamName(comp.name);
+
+          for (const owner of owners) {
+            for (const team of (owner.teams||[])) {
+              if (!team.name) continue;
+              const tn = normTeamName(team.name);
+              if (!tn) continue;
+
+              // Fuzzy match
+              const matched = espnName === tn ||
+                espnName.includes(tn) || tn.includes(espnName) ||
+                espnName.split("").filter(c=>tn.includes(c)).length > tn.length * 0.7;
+
+              if (!matched) continue;
+
+              if (isDraw && roundId === "Pool Play") {
+                // Check draw not already logged
+                const exists = draws.some(d =>
+                  d.owner_id === owner.id &&
+                  d.round_id === roundId &&
+                  normTeamName(d.team_name) === tn
+                );
+                if (exists) continue;
+                const { error } = await supabase.from("draws").insert({
+                  league_code: leagueCode, owner_id: owner.id,
+                  team_name: team.name, round_id: roundId,
+                });
+                if (!error) {
+                  inserted++;
+                  setSyncLog(prev => [{
+                    time: new Date().toLocaleTimeString(),
+                    msg: `🤝 Draw: ${owner.name} — ${team.name} (${roundId})`
+                  }, ...prev.slice(0,19)]);
+                }
+              } else if (!isDraw) {
+                // Check win not already logged
+                const exists = wins.some(w =>
+                  w.owner_id === owner.id &&
+                  w.round_id === roundId &&
+                  normTeamName(w.team_name) === tn
+                );
+                if (exists) continue;
+                const { error } = await supabase.from("wins").insert({
+                  league_code: leagueCode, owner_id: owner.id,
+                  team_name: team.name, round_id: roundId,
+                });
+                if (!error) {
+                  inserted++;
+                  setSyncLog(prev => [{
+                    time: new Date().toLocaleTimeString(),
+                    msg: `⚽ Win: ${owner.name} — ${team.name} (${roundId})`
+                  }, ...prev.slice(0,19)]);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      setLastSync(new Date());
+      if (inserted > 0) loadData();
+    } catch(e) { console.error("WC autoSyncESPN error:", e); }
+  }
+
+  // Auto-sync interval — runs every 60s when enabled
+  useEffect(() => {
+    if (!autoSync || !leagueCode) return;
+    autoSyncESPN();
+    const interval = setInterval(autoSyncESPN, 60000);
+    return () => clearInterval(interval);
+  }, [autoSync, leagueCode, owners.length]);
+
   async function recordResult(ownerId, teamName, round, type) {
     const table = type==="draw" ? "draws" : "wins";
     const { error } = await supabase.from(table).insert({
@@ -1269,7 +1445,19 @@ export default function WorldCupApp() {
               <div style={{ fontSize:"0.6rem",letterSpacing:2,color:"rgba(255,255,255,0.6)",textTransform:"uppercase" }}>2026 WORLD CUP</div>
             </div>
           </div>
-          <div style={{ background:"#f4c430",color:"#063d24",fontFamily:"'Bebas Neue',sans-serif",fontSize:"1rem",letterSpacing:2,padding:"4px 12px",borderRadius:6 }}>CHI2025</div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <button onClick={()=>setAutoSync(a=>!a)} style={{
+              background:autoSync?"#0a2a14":"#1a2440",
+              border:`1px solid ${autoSync?"#27ae60":"#2a3560"}`,
+              borderRadius:6,color:autoSync?"#2ecc71":"#6677aa",
+              fontFamily:"'Bebas Neue',sans-serif",fontSize:"0.75rem",letterSpacing:1.5,
+              padding:"4px 10px",cursor:"pointer",display:"flex",alignItems:"center",gap:5
+            }}>
+              <span style={{fontSize:8,color:autoSync?"#2ecc71":"#445"}}>●</span>
+              {autoSync?"LIVE":"AUTO-SYNC"}
+            </button>
+            <div style={{ background:"#f4c430",color:"#063d24",fontFamily:"'Bebas Neue',sans-serif",fontSize:"1rem",letterSpacing:2,padding:"4px 12px",borderRadius:6 }}>{leagueCode}</div>
+          </div>
         </div>
         <nav style={{ display:"flex",overflowX:"auto",gap:2,padding:"0 10px",scrollbarWidth:"none" }}>
           {TABS.map(t=>(
@@ -1444,10 +1632,28 @@ export default function WorldCupApp() {
             {/* WIN TRACKER */}
             {tab==="wins"&&(
               <div>
-                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20 }}>
+                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10 }}>
                   <h2 style={{ margin:0,fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2 }}>📋 Result Log</h2>
-                  <button onClick={()=>{ if(!adminUnlocked){setModal("pin");return;} setModal("addResult"); }} style={S.btn()}>+ Record Result</button>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+                    {lastSync&&<span style={{fontSize:11,color:"#6677aa"}}>Synced: {lastSync.toLocaleTimeString()}</span>}
+                    <button onClick={()=>setAutoSync(a=>!a)} style={{
+                      ...S.btn(autoSync?"#0a2a14":"#1a2440",autoSync?"#2ecc71":"#6677aa"),
+                      border:`1px solid ${autoSync?"#27ae60":"#2a3560"}`,fontSize:12,padding:"7px 14px"
+                    }}>{autoSync?"🔄 Auto-Sync ON":"Auto-Sync OFF"}</button>
+                    <button onClick={autoSyncESPN} style={{...S.btn(),fontSize:12,padding:"7px 14px"}}>⚽ Sync Now</button>
+                    <button onClick={()=>{ if(!adminUnlocked){setModal("pin");return;} setModal("addResult"); }} style={S.btn()}>+ Manual Result</button>
+                  </div>
                 </div>
+                {syncLog.length>0&&(
+                  <div style={{background:"#080e1a",border:"1px solid #1e2d4a",borderRadius:10,padding:"10px 14px",marginBottom:14}}>
+                    <div style={{fontSize:10,color:"#6677aa",textTransform:"uppercase",letterSpacing:1.5,fontWeight:700,marginBottom:8}}>Auto-Sync Log</div>
+                    {syncLog.slice(0,5).map((l,i)=>(
+                      <div key={i} style={{fontSize:12,color:"#8899cc",padding:"3px 0",borderBottom:i<Math.min(syncLog.length,5)-1?"1px solid #131929":"none"}}>
+                        <span style={{color:"#445",marginRight:8}}>{l.time}</span>{l.msg}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {wins.length===0&&draws.length===0?<Empty text="No results recorded yet." />:(
                   <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
                     {[...wins.map(w=>({...w,type:"win"})),...draws.map(d=>({...d,type:"draw"}))].map(r=>{
