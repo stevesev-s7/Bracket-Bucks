@@ -1502,36 +1502,84 @@ export default function WorldCupApp() {
                   )}
 
                   {/* My Leagues */}
-                  <div style={{ ...S.card,marginBottom:20 }}>
-                    <SecTitle>🌍 My Leagues</SecTitle>
-                    {myLeagues.length===0&&<p style={{color:"#445",fontSize:13,marginBottom:12}}>No leagues joined yet.</p>}
-                    <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
-                      {[...myLeagues].reverse().map(l=>(
-                        <button key={l.code} onClick={()=>switchLeague(l.code)}
-                          style={{...S.btn(l.code===leagueCode?"#0a2a14":"#0f1625","#dce4f5"),
-                            padding:"12px 16px",fontSize:14,borderRadius:10,textAlign:"left",
-                            border:`1px solid ${l.code===leagueCode?"#f4c430":"#1e2840"}`,
-                            display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                          <div>
-                            <div style={{fontWeight:700}}>{l.name}</div>
-                            <div style={{fontSize:11,color:"#6677aa",marginTop:2}}>
-                              Code: <span style={{fontFamily:"'DM Mono',monospace",color:"#f4c430"}}>{l.code}</span>
-                              {l.code===leagueCode&&<span style={{color:"#2ecc71",marginLeft:8}}>✓ Active</span>}
+                  {(()=>{
+                    // Detect March Madness leagues from localStorage to offer cross-join
+                    let mmLeagues = [];
+                    try { mmLeagues = JSON.parse(localStorage.getItem("bb_my_leagues")||"[]"); } catch {}
+                    const wcCodes = new Set(myLeagues.map(l=>l.code));
+                    const mmNotJoined = mmLeagues.filter(l=>!wcCodes.has(l.code));
+                    return (
+                      <div style={{ ...S.card,marginBottom:20 }}>
+                        <SecTitle>🌍 My Leagues</SecTitle>
+
+                        {/* MM leagues available to join */}
+                        {mmNotJoined.length>0&&(
+                          <div style={{background:"#0a1428",border:"1px solid #2a3560",borderRadius:10,padding:"12px 16px",marginBottom:14}}>
+                            <div style={{fontSize:11,color:"#6677aa",textTransform:"uppercase",letterSpacing:1.5,fontWeight:700,marginBottom:8}}>
+                              🏀 From your March Madness profile
                             </div>
+                            {mmNotJoined.map(l=>(
+                              <div key={l.code} style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+                                background:"#0f1a30",border:"1px solid #1e2d4a",borderRadius:8,padding:"8px 12px",marginBottom:6}}>
+                                <div>
+                                  <div style={{fontWeight:700,fontSize:13}}>{l.name||l.code}</div>
+                                  <div style={{fontSize:11,color:"#f4c430",fontFamily:"'DM Mono',monospace"}}>{l.code}</div>
+                                </div>
+                                <button onClick={async()=>{
+                                  setJoinCode(l.code);
+                                  const {data,error}=await supabase.from("leagues").select("*").eq("code",l.code).single();
+                                  if(error||!data){alert("No World Cup league found with code "+l.code+". Ask the league creator to set it up.","error");return;}
+                                  saveToMyLeagues(l.code,data.name||l.name||l.code);
+                                  switchLeague(l.code);
+                                  alert("✅ Joined "+( data.name||l.code)+"!");
+                                }} style={{...S.btn("#1a3a5a","#f4c430"),border:"1px solid #f4c430",fontSize:12,padding:"6px 14px",flexShrink:0}}>
+                                  ⚽ Join WC
+                                </button>
+                              </div>
+                            ))}
                           </div>
-                          <span style={{color:"#f4c430"}}>→</span>
-                        </button>
-                      ))}
-                    </div>
-                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                      <button onClick={()=>setModal("joinLeague")} style={{...S.btn("#1a2440","#f4c430"),border:"1px solid #f4c430",fontSize:13,padding:"9px 18px"}}>
-                        + Join a League
-                      </button>
-                      <button onClick={()=>{setPaymentStep("instructions");setModal("createLeague");}} style={{...S.btn("#0a2a14","#2ecc71"),border:"1px solid #27ae60",fontSize:13,padding:"9px 18px"}}>
-                        + Create a League
-                      </button>
-                    </div>
-                  </div>
+                        )}
+
+                        {myLeagues.length===0&&mmNotJoined.length===0&&<p style={{color:"#445",fontSize:13,marginBottom:12}}>No leagues joined yet. Enter a league code below.</p>}
+
+                        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+                          {[...myLeagues].reverse().map(l=>(
+                            <div key={l.code} style={{background:l.code===leagueCode?"#0a2a14":"#0f1625",
+                              border:`1px solid ${l.code===leagueCode?"#f4c430":"#1e2840"}`,
+                              borderRadius:10,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
+                              <button onClick={()=>switchLeague(l.code)}
+                                style={{...S.btn("transparent","#dce4f5"),padding:0,flex:1,textAlign:"left",fontSize:14}}>
+                                <div style={{fontWeight:700}}>{l.name}</div>
+                                <div style={{fontSize:11,color:"#6677aa",marginTop:2}}>
+                                  {l.code===leagueCode&&<span style={{color:"#2ecc71",marginRight:8}}>✓ Active</span>}
+                                  Invite Code: <span style={{fontFamily:"'DM Mono',monospace",color:"#f4c430",fontSize:13}}>{l.code}</span>
+                                </div>
+                              </button>
+                              <button onClick={()=>{
+                                navigator.clipboard?.writeText(l.code).catch(()=>{});
+                                alert("📋 Code "+l.code+" copied!");
+                              }} style={{...S.btn("#1a2440","#6677aa"),fontSize:11,padding:"5px 10px",flexShrink:0}}>
+                                📋 Copy
+                              </button>
+                              {l.code!==leagueCode&&<button onClick={()=>switchLeague(l.code)}
+                                style={{...S.btn("#0a2a14","#f4c430"),border:"1px solid #f4c430",fontSize:11,padding:"5px 10px",flexShrink:0}}>
+                                Switch →
+                              </button>}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                          <button onClick={()=>setModal("joinLeague")} style={{...S.btn("#1a2440","#f4c430"),border:"1px solid #f4c430",fontSize:13,padding:"9px 18px"}}>
+                            + Join a League
+                          </button>
+                          <button onClick={()=>{setPaymentStep("instructions");setModal("createLeague");}} style={{...S.btn("#0a2a14","#2ecc71"),border:"1px solid #27ae60",fontSize:13,padding:"9px 18px"}}>
+                            + Create a League
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                 </div>
               );
