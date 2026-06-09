@@ -575,49 +575,83 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert }) {
         </div>
 
         {/* Draft Board */}
-        <div>
+        <div style={{ overflowX:"auto" }}>
           <div style={{ fontSize:11,color:"#6677aa",textTransform:"uppercase",letterSpacing:1.5,fontWeight:700,marginBottom:10 }}>Draft Board</div>
-          <div style={{ background:"#0f1420",border:"1px solid #1a2440",borderRadius:12,overflow:"hidden" }}>
-            <div style={{ display:"grid",gridTemplateColumns:`60px repeat(${numOwners},1fr)`,background:"#141d38",borderBottom:"1px solid #1a2440",padding:"6px 8px" }}>
-              <div style={{ fontSize:10,color:"#445",textTransform:"uppercase" }}>Rd</div>
-              {sortedOwners.map(o=>(
-                <div key={o.id} style={{ fontSize:10,color:o.color,fontWeight:700,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
-                  {o.name.split(" ")[0]}
-                </div>
-              ))}
-            </div>
-            {Array.from({length:6},(_,round)=>{
-              const isEvenR=round%2===0;
-              return (
-                <div key={round} style={{ display:"grid",gridTemplateColumns:`60px repeat(${numOwners},1fr)`,
-                  borderBottom:"1px solid #111",padding:"3px 8px",background:round%2===0?"#0f1420":"#0a0f1a" }}>
-                  <div style={{ fontSize:11,color:"#445",display:"flex",alignItems:"center" }}>Rd {round+1}</div>
-                  {sortedOwners.map((o,oi)=>{
-                    const pick=(o.teams||[])[round];
-                    const globalPick=round*numOwners+(isEvenR?oi:numOwners-1-oi);
-                    const isCurrent=globalPick===totalPicks&&!draftComplete;
-                    return (
-                      <div key={o.id} style={{ padding:"2px 3px",borderRadius:4,textAlign:"center",
-                        background:isCurrent?o.color+"33":"transparent",
-                        border:isCurrent?`1px solid ${o.color}`:"1px solid transparent",
-                        minHeight:26,display:"flex",alignItems:"center",justifyContent:"center" }}>
-                        {pick?.name?(
-                          <div>
-                            <div style={{ fontSize:8,color:o.color,fontWeight:700 }}>#{pick.seed}</div>
-                            <div style={{ fontSize:8,color:"#dce4f5",lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:44 }}>
-                              {pick.name.split(" ").slice(-1)[0]}
-                            </div>
-                          </div>
-                        ):(
-                          <div style={{ width:16,height:2,background:isCurrent?o.color:"#1a2440",borderRadius:1 }} />
-                        )}
+          <table style={{ width:"100%",borderCollapse:"collapse",background:"#0a0f1a",borderRadius:12,overflow:"hidden",minWidth:480 }}>
+            <thead>
+              <tr style={{ background:"#141d38" }}>
+                <th style={{ padding:"10px 14px",textAlign:"left",fontSize:11,color:"#6677aa",
+                  fontWeight:700,textTransform:"uppercase",letterSpacing:1.5,
+                  borderBottom:"2px solid #1a2440",width:60 }}>Rd</th>
+                {sortedOwners.map(o=>(
+                  <th key={o.id} style={{ padding:"10px 8px",textAlign:"center",
+                    borderBottom:"2px solid #1a2440",borderLeft:"1px solid #1a2440" }}>
+                    <div style={{ display:"flex",flexDirection:"column",alignItems:"center",gap:4 }}>
+                      <div style={{ width:28,height:28,borderRadius:"50%",background:o.color,
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        fontSize:13,fontWeight:800,color:"#fff",flexShrink:0 }}>
+                        {o.name.charAt(0)}
                       </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
+                      <div style={{ fontSize:11,fontWeight:700,color:o.color,
+                        whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:72 }}>
+                        {o.name.split(" ")[0]}
+                      </div>
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({length:6},(_,round)=>{
+                const isEvenR=round%2===0;
+                return (
+                  <tr key={round} style={{ background:round%2===0?"#0a0f1a":"#080d14" }}>
+                    <td style={{ padding:"10px 14px",borderBottom:"1px solid #131929",
+                      borderRight:"2px solid #1a2440" }}>
+                      <div style={{ fontSize:12,fontWeight:700,color:"#6677aa" }}>Rd {round+1}</div>
+                      <div style={{ fontSize:9,color:"#334",marginTop:1 }}>{isEvenR?"→":"←"}</div>
+                    </td>
+                    {sortedOwners.map((o,oi)=>{
+                      const pick=(o.teams||[])[round];
+                      const globalPick=round*numOwners+(isEvenR?oi:numOwners-1-oi);
+                      const isCurrent=globalPick===totalPicks&&!draftComplete;
+                      return (
+                        <td key={o.id} style={{ padding:"8px 6px",textAlign:"center",
+                          borderBottom:"1px solid #131929",borderLeft:"1px solid #1a2440",
+                          background:isCurrent?o.color+"22":"transparent",
+                          outline:isCurrent?`2px solid ${o.color}`:"none",
+                          outlineOffset:"-2px" }}>
+                          {pick?.name?(
+                            <div>
+                              <div style={{ fontSize:10,color:o.color,fontWeight:800,marginBottom:2 }}>
+                                #{pick.seed}
+                              </div>
+                              <div style={{ fontSize:11,fontWeight:600,color:"#dce4f5",
+                                lineHeight:1.3,whiteSpace:"nowrap",overflow:"hidden",
+                                textOverflow:"ellipsis",maxWidth:80 }}>
+                                {pick.name}
+                              </div>
+                              {pick.group&&<div style={{ fontSize:9,color:GROUP_COLORS[pick.group]||"#445",marginTop:2 }}>
+                                {pick.group.replace("Group ","")}
+                              </div>}
+                            </div>
+                          ):(
+                            isCurrent?(
+                              <div style={{ fontSize:10,color:o.color,fontWeight:700,animation:"pulse 1s infinite" }}>
+                                ON THE<br/>CLOCK
+                              </div>
+                            ):(
+                              <div style={{ width:20,height:2,background:"#1a2440",borderRadius:1,margin:"0 auto" }} />
+                            )
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
 
           {/* Teams Drafted per Owner */}
           <div style={{ marginTop:14 }}>
