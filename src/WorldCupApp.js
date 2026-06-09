@@ -836,6 +836,9 @@ export default function WorldCupApp() {
   const [roundDraft, setRoundDraft] = useState({});
   const [loading, setLoading] = useState(true);
   const [authUser, setAuthUser] = useState(null);
+  const [authView, setAuthView] = useState("signin"); // signin | signup
+  const [authError, setAuthError] = useState("");
+  const [authWorking, setAuthWorking] = useState(false);
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [toast, setToast] = useState(null);
   const [modal, setModal] = useState(null);
@@ -952,6 +955,23 @@ export default function WorldCupApp() {
     setTimeout(() => setToast(null), 3500);
   }
 
+  async function handleSignIn() {
+    if (!email.trim() || !password.trim()) { setAuthError("Please enter email and password."); return; }
+    setAuthWorking(true); setAuthError("");
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setAuthWorking(false);
+    if (error) setAuthError(error.message);
+  }
+
+  async function handleSignUp() {
+    if (!email.trim() || !password.trim() || !authName.trim()) { setAuthError("Please fill in all fields."); return; }
+    setAuthWorking(true); setAuthError("");
+    const { error } = await supabase.auth.signUp({ email: email.trim(), password, options:{ data:{ name: authName.trim() } } });
+    setAuthWorking(false);
+    if (error) setAuthError(error.message);
+    else setAuthError("✅ Account created! Check your email to confirm, then sign in.");
+  }
+
   const loadData = useCallback(async () => {
     setLoading(true);
     const [{ data: lg }, { data: ow }, { data: wn }, { data: dr }] = await Promise.all([
@@ -1019,6 +1039,136 @@ export default function WorldCupApp() {
   const totalWins  = wins.length;
   const totalDraws = draws.length;
 
+  // ── AUTH GATE ──────────────────────────────────────────────────────────────
+  if (!authUser) {
+    const isSignUp = authView === "signup";
+    const inp = { width:"100%", background:"#0f1625", border:"1px solid #1a2440", borderRadius:8,
+      color:"#dce4f5", fontFamily:"inherit", fontSize:15, padding:"11px 14px", outline:"none",
+      marginBottom:14, boxSizing:"border-box" };
+    return (
+      <div style={{ minHeight:"100vh", background:"#060d0b", fontFamily:"'DM Sans',sans-serif",
+        color:"#dce4f5", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+        <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
+        <Toast msg={toast?.msg} type={toast?.type} />
+        <div style={{ maxWidth:420, width:"100%" }}>
+          {/* Logo */}
+          <div style={{ textAlign:"center", marginBottom:36 }}>
+            <div style={{ fontSize:52, marginBottom:8 }}>⚽</div>
+            <h1 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:44, letterSpacing:4,
+              color:"#f4c430", margin:0, textShadow:"0 0 30px rgba(244,196,48,0.4)" }}>BRACKET BUCKS</h1>
+            <p style={{ color:"#6677aa", marginTop:8, fontSize:14 }}>2026 World Cup Edition</p>
+          </div>
+          {/* Card */}
+          <div style={{ background:"#111827", border:"1px solid #1e2840", borderRadius:18, padding:28 }}>
+            <h2 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, letterSpacing:2,
+              color:"#f4c430", margin:"0 0 22px" }}>
+              {isSignUp ? "Create Account" : "Sign In"}
+            </h2>
+            {isSignUp && (
+              <input value={authName} onChange={e=>setAuthName(e.target.value)}
+                placeholder="Your name" style={inp} onKeyDown={e=>e.key==="Enter"&&handleSignUp()} />
+            )}
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+              placeholder="Email address" style={inp} onKeyDown={e=>e.key==="Enter"&&(isSignUp?handleSignUp():handleSignIn())} />
+            <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
+              placeholder="Password" style={{...inp, marginBottom:16}} onKeyDown={e=>e.key==="Enter"&&(isSignUp?handleSignUp():handleSignIn())} />
+            {authError && (
+              <div style={{ fontSize:13, marginBottom:14, padding:"10px 14px", borderRadius:8,
+                background: authError.startsWith("✅") ? "#0a2a14" : "#2a1418",
+                color: authError.startsWith("✅") ? "#2ecc71" : "#e74c3c",
+                border: `1px solid ${authError.startsWith("✅") ? "#27ae60" : "#e74c3c"}` }}>
+                {authError}
+              </div>
+            )}
+            <button onClick={isSignUp ? handleSignUp : handleSignIn} disabled={authWorking}
+              style={{ ...S.btn("#f4c430","#0a0a0a"), width:"100%", padding:"13px", fontSize:15,
+                borderRadius:10, opacity:authWorking?0.7:1, fontWeight:800 }}>
+              {authWorking ? "Please wait…" : isSignUp ? "Create Account" : "Sign In"}
+            </button>
+            <div style={{ textAlign:"center", marginTop:18, fontSize:13, color:"#6677aa" }}>
+              {isSignUp ? "Already have an account? " : "Don't have an account? "}
+              <button onClick={()=>{ setAuthView(isSignUp?"signin":"signup"); setAuthError(""); }}
+                style={{ background:"none", border:"none", color:"#f4c430", cursor:"pointer",
+                  fontSize:13, fontWeight:700, fontFamily:"inherit" }}>
+                {isSignUp ? "Sign In" : "Create one"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── LEAGUE GATE ────────────────────────────────────────────────────────────
+  if (!leagueCode || myLeagues.length === 0) {
+    const inp = { width:"100%", background:"#0f1625", border:"1px solid #1a2440", borderRadius:8,
+      color:"#dce4f5", fontFamily:"inherit", fontSize:15, padding:"11px 14px", outline:"none",
+      marginBottom:14, boxSizing:"border-box" };
+    let mmLeagues = [];
+    try { mmLeagues = JSON.parse(localStorage.getItem("bb_my_leagues")||"[]"); } catch {}
+    return (
+      <div style={{ minHeight:"100vh", background:"#060d0b", fontFamily:"'DM Sans',sans-serif",
+        color:"#dce4f5", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+        <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
+        <Toast msg={toast?.msg} type={toast?.type} />
+        <div style={{ maxWidth:460, width:"100%" }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+              <span style={{ fontSize:32 }}>⚽</span>
+              <div>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:3, color:"#f4c430", lineHeight:1 }}>BRACKET BUCKS</div>
+                <div style={{ fontSize:11, color:"#6677aa", letterSpacing:2 }}>2026 WORLD CUP</div>
+              </div>
+            </div>
+            <button onClick={()=>supabase.auth.signOut()}
+              style={{ ...S.btn("#1a1a2e","#6677aa"), border:"1px solid #1a2440", fontSize:12 }}>Sign Out</button>
+          </div>
+
+          {/* MM leagues to quickly join */}
+          {mmLeagues.length > 0 && (
+            <div style={{ background:"#111827", border:"1px solid #1e2840", borderRadius:14, padding:20, marginBottom:16 }}>
+              <div style={{ fontSize:11, color:"#6677aa", textTransform:"uppercase", letterSpacing:2, fontWeight:700, marginBottom:12 }}>
+                🏀 Your March Madness Leagues
+              </div>
+              {mmLeagues.map(l=>(
+                <div key={l.code} style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
+                  background:"#0f1625", border:"1px solid #1e2840", borderRadius:8, padding:"10px 14px", marginBottom:8 }}>
+                  <div>
+                    <div style={{ fontWeight:700 }}>{l.name||l.code}</div>
+                    <div style={{ fontSize:11, color:"#f4c430", fontFamily:"'DM Mono',monospace" }}>{l.code}</div>
+                  </div>
+                  <button onClick={async()=>{
+                    const {data,error}=await supabase.from("leagues").select("*").eq("code",l.code).single();
+                    if(error||!data){alert("No World Cup league with code "+l.code+". Ask the creator to set it up.","error");return;}
+                    saveToMyLeagues(l.code,data.name||l.name||l.code);
+                    switchLeague(l.code);
+                  }} style={{ ...S.btn("#0a2a14","#f4c430"), border:"1px solid #f4c430", fontSize:12, padding:"7px 14px", flexShrink:0 }}>
+                    ⚽ Join
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Manual code entry */}
+          <div style={{ background:"#111827", border:"1px solid #1e2840", borderRadius:14, padding:20 }}>
+            <h2 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:2, color:"#f4c430", margin:"0 0 16px" }}>
+              Enter League Code
+            </h2>
+            <input value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
+              placeholder="e.g. CHI2025" style={inp}
+              onKeyDown={e=>e.key==="Enter"&&joinLeague()} />
+            {joinErr && <div style={{ color:"#e74c3c", fontSize:13, marginBottom:10 }}>{joinErr}</div>}
+            <button onClick={joinLeague} style={{ ...S.btn("#f4c430","#0a0a0a"), width:"100%", padding:"13px", fontSize:15, borderRadius:10, fontWeight:800 }}>
+              Join League
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── MAIN APP ───────────────────────────────────────────────────────────────
   return (
     <div style={{ maxWidth:960,margin:"0 auto",minHeight:"100vh",background:"#0d1f13",color:"#e8f0e9",fontFamily:"'DM Sans','Nunito',sans-serif" }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} * {box-sizing:border-box}`}</style>
