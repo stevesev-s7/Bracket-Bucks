@@ -423,7 +423,18 @@ function ScheduleTab({ owners }) {
 }
 
 // ─── DRAFT TAB ────────────────────────────────────────────────────────────────
-function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert }) {
+function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leagueCode, onRefresh }) {
+  // Fast poll every 3s while draft is active so all users see picks in real-time
+  const pollRef = useRef(null);
+  useEffect(() => {
+    if (!leagueCode) return;
+    // Poll every 3 seconds for owner updates during the draft
+    pollRef.current = setInterval(async () => {
+      const { data } = await supabase.from("owners").select("*").eq("league_code", leagueCode).order("num");
+      if (data) setOwners(data);
+    }, 3000);
+    return () => clearInterval(pollRef.current);
+  }, [leagueCode]);
   const pickedNames = owners.flatMap(o=>(o.teams||[]).map(t=>(t.name||"").toLowerCase().trim()));
   const available = WC_TEAMS.filter(t=>!pickedNames.includes(t.name.toLowerCase().trim()));
   const totalPicks = owners.reduce((sum,o)=>sum+(o.teams||[]).filter(t=>t.name&&t.name.trim()).length,0);
@@ -1089,7 +1100,10 @@ export default function WorldCupApp() {
     const channel = supabase.channel("wc-realtime")
       .on("postgres_changes",{event:"*",schema:"public",table:"wins",filter:`league_code=eq.${leagueCode}`},loadData)
       .on("postgres_changes",{event:"*",schema:"public",table:"draws",filter:`league_code=eq.${leagueCode}`},loadData)
-      .on("postgres_changes",{event:"*",schema:"public",table:"owners",filter:`league_code=eq.${leagueCode}`},loadData)
+      .on("postgres_changes",{event:"*",schema:"public",table:"owners"},({new:row})=>{
+        // Only reload if this change is for our league
+        if (row?.league_code === leagueCode || !row?.league_code) loadData();
+      })
       .subscribe();
     return () => { subscription.unsubscribe(); supabase.removeChannel(channel); };
   }, [loadData, leagueCode]);
@@ -1814,7 +1828,7 @@ export default function WorldCupApp() {
             )}
 
             {/* DRAFT */}
-            {tab==="draft"&&<DraftTab owners={owners} setOwners={setOwners} isAdmin={isAdmin} authUser={authUser} alert={alert} />}
+            {tab==="draft"&&<DraftTab owners={owners} setOwners={setOwners} isAdmin={isAdmin} authUser={authUser} alert={alert} leagueCode={leagueCode} onRefresh={loadData} />}
 
             {/* PROFILE */}
             {tab==="profile"&&(()=>{
