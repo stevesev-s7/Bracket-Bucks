@@ -468,6 +468,17 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
 
   async function draftPick(team) {
     if (!currentPicker) return;
+
+    // Non-admins can only pick when it's their own turn
+    if (!isAdmin) {
+      const userName = (authUser?.user_metadata?.name || authUser?.email || "").toLowerCase().trim();
+      const pickerName = (currentPicker.name || "").toLowerCase().trim();
+      if (userName !== pickerName) {
+        showAlert(`It's ${currentPicker.name}'s turn — wait for your pick!`, "error");
+        return;
+      }
+    }
+
     const updatedTeams = [...(currentPicker.teams||[])];
     const emptyIdx = updatedTeams.findIndex(t=>!t.name||!t.name.trim());
     if (emptyIdx===-1) { showAlert("This owner already has 6 teams.","error"); return; }
@@ -525,23 +536,33 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
       </div>
 
       {/* Current Picker Banner */}
-      {!draftComplete&&currentPicker&&(
-        <div style={{ background:"linear-gradient(135deg,#0a2e1a,#142010)",border:`2px solid ${currentPicker.color}`,
-          borderRadius:14,padding:"14px 20px",marginBottom:20,display:"flex",alignItems:"center",gap:14,flexWrap:"wrap" }}>
-          <div style={{ width:44,height:44,borderRadius:"50%",background:currentPicker.color,
-            display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:"#fff",flexShrink:0 }}>
-            {currentPicker.name.charAt(0)}
+      {!draftComplete&&currentPicker&&(()=>{
+        const userName = (authUser?.user_metadata?.name||authUser?.email||"").toLowerCase().trim();
+        const pickerName = (currentPicker.name||"").toLowerCase().trim();
+        const isMyTurn = isAdmin || (userName && userName === pickerName);
+        return (
+          <div style={{ background:isMyTurn?"linear-gradient(135deg,#0a2e1a,#142010)":"#0f1625",
+            border:`2px solid ${isMyTurn?currentPicker.color:"#2a3550"}`,
+            borderRadius:14,padding:"14px 20px",marginBottom:20,display:"flex",alignItems:"center",gap:14,flexWrap:"wrap" }}>
+            <div style={{ width:44,height:44,borderRadius:"50%",background:currentPicker.color,
+              display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:"#fff",flexShrink:0 }}>
+              {currentPicker.name.charAt(0)}
+            </div>
+            <div>
+              <div style={{ fontSize:11,color:"#6677aa",textTransform:"uppercase",letterSpacing:1.5,marginBottom:2 }}>
+                {isMyTurn?"🟢 Your Turn — Pick a Team":"⏳ Waiting for Pick"}
+              </div>
+              <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:22,letterSpacing:2,color:currentPicker.color }}>
+                {currentPicker.name}
+              </div>
+            </div>
+            <div style={{ marginLeft:"auto",textAlign:"right" }}>
+              <div style={{ fontSize:11,color:"#6677aa" }}>Round {pickRound+1} · Pick {totalPicks+1}</div>
+              <div style={{ fontSize:12,color:"#dce4f5" }}>{(currentPicker.teams||[]).filter(t=>t.name).length}/6 teams</div>
+            </div>
           </div>
-          <div>
-            <div style={{ fontSize:11,color:"#6677aa",textTransform:"uppercase",letterSpacing:1.5,marginBottom:2 }}>Now Picking</div>
-            <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:22,letterSpacing:2,color:currentPicker.color }}>{currentPicker.name}</div>
-          </div>
-          <div style={{ marginLeft:"auto",textAlign:"right" }}>
-            <div style={{ fontSize:11,color:"#6677aa" }}>Round {pickRound+1} · Pick {totalPicks+1}</div>
-            <div style={{ fontSize:12,color:"#dce4f5" }}>{(currentPicker.teams||[]).filter(t=>t.name).length}/6 teams</div>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Draft Order */}
       {!draftComplete&&owners.length>0&&(
@@ -588,15 +609,23 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
                   <span style={{ width:8,height:8,borderRadius:"50%",background:color,display:"inline-block" }}/>{group}
                 </div>
                 <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:5 }}>
-                  {groupTeams.map(team=>(
-                    <button key={team.name} onClick={()=>draftPick(team)} disabled={draftComplete||!currentPicker}
-                      style={{ display:"flex",alignItems:"center",gap:8,background:"#0f1625",
-                        border:`1px solid ${color}44`,borderRadius:8,padding:"7px 10px",
-                        cursor:"pointer",fontFamily:"inherit",textAlign:"left",opacity:draftComplete?0.5:1 }}>
-                      <SeedBadge seed={team.seed} />
-                      <span style={{ fontSize:12,fontWeight:600,color:"#dce4f5",flex:1 }}>{team.name}</span>
-                    </button>
-                  ))}
+                  {groupTeams.map(team=>{
+                    const userName = (authUser?.user_metadata?.name||authUser?.email||"").toLowerCase().trim();
+                    const pickerName = (currentPicker?.name||"").toLowerCase().trim();
+                    const isMyTurn = isAdmin || (userName && userName === pickerName);
+                    const btnDisabled = draftComplete || !currentPicker || !isMyTurn;
+                    return (
+                      <button key={team.name} onClick={()=>draftPick(team)} disabled={btnDisabled}
+                        title={!isMyTurn&&!draftComplete?`Wait for ${currentPicker?.name}'s pick`:""}
+                        style={{ display:"flex",alignItems:"center",gap:8,background:"#0f1625",
+                          border:`1px solid ${isMyTurn?color+"44":"#1a2440"}`,borderRadius:8,padding:"7px 10px",
+                          cursor:btnDisabled?"not-allowed":"pointer",fontFamily:"inherit",textAlign:"left",
+                          opacity:btnDisabled?0.35:1 }}>
+                        <SeedBadge seed={team.seed} />
+                        <span style={{ fontSize:12,fontWeight:600,color:isMyTurn?"#dce4f5":"#445",flex:1 }}>{team.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             );
