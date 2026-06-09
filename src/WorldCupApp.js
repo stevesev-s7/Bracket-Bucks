@@ -889,6 +889,7 @@ export default function WorldCupApp() {
   async function switchLeague(code) {
     setLeagueCode(code);
     localStorage.setItem("wc_active_league", code);
+    if (authUser) localStorage.setItem(`wc_league_${authUser.id}`, code);
     setTab("leaderboard");
   }
 
@@ -996,8 +997,37 @@ export default function WorldCupApp() {
 
   useEffect(() => {
     loadData();
-    supabase.auth.getSession().then(({data:{session}})=>setAuthUser(session?.user||null));
-    const {data:{subscription}} = supabase.auth.onAuthStateChange((_,session)=>setAuthUser(session?.user||null));
+    // On session load, restore last active league for this user
+    supabase.auth.getSession().then(({data:{session}})=>{
+      const user = session?.user||null;
+      setAuthUser(user);
+      if (user) {
+        // Try to restore their last league from localStorage
+        const saved = localStorage.getItem(`wc_league_${user.id}`) || localStorage.getItem("wc_active_league");
+        if (saved) {
+          // Also make sure it's in myLeagues list
+          const leagues = (() => { try { return JSON.parse(localStorage.getItem("wc_my_leagues")||"[]"); } catch { return []; } })();
+          if (!leagues.find(l=>l.code===saved)) {
+            // fetch league name and add it
+            supabase.from("leagues").select("name").eq("code",saved).single().then(({data})=>{
+              if (data) {
+                const updated = [...leagues, {code:saved, name:data.name||saved}];
+                localStorage.setItem("wc_my_leagues", JSON.stringify(updated));
+              }
+            });
+          }
+          setLeagueCode(saved);
+        }
+      }
+    });
+    const {data:{subscription}} = supabase.auth.onAuthStateChange((_,session)=>{
+      const user = session?.user||null;
+      setAuthUser(user);
+      if (user) {
+        const saved = localStorage.getItem(`wc_league_${user.id}`) || localStorage.getItem("wc_active_league");
+        if (saved) setLeagueCode(saved);
+      }
+    });
     const channel = supabase.channel("wc-realtime")
       .on("postgres_changes",{event:"*",schema:"public",table:"wins",filter:`league_code=eq.${leagueCode}`},loadData)
       .on("postgres_changes",{event:"*",schema:"public",table:"draws",filter:`league_code=eq.${leagueCode}`},loadData)
