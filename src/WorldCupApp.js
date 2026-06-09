@@ -455,6 +455,18 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert }) {
     showAlert("Draft reset! All picks cleared.");
   }
 
+  async function shuffleOrder() {
+    const shuffled = [...owners].sort(()=>Math.random()-0.5);
+    for (let i=0; i<shuffled.length; i++) {
+      await supabase.from("owners").update({num:i+1}).eq("id",shuffled[i].id);
+    }
+    setOwners(prev=>{
+      const map = Object.fromEntries(shuffled.map((o,i)=>[o.id,i+1]));
+      return prev.map(o=>({...o,num:map[o.id]}));
+    });
+    showAlert("🎲 Draft order shuffled!");
+  }
+
   const groupNames = [...new Set(WC_TEAMS.map(t=>t.group))].sort();
 
   return (
@@ -468,7 +480,18 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert }) {
               `Round ${pickRound+1} · Pick ${posInRound+1} of ${numOwners} · ${available.length} teams remaining`}
           </p>
         </div>
-        {isAdmin&&<button onClick={resetDraft} style={{...S.btn("#1a2440","#e74c3c"),border:"1px solid #e74c3c",fontSize:12}}>🗑 Reset Draft</button>}
+        {isAdmin&&(
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={shuffleOrder} disabled={draftComplete}
+              style={{...S.btn("#1a2440","#f4c430"),border:"1px solid #f4c430",fontSize:12,opacity:draftComplete?0.5:1}}>
+              🎲 Shuffle Order
+            </button>
+            <button onClick={resetDraft}
+              style={{...S.btn("#1a2440","#e74c3c"),border:"1px solid #e74c3c",fontSize:12}}>
+              🗑 Reset Draft
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Current Picker Banner */}
