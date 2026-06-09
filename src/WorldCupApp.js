@@ -889,7 +889,13 @@ function genCode() {
 }
 
 export default function WorldCupApp() {
-  const [tab, setTab] = useState("leaderboard");
+  const [tab, setTab] = useState(() => {
+    // Restore active tab from URL hash (e.g. #worldcup/leaderboard)
+    const hash = window.location.hash.replace('#','');
+    const part = hash.split('/')[1];
+    const valid = ["leaderboard","wins","livescores","schedule","roster","topteams","payouts","draft","howtoplay","profile","admin"];
+    return valid.includes(part) ? part : "leaderboard";
+  });
   const [leagueCode, setLeagueCode] = useState(LEAGUE_CODE);
   const [owners, setOwners] = useState([]);
   const [wins, setWins] = useState([]);
@@ -960,6 +966,7 @@ export default function WorldCupApp() {
     localStorage.setItem("wc_active_league", code);
     if (authUser) localStorage.setItem(`wc_league_${authUser.id}`, code);
     setTab("leaderboard");
+    window.location.hash = "worldcup/leaderboard";
   }
 
   async function autoAddUserAsOwner(code) {
@@ -1126,6 +1133,12 @@ export default function WorldCupApp() {
       .subscribe();
     return () => { subscription.unsubscribe(); supabase.removeChannel(channel); };
   }, [loadData, leagueCode]);
+
+  // Sync tab to URL hash so refresh stays on same tab
+  function goTab(t) {
+    setTab(t);
+    window.location.hash = `worldcup/${t}`;
+  }
 
   // ── ESPN World Cup Auto-Sync ──────────────────────────────────────────────
   // Round name → round_id mapping for FIFA World Cup 2026
@@ -1495,7 +1508,7 @@ export default function WorldCupApp() {
         </div>
         <nav style={{ display:"flex",overflowX:"auto",gap:2,padding:"0 10px",scrollbarWidth:"none" }}>
           {TABS.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{
+            <button key={t.id} onClick={()=>goTab(t.id)} style={{
               background:"transparent",border:"none",color:tab===t.id?"#f4c430":"rgba(255,255,255,0.6)",
               fontFamily:"inherit",fontWeight:700,fontSize:"0.75rem",padding:"10px 12px",cursor:"pointer",
               borderBottom:tab===t.id?"3px solid #f4c430":"3px solid transparent",whiteSpace:"nowrap",
