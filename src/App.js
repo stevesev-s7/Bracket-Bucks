@@ -23,23 +23,35 @@ const SPORTS = [
 ];
 
 export default function App() {
-  const [sport, setSport] = useState(null);
+  const [sport, setSport] = useState(() => {
+    // Restore sport from URL hash on load
+    const hash = window.location.hash.replace('#','');
+    if (hash.startsWith('worldcup') || hash === 'wc') return 'worldcup';
+    if (hash.startsWith('marchmadness') || hash === 'mm') return 'marchmadness';
+    return null;
+  });
+
+  function selectSport(s) {
+    setSport(s);
+    if (s) window.location.hash = s;
+    else window.location.hash = '';
+  }
 
   if (sport === 'worldcup') return (
     <div>
-      <SportBanner sport={SPORTS[0]} onSwitch={() => setSport(null)} />
+      <SportBanner sport={SPORTS[0]} onSwitch={() => selectSport(null)} />
       <WorldCupApp />
     </div>
   );
 
   if (sport === 'marchmadness') return (
     <div>
-      <SportBanner sport={SPORTS[1]} onSwitch={() => setSport(null)} />
+      <SportBanner sport={SPORTS[1]} onSwitch={() => selectSport(null)} />
       <MarchMadnessApp />
     </div>
   );
 
-  return <SportSelector onSelect={setSport} />;
+  return <SportSelector onSelect={selectSport} />;
 }
 
 function SportBanner({ sport, onSwitch }) {
