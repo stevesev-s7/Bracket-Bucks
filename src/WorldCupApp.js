@@ -424,16 +424,35 @@ function ScheduleTab({ owners }) {
 
 // ─── DRAFT TAB ────────────────────────────────────────────────────────────────
 function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leagueCode, onRefresh }) {
-  // Fast poll every 3s while draft is active so all users see picks in real-time
-  const pollRef = useRef(null);
+  // Real-time draft updates via Supabase channel + 3s poll fallback
   useEffect(() => {
     if (!leagueCode) return;
-    // Poll every 3 seconds for owner updates during the draft
-    pollRef.current = setInterval(async () => {
+
+    // Subscribe to owner changes via realtime
+    const ch = supabase.channel(`draft-${leagueCode}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "owners" }, async () => {
+        const { data } = await supabase.from("owners").select("*").eq("league_code", leagueCode).order("num");
+        if (data) setOwners(data);
+      })
+      .subscribe();
+
+    // 3s poll as fallback (handles cases where realtime misses events)
+    const poll = setInterval(async () => {
       const { data } = await supabase.from("owners").select("*").eq("league_code", leagueCode).order("num");
-      if (data) setOwners(data);
+      if (data) setOwners(prev => {
+        // Only update if data actually changed (compare team picks)
+        const changed = data.some((o, i) => {
+          const prev_o = prev.find(p => p.id === o.id);
+          return !prev_o || JSON.stringify(o.teams) !== JSON.stringify(prev_o.teams);
+        });
+        return changed ? data : prev;
+      });
     }, 3000);
-    return () => clearInterval(pollRef.current);
+
+    return () => {
+      supabase.removeChannel(ch);
+      clearInterval(poll);
+    };
   }, [leagueCode]);
   const pickedNames = owners.flatMap(o=>(o.teams||[]).map(t=>(t.name||"").toLowerCase().trim()));
   const available = WC_TEAMS.filter(t=>!pickedNames.includes(t.name.toLowerCase().trim()));
@@ -1828,7 +1847,7 @@ export default function WorldCupApp() {
             )}
 
             {/* DRAFT */}
-            {tab==="draft"&&<DraftTab owners={owners} setOwners={setOwners} isAdmin={isAdmin} authUser={authUser} alert={alert} leagueCode={leagueCode} onRefresh={loadData} />}
+            <div style={{display:tab==="draft"?"block":"none"}}><DraftTab owners={owners} setOwners={setOwners} isAdmin={isAdmin} authUser={authUser} alert={alert} leagueCode={leagueCode} onRefresh={loadData} /></div>
 
             {/* PROFILE */}
             {tab==="profile"&&(()=>{
