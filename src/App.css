@@ -710,3 +710,10 @@ a[href^="sms:"] {
 * {
   -webkit-touch-callout: none;
 }
+
+/* Nuclear option - kill ALL auto-detected links */
+a:not([href]) {
+  text-decoration: none !important;
+  color: inherit !important;
+  pointer-events: none !important;
+}
