@@ -592,7 +592,7 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
           border:"2px solid #2ecc71",borderRadius:14,marginBottom:20 }}>
           <div style={{ fontSize:40,marginBottom:8 }}>🏆</div>
           <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:28,letterSpacing:3,color:"#2ecc71" }}>Draft Complete!</div>
-          <div style={{ color:"#6677aa",fontSize:13,marginTop:6 }}>All {numOwners*6} picks made. Let's play!</div>
+          <div style={{ color:"#6677aa",fontSize:13,marginTop:6 }}>All {numOwners*teamsPerOwner} picks made. Let's play!</div>
         </div>
       )}
 
@@ -947,15 +947,7 @@ export default function WorldCupApp() {
   const [wins, setWins] = useState([]);
   const [draws, setDraws] = useState([]);
   const [league, setLeague] = useState(null);
-  const [teamsPerOwner, setTeamsPerOwner] = useState(() => {
-    try {
-      // Read from the CURRENT active league, not the hardcoded default
-      const activeCode = localStorage.getItem("wc_active_league") || LEAGUE_CODE;
-      const saved = localStorage.getItem(`wc_tpo_${activeCode}`);
-      if (saved) return parseInt(saved) || 6;
-    } catch {}
-    return 6;
-  });
+  const [teamsPerOwner, setTeamsPerOwner] = useState(6);
 
   const [rounds, setRounds] = useState(() => {
     // Try localStorage first as immediate fallback before Supabase loads
