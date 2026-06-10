@@ -699,3 +699,14 @@ body {
   .ss-card { min-width: 220px; padding: 32px 28px; }
   .ss-cards { gap: 16px; }
 }
+
+/* ── Prevent browser auto-detection underlines on dollar amounts ── */
+a[href^="tel:"],
+a[href^="sms:"] {
+  text-decoration: none !important;
+  color: inherit !important;
+  pointer-events: none !important;
+}
+* {
+  -webkit-touch-callout: none;
+}
