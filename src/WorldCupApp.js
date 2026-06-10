@@ -2029,7 +2029,7 @@ export default function WorldCupApp() {
                     steps:[
                       `All ${owners.length||"?"} players participate in a snake draft before the tournament starts.`,
                       "The admin shuffles the draft order randomly. In a snake draft, the order reverses each round — 1st pick in Round 1 picks last in Round 2, then 1st again in Round 3.",
-                      "Each player drafts 6 teams total across 6 rounds.",
+                      `Each player drafts ${teamsPerOwner} teams total across ${teamsPerOwner} rounds.`,
                       "Teams are organized by group (A–L) and seed (#1–#12). Seed #1 = strongest in the group, #12 = weakest.",
                       "High seeds (#10–12) pay more if they win, but are less likely to advance. Low seeds (#1–3) are safer but pay less.",
                       "Only the admin can make picks — when it's your turn, the admin selects your team on your behalf (or you can be present during the live draft).",
