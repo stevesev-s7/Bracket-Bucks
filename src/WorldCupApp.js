@@ -423,7 +423,8 @@ function ScheduleTab({ owners }) {
 }
 
 // ─── DRAFT TAB ────────────────────────────────────────────────────────────────
-function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leagueCode, onRefresh }) {
+function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leagueCode, onRefresh, teamsPerOwner: tpo }) {
+  const teamsPerOwner = tpo || 6;
   // Real-time draft updates via Supabase channel + 3s poll fallback
   useEffect(() => {
     if (!leagueCode) return;
@@ -464,7 +465,7 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
   const sortedOwners = [...owners].sort((a,b)=>a.num-b.num);
   const currentPickerIdx = isEvenRound?posInRound:(numOwners-1-posInRound);
   const currentPicker = sortedOwners[currentPickerIdx]||null;
-  const draftComplete = totalPicks>=numOwners*6&&numOwners>0; // 6 teams per player for WC
+  const draftComplete = totalPicks>=numOwners*teamsPerOwner&&numOwners>0;
 
   async function draftPick(team) {
     if (!currentPicker) return;
@@ -481,7 +482,7 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
 
     const updatedTeams = [...(currentPicker.teams||[])];
     const emptyIdx = updatedTeams.findIndex(t=>!t.name||!t.name.trim());
-    if (emptyIdx===-1) { showAlert("This owner already has 6 teams.","error"); return; }
+    if (emptyIdx===-1) { showAlert(`This owner already has ${teamsPerOwner} teams.`,"error"); return; }
     updatedTeams[emptyIdx] = { seed:team.seed, name:team.name, group:team.group };
     const { error } = await supabase.from("owners").update({ teams:updatedTeams }).eq("id",currentPicker.id);
     if (error) { showAlert("Failed to save pick.","error"); return; }
@@ -490,7 +491,7 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
   }
 
   async function resetDraft() {
-    const blank = Array.from({length:6},(_,i)=>({seed:i+1,name:"",group:""}));
+    const blank = Array.from({length:teamsPerOwner},(_,i)=>({seed:i+1,name:"",group:""}));
     for (const o of owners) await supabase.from("owners").update({teams:blank}).eq("id",o.id);
     setOwners(prev=>prev.map(o=>({...o,teams:blank})));
     showAlert("Draft reset! All picks cleared.");
@@ -558,7 +559,7 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
             </div>
             <div style={{ marginLeft:"auto",textAlign:"right" }}>
               <div style={{ fontSize:11,color:"#6677aa" }}>Round {pickRound+1} · Pick {totalPicks+1}</div>
-              <div style={{ fontSize:12,color:"#dce4f5" }}>{(currentPicker.teams||[]).filter(t=>t.name).length}/6 teams</div>
+              <div style={{ fontSize:12,color:"#dce4f5" }}>{(currentPicker.teams||[]).filter(t=>t.name).length}/{teamsPerOwner} teams</div>
             </div>
           </div>
         );
@@ -661,7 +662,7 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
               </tr>
             </thead>
             <tbody>
-              {Array.from({length:6},(_,round)=>{
+              {Array.from({length:teamsPerOwner},(_,round)=>{
                 const isEvenR=round%2===0;
                 return (
                   <tr key={round} style={{ background:round%2===0?"#0a0f1a":"#080d14" }}>
@@ -723,7 +724,7 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
                   <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:6 }}>
                     <div style={{ width:8,height:8,borderRadius:"50%",background:o.color }} />
                     <span style={{ fontWeight:700,fontSize:13,color:o.id===currentPicker?.id?o.color:"#dce4f5" }}>{o.name}</span>
-                    <span style={{ marginLeft:"auto",fontSize:11,color:"#445" }}>{drafted.length}/6</span>
+                    <span style={{ marginLeft:"auto",fontSize:11,color:"#445" }}>{drafted.length}/{teamsPerOwner}</span>
                   </div>
                   <div style={{ display:"flex",flexWrap:"wrap",gap:4 }}>
                     {drafted.map((t,i)=>(
@@ -732,7 +733,7 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
                         <SeedBadge seed={t.seed} /><span>{t.name}</span>
                       </span>
                     ))}
-                    {Array.from({length:6-drafted.length}).map((_,i)=>(
+                    {Array.from({length:teamsPerOwner-drafted.length}).map((_,i)=>(
                       <span key={`e${i}`} style={{ fontSize:10,background:"#111",color:"#333",borderRadius:4,padding:"2px 8px",border:"1px dashed #1a2440" }}>—</span>
                     ))}
                   </div>
@@ -945,6 +946,14 @@ export default function WorldCupApp() {
   const [wins, setWins] = useState([]);
   const [draws, setDraws] = useState([]);
   const [league, setLeague] = useState(null);
+  const [teamsPerOwner, setTeamsPerOwner] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`wc_tpo_${LEAGUE_CODE}`);
+      if (saved) return parseInt(saved) || 6;
+    } catch {}
+    return 6;
+  });
+
   const [rounds, setRounds] = useState(() => {
     // Try localStorage first as immediate fallback before Supabase loads
     try {
@@ -1039,7 +1048,7 @@ export default function WorldCupApp() {
     if (!alreadyOwner) {
       const color = OWNER_COLORS[(existingOwners?.length || 0) % OWNER_COLORS.length];
       const num = (existingOwners?.length || 0) + 1;
-      const blankTeams = Array.from({length:6}, (_,i) => ({ seed:i+1, name:"", group:"" }));
+      const blankTeams = Array.from({length:teamsPerOwner}, (_,i) => ({ seed:i+1, name:"", group:"" }));
       await supabase.from("owners").insert({
         league_code: code, name: userName, color, num, teams: blankTeams
       });
@@ -1149,6 +1158,10 @@ export default function WorldCupApp() {
     if (lgData?.settings?.round_values) {
       try { localStorage.setItem(`wc_rounds_${leagueCode}`, JSON.stringify(lgData.settings.round_values)); } catch {}
     }
+    // Load teams per owner setting
+    const tpo = lgData?.settings?.teams_per_owner || 6;
+    setTeamsPerOwner(tpo);
+    try { localStorage.setItem(`wc_tpo_${leagueCode}`, String(tpo)); } catch {}
     setStats(calcStats(ownersData, winsData, drawsData, computedRounds));
     setLoading(false);
   }, [leagueCode]);
@@ -1952,7 +1965,7 @@ export default function WorldCupApp() {
             )}
 
             {/* DRAFT */}
-            <div style={{display:tab==="draft"?"block":"none"}}><DraftTab owners={owners} setOwners={setOwners} isAdmin={isAdmin} authUser={authUser} alert={alert} leagueCode={leagueCode} onRefresh={loadData} /></div>
+            <div style={{display:tab==="draft"?"block":"none"}}><DraftTab owners={owners} setOwners={setOwners} isAdmin={isAdmin} authUser={authUser} alert={alert} leagueCode={leagueCode} onRefresh={loadData} teamsPerOwner={teamsPerOwner} /></div>
 
             {/* HOW TO PLAY */}
             {tab==="howtoplay"&&(()=>{
@@ -2464,10 +2477,10 @@ export default function WorldCupApp() {
                       </div>
                     </div>
 
-                    {/* Round Values Editor */}
+                    {/* League Settings Editor */}
                     <div style={S.card}>
                       <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:8 }}>
-                        <SecTitle style={{margin:0}}>⚙️ Round Values</SecTitle>
+                        <SecTitle style={{margin:0}}>⚙️ League Settings</SecTitle>
                         {!editingRounds?(
                           <button onClick={()=>{ setRoundDraft(Object.fromEntries(rounds.map(r=>[r.id,r.dmg]))); setEditingRounds(true); }}
                             style={{ ...S.btn("#1a2440","#f4c430"),border:"1px solid #f4c430",fontSize:12,padding:"6px 14px" }}>✏ Edit</button>
@@ -2480,8 +2493,9 @@ export default function WorldCupApp() {
                                 const v = parseFloat(roundDraft[r.id]);
                                 cleanDraft[r.id] = isNaN(v) ? DEFAULT_ROUND_VALUES[r.id] : v;
                               });
+                              const newTpo = roundDraft.__tpo ? parseInt(roundDraft.__tpo) : teamsPerOwner;
                               const existingSettings = league?.settings || {};
-                              const newSettings = { ...existingSettings, round_values: cleanDraft };
+                              const newSettings = { ...existingSettings, round_values: cleanDraft, teams_per_owner: newTpo };
                               // Save to Supabase
                               const { error } = await supabase.from("leagues")
                                 .update({ settings: newSettings })
@@ -2492,19 +2506,40 @@ export default function WorldCupApp() {
                               }
                               // Also save to localStorage as persistent fallback
                               try { localStorage.setItem(`wc_rounds_${leagueCode}`, JSON.stringify(cleanDraft)); } catch {}
-                              // Apply immediately without waiting for full reload
+                              // Apply immediately
                               const newRounds = getRounds({ round_values: cleanDraft });
                               setRounds(newRounds);
+                              setTeamsPerOwner(newTpo);
+                              try { localStorage.setItem(`wc_tpo_${leagueCode}`, String(newTpo)); } catch {}
                               setStats(calcStats(owners, wins, draws, newRounds));
                               setLeague(prev => ({ ...(prev||{}), settings: newSettings }));
                               setEditingRounds(false);
-                              alert("✅ Round values saved!");
+                              alert("✅ Settings saved!");
                             }} style={{ ...S.btn(),fontSize:12,padding:"6px 14px" }}>✓ Save</button>
                             <button onClick={()=>setEditingRounds(false)}
                               style={{ ...S.btn("#1a2440","#6677aa"),fontSize:12,padding:"6px 14px" }}>Cancel</button>
                           </div>
                         )}
                       </div>
+                      {/* Teams per owner */}
+                      <div style={{background:"#0a0f1a",border:"1px solid #1a2440",borderRadius:8,padding:"12px 14px",marginBottom:14,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+                        <div>
+                          <div style={{fontSize:11,color:"#6677aa",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Teams Per Owner</div>
+                          <div style={{fontSize:11,color:"#445"}}>How many teams each player drafts</div>
+                        </div>
+                        {editingRounds?(
+                          <input type="number" min="1" max="12" step="1"
+                            defaultValue={teamsPerOwner}
+                            onChange={e=>setRoundDraft(prev=>({...prev,__tpo:parseInt(e.target.value)||6}))}
+                            style={{background:"#111827",border:"1px solid #f4c430",borderRadius:6,color:"#f4c430",
+                              fontFamily:"'DM Mono',monospace",fontSize:18,fontWeight:700,
+                              padding:"5px 10px",width:70,outline:"none",marginLeft:"auto"}}
+                          />
+                        ):(
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:24,fontWeight:700,color:"#f4c430",marginLeft:"auto"}}>{teamsPerOwner}</div>
+                        )}
+                      </div>
+
                       <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10 }}>
                         {rounds.map(r=>(
                           <div key={r.id} style={{ background:"#0a0f1a",border:"1px solid #1a2440",borderRadius:8,padding:"10px 12px" }}>
