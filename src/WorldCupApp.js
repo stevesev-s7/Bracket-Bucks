@@ -949,7 +949,9 @@ export default function WorldCupApp() {
   const [league, setLeague] = useState(null);
   const [teamsPerOwner, setTeamsPerOwner] = useState(() => {
     try {
-      const saved = localStorage.getItem(`wc_tpo_${LEAGUE_CODE}`);
+      // Read from the CURRENT active league, not the hardcoded default
+      const activeCode = localStorage.getItem("wc_active_league") || LEAGUE_CODE;
+      const saved = localStorage.getItem(`wc_tpo_${activeCode}`);
       if (saved) return parseInt(saved) || 6;
     } catch {}
     return 6;
