@@ -860,7 +860,7 @@ function OwnerManager({ owners, stats, leagueCode, onRefresh, alertFn }) {
                 <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                   <div style={{ width:10, height:10, borderRadius:"50%", background:o.color, flexShrink:0 }} />
                   <span style={{ fontWeight:700, flex:1 }}>{o.name}</span>
-                  <span style={{ fontSize:11, color:"#6677aa" }}>{(o.teams||[]).filter(t=>t.name).length}/6 teams</span>
+                  <span style={{ fontSize:11, color:"#6677aa" }}>{(o.teams||[]).filter(t=>t.name).length}/{teamsPerOwner} teams</span>
                   {s && <span style={{ fontSize:12, fontFamily:"'DM Mono',monospace",
                     color:s.net>0?"#2ecc71":s.net<0?"#e74c3c":"#667" }}>
                     {s.net>=0?"+":""}${s.net.toFixed(2)}
@@ -2468,7 +2468,7 @@ export default function WorldCupApp() {
                       <SecTitle>League Info</SecTitle>
                       <div style={{ display:"flex",gap:24,flexWrap:"wrap" }}>
                         {[["Name",league?.name||"CHI2025"],["Code",<span style={{ fontFamily:"'DM Mono',monospace",color:"#f4c430",background:"#1a2440",padding:"2px 10px",borderRadius:4 }}>{leagueCode}</span>],
-                          ["Owners",`${owners.length}/8`],["Wins Logged",totalWins],["Draws Logged",totalDraws]].map(([l,v])=>(
+                          ["Owners",`${owners.length} joined`],["Wins Logged",totalWins],["Draws Logged",totalDraws]].map(([l,v])=>(
                           <div key={l}>
                             <div style={{ fontSize:10,color:"#445",textTransform:"uppercase",letterSpacing:1,marginBottom:4 }}>{l}</div>
                             <div style={{ fontWeight:600 }}>{v}</div>
