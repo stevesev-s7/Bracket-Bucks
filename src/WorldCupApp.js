@@ -1896,7 +1896,7 @@ export default function WorldCupApp() {
                             <th key={r.id} style={{ ...TH, textAlign:"center" }}>
                               <div>{r.short}</div>
                               <div style={{ fontSize:10,color:"#f4c430",fontWeight:600,marginTop:2 }}>
-                                {n>0?`$${perWin.toFixed(2)} per win`:`$${r.dmg.toFixed(2)} × seed × N`}
+                                ${perWin.toFixed(2)} per win
                               </div>
                             </th>
                           );
@@ -1916,15 +1916,15 @@ export default function WorldCupApp() {
                             return (
                               <td key={r.id} style={{ ...TD, textAlign:"center", padding:"10px 8px" }}>
                                 <div style={{ fontWeight:700,color:"#2ecc71",fontFamily:"'DM Mono',monospace",fontSize:14 }}>
-                                  {n>0?`$${winTotal.toFixed(2)}`:`$${winPer.toFixed(2)} × N`}
+                                  ${winTotal.toFixed(2)}
                                 </div>
                                 <div style={{ fontSize:10,color:"#445",marginTop:1 }}>
-                                  {n>0?`$${winPer.toFixed(2)}/owner`:`${n} others`}
+                                  ${winPer.toFixed(2)}/owner
                                 </div>
                                 {drawTotal!==null&&(
                                   <div style={{ marginTop:5,borderTop:"1px solid #1a2440",paddingTop:4 }}>
                                     <div style={{ fontWeight:700,color:"#f39c12",fontFamily:"'DM Mono',monospace",fontSize:12 }}>
-                                      {n>0?`$${drawTotal.toFixed(2)}`:`$${drawPer.toFixed(2)} × N`}
+                                      ${drawTotal.toFixed(2)}
                                     </div>
                                     <div style={{ fontSize:10,color:"#445" }}>${drawPer.toFixed(2)}/owner draw</div>
                                   </div>
