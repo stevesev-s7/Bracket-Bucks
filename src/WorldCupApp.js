@@ -1174,21 +1174,22 @@ export default function WorldCupApp() {
       const user = session?.user||null;
       setAuthUser(user);
       if (user) {
-        // Try to restore their last league from localStorage
         const saved = localStorage.getItem(`wc_league_${user.id}`) || localStorage.getItem("wc_active_league");
         if (saved) {
-          // Also make sure it's in myLeagues list
-          const leagues = (() => { try { return JSON.parse(localStorage.getItem("wc_my_leagues")||"[]"); } catch { return []; } })();
-          if (!leagues.find(l=>l.code===saved)) {
-            // fetch league name and add it
-            supabase.from("leagues").select("name").eq("code",saved).single().then(({data})=>{
-              if (data) {
-                const updated = [...leagues, {code:saved, name:data.name||saved}];
-                localStorage.setItem("wc_my_leagues", JSON.stringify(updated));
+          setLeagueCode(saved);
+          // Ensure it's in myLeagues state so gate doesn't show
+          setMyLeagues(prev => {
+            if (prev.find(l => l.code === saved)) return prev;
+            const updated = [...prev, { code: saved, name: saved }];
+            localStorage.setItem("wc_my_leagues", JSON.stringify(updated));
+            // Try to get real name async
+            supabase.from("leagues").select("name").eq("code", saved).single().then(({data}) => {
+              if (data?.name) {
+                setMyLeagues(p => p.map(l => l.code === saved ? {...l, name: data.name} : l));
               }
             });
-          }
-          setLeagueCode(saved);
+            return updated;
+          });
         }
       }
     });
@@ -1197,7 +1198,15 @@ export default function WorldCupApp() {
       setAuthUser(user);
       if (user) {
         const saved = localStorage.getItem(`wc_league_${user.id}`) || localStorage.getItem("wc_active_league");
-        if (saved) setLeagueCode(saved);
+        if (saved) {
+          setLeagueCode(saved);
+          setMyLeagues(prev => {
+            if (prev.find(l => l.code === saved)) return prev;
+            const updated = [...prev, { code: saved, name: saved }];
+            localStorage.setItem("wc_my_leagues", JSON.stringify(updated));
+            return updated;
+          });
+        }
       }
     });
     const channel = supabase.channel("wc-realtime")
@@ -1495,7 +1504,8 @@ export default function WorldCupApp() {
     } catch { return false; }
   })();
 
-  if (!leagueCode || (myLeagues.length === 0 && !hasStoredLeague)) {
+  // Show gate only if no league is saved anywhere
+  if (myLeagues.length === 0 && !hasStoredLeague) {
     const inp = { width:"100%", background:"#0f1625", border:"1px solid #1a2440", borderRadius:8,
       color:"#dce4f5", fontFamily:"inherit", fontSize:15, padding:"11px 14px", outline:"none",
       marginBottom:14, boxSizing:"border-box" };
