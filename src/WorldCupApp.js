@@ -1949,19 +1949,23 @@ export default function WorldCupApp() {
                             const drawTotal = r.hasDraw ? (r.dmg/2) * seed * n : null;
                             const drawPer   = r.hasDraw ? (r.dmg/2) * seed : null;
                             return (
-                              <td key={r.id} style={{ ...TD, textAlign:"center", padding:"10px 8px" }}>
-                                <div style={{ fontWeight:700,color:"#2ecc71",fontFamily:"'DM Mono',monospace",fontSize:14 }}>
-                                  ${winTotal.toFixed(2)}
+                              <td key={r.id} style={{ ...TD, textAlign:"center", padding:"10px 8px",
+                                WebkitUserSelect:"none", userSelect:"none",
+                                WebkitTextSizeAdjust:"none" }}>
+                                <div style={{ fontWeight:700,color:"#2ecc71",fontFamily:"'DM Mono',monospace",fontSize:14,
+                                  textDecoration:"none",WebkitTextDecorationLine:"none" }}>
+                                  {`$${winTotal.toFixed(2)}`}
                                 </div>
-                                <div style={{ fontSize:10,color:"#445",marginTop:1 }}>
-                                  ${winPer.toFixed(2)}/owner
+                                <div style={{ fontSize:10,color:"#445",marginTop:1,textDecoration:"none" }}>
+                                  {`$${winPer.toFixed(2)}/owner`}
                                 </div>
                                 {drawTotal!==null&&(
                                   <div style={{ marginTop:5,borderTop:"1px solid #1a2440",paddingTop:4 }}>
-                                    <div style={{ fontWeight:700,color:"#f39c12",fontFamily:"'DM Mono',monospace",fontSize:12 }}>
-                                      ${drawTotal.toFixed(2)}
+                                    <div style={{ fontWeight:700,color:"#f39c12",fontFamily:"'DM Mono',monospace",fontSize:12,
+                                      textDecoration:"none",WebkitTextDecorationLine:"none" }}>
+                                      {`$${drawTotal.toFixed(2)}`}
                                     </div>
-                                    <div style={{ fontSize:10,color:"#445" }}>${drawPer.toFixed(2)}/owner draw</div>
+                                    <div style={{ fontSize:10,color:"#445",textDecoration:"none" }}>{`$${drawPer.toFixed(2)}/owner draw`}</div>
                                   </div>
                                 )}
                               </td>
