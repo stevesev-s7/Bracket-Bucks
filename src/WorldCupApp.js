@@ -751,7 +751,8 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
 
 
 // ─── OWNER MANAGER COMPONENT ─────────────────────────────────────────────────
-function OwnerManager({ owners, stats, leagueCode, onRefresh, alertFn }) {
+function OwnerManager({ owners, stats, leagueCode, onRefresh, alertFn, teamsPerOwner }) {
+  const tpo = teamsPerOwner || 6;
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("");
@@ -777,7 +778,7 @@ function OwnerManager({ owners, stats, leagueCode, onRefresh, alertFn }) {
   async function addOwner() {
     if (!newName.trim()) return;
     if (owners.length >= 12) { alertFn("Max 12 owners per league.", "error"); return; }
-    const blank = Array.from({length:6}, (_,i) => ({seed:i+1, name:"", group:""}));
+    const blank = Array.from({length:tpo}, (_,i) => ({seed:i+1, name:"", group:""}));
     const { error } = await supabase.from("owners").insert({
       league_code: leagueCode,
       name: newName.trim(),
@@ -805,7 +806,7 @@ function OwnerManager({ owners, stats, leagueCode, onRefresh, alertFn }) {
   async function loadDefaults() {
     for (let i = 0; i < CHI2025_OWNERS.length; i++) {
       const o = CHI2025_OWNERS[i];
-      const blank = Array.from({length:6}, (_,j) => ({seed:j+1, name:"", group:""}));
+      const blank = Array.from({length:tpo}, (_,j) => ({seed:j+1, name:"", group:""}));
       await supabase.from("owners").insert({
         league_code: leagueCode, name: o.name, color: o.color, num: i+1, teams: blank
       });
@@ -2579,6 +2580,7 @@ export default function WorldCupApp() {
                       leagueCode={leagueCode}
                       onRefresh={loadData}
                       alertFn={alert}
+                      teamsPerOwner={teamsPerOwner}
                     />
 
                     {/* Result Log */}
