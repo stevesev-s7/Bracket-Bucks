@@ -945,7 +945,14 @@ export default function WorldCupApp() {
   const [wins, setWins] = useState([]);
   const [draws, setDraws] = useState([]);
   const [league, setLeague] = useState(null);
-  const [rounds, setRounds] = useState(getRounds({}));
+  const [rounds, setRounds] = useState(() => {
+    // Try localStorage first as immediate fallback before Supabase loads
+    try {
+      const saved = localStorage.getItem(`wc_rounds_${leagueCode || LEAGUE_CODE}`);
+      if (saved) return getRounds({ round_values: JSON.parse(saved) });
+    } catch {}
+    return getRounds({});
+  });
   const [editingRounds, setEditingRounds] = useState(false);
   const [roundDraft, setRoundDraft] = useState({});
   const [loading, setLoading] = useState(true);
@@ -1138,6 +1145,10 @@ export default function WorldCupApp() {
     const lgData = lg || {};
     const computedRounds = getRounds(lgData?.settings);
     setRounds(computedRounds);
+    // Cache round values in localStorage so they survive refresh even if Supabase column missing
+    if (lgData?.settings?.round_values) {
+      try { localStorage.setItem(`wc_rounds_${leagueCode}`, JSON.stringify(lgData.settings.round_values)); } catch {}
+    }
     setStats(calcStats(ownersData, winsData, drawsData, computedRounds));
     setLoading(false);
   }, [leagueCode]);
@@ -2471,7 +2482,7 @@ export default function WorldCupApp() {
                               });
                               const existingSettings = league?.settings || {};
                               const newSettings = { ...existingSettings, round_values: cleanDraft };
-                              // Upsert the league row to ensure settings column gets updated
+                              // Save to Supabase
                               const { error } = await supabase.from("leagues")
                                 .update({ settings: newSettings })
                                 .eq("code", leagueCode);
@@ -2479,6 +2490,8 @@ export default function WorldCupApp() {
                                 alert("Save error: " + error.message, "error");
                                 return;
                               }
+                              // Also save to localStorage as persistent fallback
+                              try { localStorage.setItem(`wc_rounds_${leagueCode}`, JSON.stringify(cleanDraft)); } catch {}
                               // Apply immediately without waiting for full reload
                               const newRounds = getRounds({ round_values: cleanDraft });
                               setRounds(newRounds);
