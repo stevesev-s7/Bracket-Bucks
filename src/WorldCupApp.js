@@ -925,7 +925,22 @@ export default function WorldCupApp() {
     const valid = ["leaderboard","wins","livescores","schedule","roster","topteams","payouts","draft","howtoplay","profile","admin"];
     return valid.includes(part) ? part : "leaderboard";
   });
-  const [leagueCode, setLeagueCode] = useState(LEAGUE_CODE);
+  const [leagueCode, setLeagueCode] = useState(() => {
+    // Restore league from localStorage on first load — no need to re-enter code
+    try {
+      // Check per-user key first (set after sign-in)
+      const keys = Object.keys(localStorage);
+      const userKey = keys.find(k => k.startsWith("wc_league_"));
+      if (userKey) return localStorage.getItem(userKey) || LEAGUE_CODE;
+      // Fall back to last active league
+      const active = localStorage.getItem("wc_active_league");
+      if (active) return active;
+      // Fall back to first saved league
+      const saved = JSON.parse(localStorage.getItem("wc_my_leagues") || "[]");
+      if (saved.length > 0) return saved[saved.length - 1].code;
+    } catch {}
+    return LEAGUE_CODE;
+  });
   const [owners, setOwners] = useState([]);
   const [wins, setWins] = useState([]);
   const [draws, setDraws] = useState([]);
@@ -950,7 +965,15 @@ export default function WorldCupApp() {
 
   // League management
   const [myLeagues, setMyLeagues] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("wc_my_leagues") || "[]"); } catch { return []; }
+    try {
+      const saved = JSON.parse(localStorage.getItem("wc_my_leagues") || "[]");
+      // If they have a saved active league but it's not in myLeagues yet, add it
+      const active = localStorage.getItem("wc_active_league");
+      if (active && !saved.find(l => l.code === active)) {
+        return [...saved, { code: active, name: active }];
+      }
+      return saved;
+    } catch { return []; }
   });
   const [joinCode, setJoinCode] = useState("");
   const [joinErr, setJoinErr] = useState("");
@@ -1435,7 +1458,19 @@ export default function WorldCupApp() {
   }
 
   // ── LEAGUE GATE ────────────────────────────────────────────────────────────
-  if (!leagueCode || myLeagues.length === 0) {
+  // Skip league gate if user already has a saved league
+  const hasStoredLeague = (() => {
+    try {
+      const keys = Object.keys(localStorage);
+      const userKey = keys.find(k => k.startsWith("wc_league_"));
+      if (userKey && localStorage.getItem(userKey)) return true;
+      if (localStorage.getItem("wc_active_league")) return true;
+      const saved = JSON.parse(localStorage.getItem("wc_my_leagues") || "[]");
+      return saved.length > 0;
+    } catch { return false; }
+  })();
+
+  if (!leagueCode || (myLeagues.length === 0 && !hasStoredLeague)) {
     const inp = { width:"100%", background:"#0f1625", border:"1px solid #1a2440", borderRadius:8,
       color:"#dce4f5", fontFamily:"inherit", fontSize:15, padding:"11px 14px", outline:"none",
       marginBottom:14, boxSizing:"border-box" };
