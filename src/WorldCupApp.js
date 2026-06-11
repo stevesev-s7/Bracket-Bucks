@@ -958,6 +958,7 @@ export default function WorldCupApp() {
     return getRounds({});
   });
   const [editingRounds, setEditingRounds] = useState(false);
+  const [allLeagues, setAllLeagues] = useState([]);
   const [roundDraft, setRoundDraft] = useState({});
   const [loading, setLoading] = useState(true);
   const [authUser, setAuthUser] = useState(null);
@@ -1006,6 +1007,13 @@ export default function WorldCupApp() {
   const [authName, setAuthName] = useState("");
 
   const isAdmin = adminUnlocked;
+
+  // Load all leagues when admin is unlocked
+  useEffect(() => {
+    if (!adminUnlocked) return;
+    supabase.from("leagues").select("code,name,settings").order("name")
+      .then(({data}) => { if (data) setAllLeagues(data); });
+  }, [adminUnlocked]);
 
   function saveToMyLeagues(code, name) {
     setMyLeagues(prev => {
@@ -2472,11 +2480,38 @@ export default function WorldCupApp() {
                 ):(
                   <div style={{ display:"flex",flexDirection:"column",gap:16 }}>
 
+                    {/* Admin League Switcher */}
+                    <div style={S.card}>
+                      <SecTitle>🌍 All Leagues</SecTitle>
+                      <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
+                        {allLeagues.map(l=>(
+                          <button key={l.code} onClick={()=>switchLeague(l.code)}
+                            style={{...S.btn(l.code===leagueCode?"#0a2a14":"#0a0f1a","#dce4f5"),
+                              border:`1px solid ${l.code===leagueCode?"#f4c430":"#1a2440"}`,
+                              borderRadius:8,padding:"10px 14px",textAlign:"left",
+                              display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                            <div>
+                              <div style={{fontWeight:700,fontSize:13}}>{l.name||l.code}</div>
+                              <div style={{fontSize:11,color:"#6677aa",marginTop:2,fontFamily:"'DM Mono',monospace"}}>
+                                {l.code}
+                                {l.settings?.teams_per_owner&&<span style={{color:"#445",marginLeft:8}}>{l.settings.teams_per_owner} teams/owner</span>}
+                              </div>
+                            </div>
+                            {l.code===leagueCode
+                              ? <span style={{color:"#2ecc71",fontSize:11,fontWeight:700}}>✓ Active</span>
+                              : <span style={{color:"#f4c430",fontSize:12}}>Switch →</span>
+                            }
+                          </button>
+                        ))}
+                        {allLeagues.length===0&&<div style={{color:"#445",fontSize:13}}>Loading leagues...</div>}
+                      </div>
+                    </div>
+
                     {/* League Info */}
                     <div style={S.card}>
                       <SecTitle>League Info</SecTitle>
                       <div style={{ display:"flex",gap:24,flexWrap:"wrap" }}>
-                        {[["Name",league?.name||"CHI2025"],["Code",<span style={{ fontFamily:"'DM Mono',monospace",color:"#f4c430",background:"#1a2440",padding:"2px 10px",borderRadius:4 }}>{leagueCode}</span>],
+                        {[["Name",league?.name||leagueCode],["Code",<span style={{ fontFamily:"'DM Mono',monospace",color:"#f4c430",background:"#1a2440",padding:"2px 10px",borderRadius:4 }}>{leagueCode}</span>],
                           ["Owners",`${owners.length} joined`],["Wins Logged",totalWins],["Draws Logged",totalDraws]].map(([l,v])=>(
                           <div key={l}>
                             <div style={{ fontSize:10,color:"#445",textTransform:"uppercase",letterSpacing:1,marginBottom:4 }}>{l}</div>
