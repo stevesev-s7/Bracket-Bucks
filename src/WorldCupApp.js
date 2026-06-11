@@ -42,15 +42,15 @@ const ROUNDS = getRounds({});
 
 const WC_TEAMS = [
   {name:"Mexico",group:"Group A",seed:4},{name:"South Africa",group:"Group A",seed:10},
-  {name:"South Korea",group:"Group A",seed:9},{name:"Czech Republic",group:"Group A",seed:7},
+  {name:"South Korea",group:"Group A",seed:9},{name:"Czechia",group:"Group A",seed:7},
   {name:"Canada",group:"Group B",seed:7},{name:"Bosnia-Herzegovina",group:"Group B",seed:8},
   {name:"Qatar",group:"Group B",seed:11},{name:"Switzerland",group:"Group B",seed:5},
   {name:"Brazil",group:"Group C",seed:1},{name:"Morocco",group:"Group C",seed:3},
   {name:"Haiti",group:"Group C",seed:12},{name:"Scotland",group:"Group C",seed:7},
   {name:"United States",group:"Group D",seed:4},{name:"Paraguay",group:"Group D",seed:6},
-  {name:"Australia",group:"Group D",seed:9},{name:"Turkey",group:"Group D",seed:5},
+  {name:"Australia",group:"Group D",seed:9},{name:"Türkiye",group:"Group D",seed:5},
   {name:"Germany",group:"Group E",seed:2},{name:"Curaçao",group:"Group E",seed:12},
-  {name:"Côte d'Ivoire",group:"Group E",seed:7},{name:"Ecuador",group:"Group E",seed:5},
+  {name:"Ivory Coast",group:"Group E",seed:7},{name:"Ecuador",group:"Group E",seed:5},
   {name:"Netherlands",group:"Group F",seed:2},{name:"Japan",group:"Group F",seed:4},
   {name:"Sweden",group:"Group F",seed:6},{name:"Tunisia",group:"Group F",seed:9},
   {name:"Belgium",group:"Group G",seed:3},{name:"Egypt",group:"Group G",seed:8},
@@ -61,21 +61,24 @@ const WC_TEAMS = [
   {name:"Iraq",group:"Group I",seed:11},{name:"Norway",group:"Group I",seed:3},
   {name:"Argentina",group:"Group J",seed:2},{name:"Algeria",group:"Group J",seed:8},
   {name:"Austria",group:"Group J",seed:6},{name:"Jordan",group:"Group J",seed:12},
-  {name:"Portugal",group:"Group K",seed:2},{name:"DR Congo",group:"Group K",seed:10},
+  {name:"Portugal",group:"Group K",seed:2},{name:"Congo DR",group:"Group K",seed:10},
   {name:"Uzbekistan",group:"Group K",seed:11},{name:"Colombia",group:"Group K",seed:3},
   {name:"England",group:"Group L",seed:1},{name:"Croatia",group:"Group L",seed:5},
   {name:"Ghana",group:"Group L",seed:8},{name:"Panama",group:"Group L",seed:10},
 ];
 
 // Mapping from old names to ESPN names for backward compatibility
+// Maps any alternate/old name -> exact ESPN displayName
 const ESPN_NAME_MAP = {
   "Republic of Korea": "South Korea",
-  "Czechia": "Czech Republic",
+  "Czech Republic": "Czechia",
   "Bosnia and Herzegovina": "Bosnia-Herzegovina",
   "USA": "United States",
-  "Ivory Coast": "Côte d'Ivoire",
-  "Congo DR": "DR Congo",
+  "Côte d'Ivoire": "Ivory Coast",
+  "DR Congo": "Congo DR",
   "Curacao": "Curaçao",
+  "Turkey": "Türkiye",
+  "South Korea": "South Korea",
 };
 
 const OWNER_COLORS = ["#e74c3c","#3498db","#2ecc71","#f39c12","#9b59b6","#1abc9c","#e67e22","#e91e63"];
