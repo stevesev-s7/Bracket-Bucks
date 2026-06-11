@@ -1400,13 +1400,17 @@ export default function WorldCupApp() {
   const ESPN_WC_ROUND_MAP = {
     "Group Stage":    "Pool Play",
     "Group Play":     "Pool Play",
+    "Group A": "Pool Play", "Group B": "Pool Play", "Group C": "Pool Play",
+    "Group D": "Pool Play", "Group E": "Pool Play", "Group F": "Pool Play",
+    "Group G": "Pool Play", "Group H": "Pool Play", "Group I": "Pool Play",
+    "Group J": "Pool Play", "Group K": "Pool Play", "Group L": "Pool Play",
     "Round of 32":    "Round of 32",
     "Round of 16":    "Round of 16",
     "Quarterfinals":  "Round of 8",
     "Quarterfinal":   "Round of 8",
     "Semifinals":     "Round of 4",
     "Semifinal":      "Round of 4",
-    "Third Place":    null, // skip 3rd place match
+    "Third Place":    null,
     "Final":          "Championship",
     "World Cup Final":"Championship",
   };
@@ -1449,7 +1453,7 @@ export default function WorldCupApp() {
             id: ev.id,
             completed: comp?.status?.type?.completed,
             isLive: comp?.status?.type?.state === "in",
-            roundName: comp?.notes?.[0]?.headline || ev.name || "",
+            roundName: comp?.notes?.[0]?.headline || comp?.status?.type?.name || ev.name || "",
             competitors: (comp?.competitors||[]).map(c=>({
               name: c.team?.displayName,
               score: c.score,
@@ -1479,12 +1483,13 @@ export default function WorldCupApp() {
         }
         if (!roundId) {
           // Fallback: detect by round keywords
-          if (rl.includes("group") || rl.includes("pool")) roundId = "Pool Play";
+          if (rl.includes("group") || rl.includes("pool") || /^group [a-l]$/i.test(game.roundName.trim())) roundId = "Pool Play";
           else if (rl.includes("round of 32")) roundId = "Round of 32";
           else if (rl.includes("round of 16")) roundId = "Round of 16";
           else if (rl.includes("quarter")) roundId = "Round of 8";
           else if (rl.includes("semi")) roundId = "Round of 4";
-          else if (rl.includes("final") && !rl.includes("semi") && !rl.includes("quarter")) roundId = "Championship";
+          else if (rl.includes("final") && !rl.includes("semi") && !rl.includes("quarter") && !rl.includes("third")) roundId = "Championship";
+          else roundId = "Pool Play"; // Default to Pool Play during group stage
         }
         if (!roundId) continue;
 
@@ -1506,10 +1511,9 @@ export default function WorldCupApp() {
               const tn = normTeamName(team.name);
               if (!tn) continue;
 
-              // Fuzzy match
+              // Exact match first (using normalization), then fuzzy
               const matched = espnName === tn ||
-                espnName.includes(tn) || tn.includes(espnName) ||
-                espnName.split("").filter(c=>tn.includes(c)).length > tn.length * 0.7;
+                espnName.includes(tn) || tn.includes(espnName);
 
               if (!matched) continue;
 
