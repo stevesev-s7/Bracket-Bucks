@@ -1138,7 +1138,7 @@ export default function WorldCupApp() {
   const [stats, setStats] = useState([]);
 
   // Auto-sync ESPN
-  const [autoSync, setAutoSync] = useState(false);
+  const [autoSync, setAutoSync] = useState(true);
   const [lastSync, setLastSync] = useState(null);
   const [syncLog, setSyncLog] = useState([]);
 
@@ -1562,9 +1562,10 @@ export default function WorldCupApp() {
     } catch(e) { console.error("WC autoSyncESPN error:", e); }
   }
 
-  // Auto-sync interval — runs every 60s when enabled
+  // Auto-sync interval — runs every 60s when enabled, and on first load
   useEffect(() => {
-    if (!autoSync || !leagueCode) return;
+    if (!autoSync || !leagueCode || !owners.length) return;
+    // Run immediately on load/enable
     autoSyncESPN();
     const interval = setInterval(autoSyncESPN, 60000);
     return () => clearInterval(interval);
