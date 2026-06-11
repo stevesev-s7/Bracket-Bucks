@@ -370,54 +370,202 @@ function TopTeams({ owners, wins, draws }) {
 
 // ─── SCHEDULE TAB ─────────────────────────────────────────────────────────────
 function ScheduleTab({ owners }) {
-  const groups = ["A","B","C","D","E","F","G","H","I","J","K","L"];
-  const findOwner = (teamName) => owners.find(o=>(o.teams||[]).some(t=>t.name===teamName));
+  const [games, setGames] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all"); // all | upcoming | live | completed
+  const [search, setSearch] = useState("");
+
+  const findOwner = (teamName) => {
+    if (!teamName) return null;
+    const n = teamName.toLowerCase();
+    return owners.find(o=>(o.teams||[]).some(t=>t.name&&t.name.toLowerCase()===n));
+  };
+
+  useEffect(()=>{
+    async function loadSchedule() {
+      setLoading(true);
+      try {
+        // Fetch all WC 2026 dates
+        const dates = [];
+        for (let d = new Date("2026-06-11"); d <= new Date("2026-07-19"); d.setDate(d.getDate()+1)) {
+          dates.push(d.toISOString().split("T")[0].replace(/-/g,""));
+        }
+        const base = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
+        const seen = new Set(); const all = [];
+        await Promise.all(dates.map(async d=>{
+          try {
+            const r = await fetch(`${base}?dates=${d}`);
+            if (!r.ok) return;
+            const data = await r.json();
+            for (const ev of (data.events||[])) {
+              if (seen.has(ev.id)) continue;
+              seen.add(ev.id);
+              const comp = ev.competitions?.[0];
+              const status = comp?.status?.type;
+              const venue = comp?.venue;
+              const home = comp?.competitors?.find(c=>c.homeAway==="home");
+              const away = comp?.competitors?.find(c=>c.homeAway==="away");
+              all.push({
+                id: ev.id,
+                date: ev.date,
+                name: ev.name,
+                shortName: ev.shortName,
+                round: comp?.notes?.[0]?.headline || "",
+                status: status?.description || "",
+                state: status?.state || "",
+                completed: status?.completed || false,
+                isLive: status?.state === "in",
+                venue: venue?.fullName || "",
+                city: venue?.address?.city || "",
+                country: venue?.address?.country || "",
+                home: { name: home?.team?.displayName, abbr: home?.team?.abbreviation, score: home?.score, winner: home?.winner, logo: home?.team?.logo },
+                away: { name: away?.team?.displayName, abbr: away?.team?.abbreviation, score: away?.score, winner: away?.winner, logo: away?.team?.logo },
+              });
+            }
+          } catch {}
+        }));
+        all.sort((a,b)=>new Date(a.date)-new Date(b.date));
+        setGames(all);
+      } catch(e) { console.error(e); }
+      setLoading(false);
+    }
+    loadSchedule();
+  },[]);
+
+  const filtered = games.filter(g=>{
+    if (filter==="live" && !g.isLive) return false;
+    if (filter==="completed" && !g.completed) return false;
+    if (filter==="upcoming" && (g.completed||g.isLive)) return false;
+    if (search) {
+      const s = search.toLowerCase();
+      return g.home?.name?.toLowerCase().includes(s) || g.away?.name?.toLowerCase().includes(s) || g.venue?.toLowerCase().includes(s) || g.city?.toLowerCase().includes(s);
+    }
+    return true;
+  });
+
+  // Group by date
+  const byDate = {};
+  filtered.forEach(g=>{
+    const d = new Date(g.date).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(g);
+  });
+
+  const inp = {background:"#0a0f1a",border:"1px solid #1a2440",borderRadius:8,color:"#dce4f5",
+    fontFamily:"inherit",fontSize:13,padding:"8px 12px",outline:"none",flex:1};
 
   return (
     <div>
-      <h2 style={{ margin:"0 0 8px",fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2 }}>📅 Group Stage Schedule</h2>
-      <p style={{ color:"#6677aa",fontSize:13,marginBottom:20 }}>June 11 – July 2, 2026 · USA, Canada & Mexico</p>
+      <h2 style={{margin:"0 0 4px",fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}}>📅 Full Schedule</h2>
+      <p style={{color:"#6677aa",fontSize:13,marginBottom:16}}>June 11 – July 19, 2026 · USA, Canada & Mexico</p>
 
-      <div style={{ ...S.card,marginBottom:20,background:"linear-gradient(135deg,#0a1a2e,#111827)",border:"2px solid #f4c430" }}>
-        <SecTitle>Tournament Structure</SecTitle>
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:12 }}>
-          {[["⚽ Pool Play","Jun 11 – Jul 2","48 teams · Top 2 per group + 8 best 3rd advance"],
-            ["🔄 Round of 32","Jul 4 – 9","32 teams · Single elimination begins"],
-            ["🔄 Round of 16","Jul 11 – 14","16 teams · Single elimination"],
-            ["🏆 QF / SF / Final","Jul 16 – 19","8→4→2→Champion · Final Jul 19"]].map(([title,date,sub])=>(
-            <div key={title} style={{ background:"#0f1625",border:"1px solid #1a2440",borderRadius:10,padding:"12px 14px" }}>
-              <div style={{ fontWeight:700,marginBottom:4 }}>{title}</div>
-              <div style={{ fontSize:12,color:"#f4c430",marginBottom:2 }}>{date}</div>
-              <div style={{ fontSize:11,color:"#6677aa" }}>{sub}</div>
+      {/* Tournament Structure */}
+      <div style={{...S.card,marginBottom:16,background:"linear-gradient(135deg,#0a1a2e,#111827)",border:"2px solid #f4c430"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10}}>
+          {[["⚽ Pool Play","Jun 11 – Jul 2","48 teams"],
+            ["🔄 Round of 32","Jul 4 – 9","32 teams"],
+            ["🔄 Round of 16","Jul 11 – 14","16 teams"],
+            ["🏆 QF / SF / Final","Jul 16 – 19","Champion Jul 19"]].map(([title,date,sub])=>(
+            <div key={title} style={{background:"#0f1625",border:"1px solid #1a2440",borderRadius:10,padding:"10px 12px"}}>
+              <div style={{fontWeight:700,fontSize:13,marginBottom:3}}>{title}</div>
+              <div style={{fontSize:11,color:"#f4c430",marginBottom:2}}>{date}</div>
+              <div style={{fontSize:11,color:"#6677aa"}}>{sub}</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12 }}>
-        {groups.map(g=>{
-          const groupTeams = WC_TEAMS.filter(t=>t.group===`Group ${g}`).sort((a,b)=>a.seed-b.seed);
-          const color = GROUP_COLORS[`Group ${g}`]||"#555";
-          return (
-            <div key={g} style={{ ...S.card,borderTop:`3px solid ${color}` }}>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color,marginBottom:10 }}>Group {g}</div>
-              {groupTeams.map(team=>{
-                const owner = findOwner(team.name);
-                return (
-                  <div key={team.name} style={{ display:"flex",alignItems:"center",gap:8,
-                    padding:"6px 8px",borderRadius:7,marginBottom:4,
-                    background:"#0f1625",border:"1px solid #1a2440",
-                    borderLeft:`3px solid ${owner?.color||"#333"}` }}>
-                    <SeedBadge seed={team.seed} />
-                    <span style={{ flex:1,fontSize:13,fontWeight:600 }}>{team.name}</span>
-                    {owner&&<span style={{ fontSize:10,color:owner.color,fontWeight:700 }}>{owner.name.split(" ")[0]}</span>}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
+      {/* Filters */}
+      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)}
+          placeholder="Search team or venue..." style={inp} />
+        {["all","upcoming","live","completed"].map(f=>(
+          <button key={f} onClick={()=>setFilter(f)}
+            style={{...S.btn(filter===f?"#1a2440":"transparent",filter===f?"#f4c430":"#6677aa"),
+              border:`1px solid ${filter===f?"#f4c430":"#1a2440"}`,fontSize:12,padding:"7px 14px",
+              textTransform:"capitalize",flexShrink:0}}>
+            {f==="live"?"🔴 Live":f.charAt(0).toUpperCase()+f.slice(1)}
+          </button>
+        ))}
       </div>
+
+      {loading&&<div style={{textAlign:"center",padding:"40px",color:"#6677aa"}}>Loading schedule from ESPN...</div>}
+
+      {!loading&&filtered.length===0&&<Empty text="No games match your filter." />}
+
+      {/* Games grouped by date */}
+      {Object.entries(byDate).map(([date,dayGames])=>(
+        <div key={date} style={{marginBottom:20}}>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,
+            color:"#f4c430",marginBottom:10,paddingBottom:6,borderBottom:"1px solid #1a2440"}}>
+            {date}
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {dayGames.map(g=>{
+              const homeOwner = findOwner(g.home?.name);
+              const awayOwner = findOwner(g.away?.name);
+              const localTime = new Date(g.date).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZoneName:"short"});
+              const statusColor = g.isLive?"#e74c3c":g.completed?"#2ecc71":"#6677aa";
+              return (
+                <div key={g.id} style={{...S.card,padding:"14px 16px",
+                  borderLeft:`3px solid ${g.isLive?"#e74c3c":g.completed?"#2ecc71":"#1a2440"}`}}>
+                  {/* Header row */}
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:6}}>
+                    <div style={{fontSize:11,color:"#6677aa"}}>{g.round}</div>
+                    <div style={{display:"flex",gap:12,alignItems:"center"}}>
+                      <span style={{fontSize:11,color:statusColor,fontWeight:700}}>{g.status}</span>
+                      {!g.completed&&!g.isLive&&<span style={{fontSize:11,color:"#8899cc"}}>{localTime}</span>}
+                    </div>
+                  </div>
+                  {/* Teams row */}
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    {/* Away */}
+                    <div style={{flex:1,display:"flex",alignItems:"center",gap:8,minWidth:0}}>
+                      {awayOwner&&<div style={{width:6,height:24,borderRadius:3,background:awayOwner.color,flexShrink:0}}/>}
+                      <div style={{minWidth:0}}>
+                        <div style={{fontWeight:700,fontSize:14,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
+                          color:g.completed&&g.away?.winner?"#2ecc71":g.completed&&!g.away?.winner?"#6677aa":"#dce4f5"}}>
+                          {g.away?.name||"TBD"}
+                        </div>
+                        {awayOwner&&<div style={{fontSize:10,color:awayOwner.color}}>{awayOwner.name.split(" ")[0]}</div>}
+                      </div>
+                    </div>
+                    {/* Score / VS */}
+                    <div style={{textAlign:"center",minWidth:60,flexShrink:0}}>
+                      {(g.completed||g.isLive)?(
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:20,fontWeight:800,
+                          color:g.isLive?"#e74c3c":"#dce4f5"}}>
+                          {g.away?.score} – {g.home?.score}
+                        </div>
+                      ):(
+                        <div style={{fontSize:13,color:"#445",fontWeight:700}}>VS</div>
+                      )}
+                    </div>
+                    {/* Home */}
+                    <div style={{flex:1,display:"flex",alignItems:"center",gap:8,justifyContent:"flex-end",minWidth:0}}>
+                      <div style={{textAlign:"right",minWidth:0}}>
+                        <div style={{fontWeight:700,fontSize:14,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
+                          color:g.completed&&g.home?.winner?"#2ecc71":g.completed&&!g.home?.winner?"#6677aa":"#dce4f5"}}>
+                          {g.home?.name||"TBD"}
+                        </div>
+                        {homeOwner&&<div style={{fontSize:10,color:homeOwner.color,textAlign:"right"}}>{homeOwner.name.split(" ")[0]}</div>}
+                      </div>
+                      {homeOwner&&<div style={{width:6,height:24,borderRadius:3,background:homeOwner.color,flexShrink:0}}/>}
+                    </div>
+                  </div>
+                  {/* Venue */}
+                  {(g.venue||g.city)&&(
+                    <div style={{marginTop:8,fontSize:11,color:"#445",display:"flex",gap:6,alignItems:"center"}}>
+                      <span>📍</span>
+                      <span>{[g.venue,g.city,g.country].filter(Boolean).join(" · ")}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
