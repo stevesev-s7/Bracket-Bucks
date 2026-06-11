@@ -1449,11 +1449,24 @@ export default function WorldCupApp() {
           if (seen.has(ev.id)) continue;
           seen.add(ev.id);
           const comp = ev.competitions?.[0];
+          // Detect round from date since ESPN notes headline is often null
+          const gameDate = ev.date ? ev.date.substring(0,10) : "";
+          let detectedRound = comp?.notes?.[0]?.headline || "";
+          if (!detectedRound) {
+            // Determine round by date range
+            if (gameDate >= "2026-06-11" && gameDate <= "2026-07-02") detectedRound = "Pool Play";
+            else if (gameDate >= "2026-07-04" && gameDate <= "2026-07-09") detectedRound = "Round of 32";
+            else if (gameDate >= "2026-07-11" && gameDate <= "2026-07-14") detectedRound = "Round of 16";
+            else if (gameDate >= "2026-07-16" && gameDate <= "2026-07-17") detectedRound = "Round of 8";
+            else if (gameDate >= "2026-07-18" && gameDate <= "2026-07-18") detectedRound = "Round of 4";
+            else if (gameDate >= "2026-07-19") detectedRound = "Championship";
+            else detectedRound = "Pool Play";
+          }
           allGames.push({
             id: ev.id,
             completed: comp?.status?.type?.completed,
             isLive: comp?.status?.type?.state === "in",
-            roundName: comp?.notes?.[0]?.headline || comp?.status?.type?.name || ev.name || "",
+            roundName: detectedRound,
             competitors: (comp?.competitors||[]).map(c=>({
               name: c.team?.displayName,
               score: c.score,
