@@ -42,15 +42,15 @@ const ROUNDS = getRounds({});
 
 const WC_TEAMS = [
   {name:"Mexico",group:"Group A",seed:4},{name:"South Africa",group:"Group A",seed:10},
-  {name:"Republic of Korea",group:"Group A",seed:9},{name:"Czechia",group:"Group A",seed:7},
-  {name:"Canada",group:"Group B",seed:7},{name:"Bosnia and Herzegovina",group:"Group B",seed:8},
+  {name:"South Korea",group:"Group A",seed:9},{name:"Czech Republic",group:"Group A",seed:7},
+  {name:"Canada",group:"Group B",seed:7},{name:"Bosnia-Herzegovina",group:"Group B",seed:8},
   {name:"Qatar",group:"Group B",seed:11},{name:"Switzerland",group:"Group B",seed:5},
   {name:"Brazil",group:"Group C",seed:1},{name:"Morocco",group:"Group C",seed:3},
   {name:"Haiti",group:"Group C",seed:12},{name:"Scotland",group:"Group C",seed:7},
-  {name:"USA",group:"Group D",seed:4},{name:"Paraguay",group:"Group D",seed:6},
+  {name:"United States",group:"Group D",seed:4},{name:"Paraguay",group:"Group D",seed:6},
   {name:"Australia",group:"Group D",seed:9},{name:"Turkey",group:"Group D",seed:5},
-  {name:"Germany",group:"Group E",seed:2},{name:"Curacao",group:"Group E",seed:12},
-  {name:"Ivory Coast",group:"Group E",seed:7},{name:"Ecuador",group:"Group E",seed:5},
+  {name:"Germany",group:"Group E",seed:2},{name:"Curaçao",group:"Group E",seed:12},
+  {name:"Côte d'Ivoire",group:"Group E",seed:7},{name:"Ecuador",group:"Group E",seed:5},
   {name:"Netherlands",group:"Group F",seed:2},{name:"Japan",group:"Group F",seed:4},
   {name:"Sweden",group:"Group F",seed:6},{name:"Tunisia",group:"Group F",seed:9},
   {name:"Belgium",group:"Group G",seed:3},{name:"Egypt",group:"Group G",seed:8},
@@ -61,11 +61,22 @@ const WC_TEAMS = [
   {name:"Iraq",group:"Group I",seed:11},{name:"Norway",group:"Group I",seed:3},
   {name:"Argentina",group:"Group J",seed:2},{name:"Algeria",group:"Group J",seed:8},
   {name:"Austria",group:"Group J",seed:6},{name:"Jordan",group:"Group J",seed:12},
-  {name:"Portugal",group:"Group K",seed:2},{name:"Congo DR",group:"Group K",seed:10},
+  {name:"Portugal",group:"Group K",seed:2},{name:"DR Congo",group:"Group K",seed:10},
   {name:"Uzbekistan",group:"Group K",seed:11},{name:"Colombia",group:"Group K",seed:3},
   {name:"England",group:"Group L",seed:1},{name:"Croatia",group:"Group L",seed:5},
   {name:"Ghana",group:"Group L",seed:8},{name:"Panama",group:"Group L",seed:10},
 ];
+
+// Mapping from old names to ESPN names for backward compatibility
+const ESPN_NAME_MAP = {
+  "Republic of Korea": "South Korea",
+  "Czechia": "Czech Republic",
+  "Bosnia and Herzegovina": "Bosnia-Herzegovina",
+  "USA": "United States",
+  "Ivory Coast": "Côte d'Ivoire",
+  "Congo DR": "DR Congo",
+  "Curacao": "Curaçao",
+};
 
 const OWNER_COLORS = ["#e74c3c","#3498db","#2ecc71","#f39c12","#9b59b6","#1abc9c","#e67e22","#e91e63"];
 
@@ -377,8 +388,13 @@ function ScheduleTab({ owners }) {
 
   const findOwner = (teamName) => {
     if (!teamName) return null;
-    const n = teamName.toLowerCase();
-    return owners.find(o=>(o.teams||[]).some(t=>t.name&&t.name.toLowerCase()===n));
+    const mapped = ESPN_NAME_MAP[teamName] || teamName;
+    const n = mapped.toLowerCase().replace(/[^a-z0-9]/g,"");
+    return owners.find(o=>(o.teams||[]).some(t=>{
+      if (!t.name) return false;
+      const tn = (ESPN_NAME_MAP[t.name]||t.name).toLowerCase().replace(/[^a-z0-9]/g,"");
+      return tn === n;
+    }));
   };
 
   useEffect(()=>{
@@ -1392,7 +1408,11 @@ export default function WorldCupApp() {
     "World Cup Final":"Championship",
   };
 
-  const normTeamName = s => (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+  const normTeamName = s => {
+    // Normalize ESPN name variations for matching
+    const mapped = ESPN_NAME_MAP[s] || s;
+    return (mapped||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+  };
 
   async function fetchESPNGames() {
     // FIFA World Cup 2026 dates on ESPN soccer API
