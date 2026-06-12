@@ -1531,16 +1531,17 @@ export default function WorldCupApp() {
               if (!matched) continue;
 
               if (isDraw && roundId === "Pool Play") {
-                // Check draw not already logged
+                // Check this exact ESPN game hasn't already been logged for this owner/team
                 const exists = draws.some(d =>
                   d.owner_id === owner.id &&
-                  d.round_id === roundId &&
-                  normTeamName(d.team_name) === tn
+                  normTeamName(d.team_name) === tn &&
+                  d.espn_game_id === String(game.id)
                 );
                 if (exists) continue;
                 const { error } = await supabase.from("draws").insert({
                   league_code: leagueCode, owner_id: owner.id,
                   team_name: team.name, round_id: roundId,
+                  espn_game_id: String(game.id),
                 });
                 if (!error) {
                   inserted++;
@@ -1550,16 +1551,17 @@ export default function WorldCupApp() {
                   }, ...prev.slice(0,19)]);
                 }
               } else if (!isDraw) {
-                // Check win not already logged
+                // Check this exact ESPN game hasn't already been logged for this owner/team
                 const exists = wins.some(w =>
                   w.owner_id === owner.id &&
-                  w.round_id === roundId &&
-                  normTeamName(w.team_name) === tn
+                  normTeamName(w.team_name) === tn &&
+                  w.espn_game_id === String(game.id)
                 );
                 if (exists) continue;
                 const { error } = await supabase.from("wins").insert({
                   league_code: leagueCode, owner_id: owner.id,
                   team_name: team.name, round_id: roundId,
+                  espn_game_id: String(game.id),
                 });
                 if (!error) {
                   inserted++;
