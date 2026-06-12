@@ -111,15 +111,15 @@ function calcStats(owners, wins, draws, roundsArg) {
   const others = Math.max(numOwners - 1, 1);
 
   // Build team seed lookup: team_name -> seed
+  // WC_TEAMS is the authoritative source; only fall back to an owner's
+  // drafted-team seed if WC_TEAMS doesn't have an entry for that name.
   const seedOf = {};
+  WC_TEAMS.forEach(t => { seedOf[t.name] = t.seed; });
   owners.forEach(o => {
     (o.teams||[]).forEach(t => {
-      if (t.name) seedOf[t.name] = t.seed || 1;
+      if (t.name && seedOf[t.name] == null && t.seed) seedOf[t.name] = t.seed;
     });
   });
-
-  // Also pull seeds from WC_TEAMS constant as fallback
-  WC_TEAMS.forEach(t => { if (!seedOf[t.name]) seedOf[t.name] = t.seed; });
 
   return owners.map(owner => {
     const myWins  = ROUNDS.map(r => wins.filter(w  => w.owner_id===owner.id && w.round_id===r.id));
