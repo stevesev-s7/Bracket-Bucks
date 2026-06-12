@@ -2026,7 +2026,7 @@ export default function WorldCupApp() {
                           <span style={{ fontWeight:600,flex:1,minWidth:120 }}>{r.team_name}</span>
                           <span style={{ fontSize:11,background:"#1a2440",color:"#8899cc",borderRadius:5,padding:"2px 8px" }}>{round.id}</span>
                           <span style={{ color:"#f4c430",fontWeight:700,fontFamily:"'DM Mono',monospace" }}>
-                            +${r.type==="draw"?(round.dmg/2).toFixed(2):round.dmg.toFixed(2)}/owner
+                            +${((r.type==="draw"?round.dmg/2:round.dmg) * ((WC_TEAMS.find(t=>t.name===r.team_name)||{}).seed || 1)).toFixed(2)}/owner
                           </span>
                           <div style={{ display:"flex",alignItems:"center",gap:6 }}>
                             <div style={{ width:7,height:7,borderRadius:"50%",background:owner.color }} />
