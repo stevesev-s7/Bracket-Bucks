@@ -1481,8 +1481,23 @@ export default function WorldCupApp() {
   }
 
   async function autoSyncESPN() {
-    if (!leagueCode || !owners.length) return;
+    const currentLeagueCode = leagueCode;
+    if (!currentLeagueCode) return;
     try {
+      // Always fetch fresh, league-scoped data — avoids stale closure state
+      // from a previously-loaded league if the user switched leagues.
+      const [{ data: freshOwners }, { data: freshWins }, { data: freshDraws }] = await Promise.all([
+        supabase.from("owners").select("*").eq("league_code", currentLeagueCode).order("num"),
+        supabase.from("wins").select("*").eq("league_code", currentLeagueCode),
+        supabase.from("draws").select("*").eq("league_code", currentLeagueCode),
+      ]);
+      const syncOwners = freshOwners || [];
+      const syncWins   = freshWins   || [];
+      const syncDraws  = freshDraws  || [];
+      if (!syncOwners.length) return;
+      // Bail out entirely if the league has changed since this sync started
+      if (currentLeagueCode !== leagueCode) return;
+
       const games = await fetchESPNGames();
       const completedGames = games.filter(g => g.completed);
       let inserted = 0;
@@ -1518,7 +1533,7 @@ export default function WorldCupApp() {
         for (const comp of teamsToCheck) {
           const espnName = normTeamName(comp.name);
 
-          for (const owner of owners) {
+          for (const owner of syncOwners) {
             for (const team of (owner.teams||[])) {
               if (!team.name) continue;
               const tn = normTeamName(team.name);
@@ -1532,19 +1547,20 @@ export default function WorldCupApp() {
 
               if (isDraw && roundId === "Pool Play") {
                 // Check this exact ESPN game hasn't already been logged for this owner/team
-                const exists = draws.some(d =>
+                const exists = syncDraws.some(d =>
                   d.owner_id === owner.id &&
                   normTeamName(d.team_name) === tn &&
                   d.espn_game_id === String(game.id)
                 );
                 if (exists) continue;
                 const { error } = await supabase.from("draws").insert({
-                  league_code: leagueCode, owner_id: owner.id,
+                  league_code: currentLeagueCode, owner_id: owner.id,
                   team_name: team.name, round_id: roundId,
                   espn_game_id: String(game.id),
                 });
                 if (!error) {
                   inserted++;
+                  syncDraws.push({ owner_id: owner.id, team_name: team.name, espn_game_id: String(game.id) });
                   setSyncLog(prev => [{
                     time: new Date().toLocaleTimeString(),
                     msg: `🤝 Draw: ${owner.name} — ${team.name} (${roundId})`
@@ -1552,19 +1568,20 @@ export default function WorldCupApp() {
                 }
               } else if (!isDraw) {
                 // Check this exact ESPN game hasn't already been logged for this owner/team
-                const exists = wins.some(w =>
+                const exists = syncWins.some(w =>
                   w.owner_id === owner.id &&
                   normTeamName(w.team_name) === tn &&
                   w.espn_game_id === String(game.id)
                 );
                 if (exists) continue;
                 const { error } = await supabase.from("wins").insert({
-                  league_code: leagueCode, owner_id: owner.id,
+                  league_code: currentLeagueCode, owner_id: owner.id,
                   team_name: team.name, round_id: roundId,
                   espn_game_id: String(game.id),
                 });
                 if (!error) {
                   inserted++;
+                  syncWins.push({ owner_id: owner.id, team_name: team.name, espn_game_id: String(game.id) });
                   setSyncLog(prev => [{
                     time: new Date().toLocaleTimeString(),
                     msg: `⚽ Win: ${owner.name} — ${team.name} (${roundId})`
