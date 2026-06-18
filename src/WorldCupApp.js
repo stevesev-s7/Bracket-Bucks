@@ -352,7 +352,7 @@ function TopTeams({ owners, wins, draws }) {
       if(r) earned += (r.dmg/2) * (team.seed || 1);
     });
     return { ...team, wins:teamWins, draws:teamDraws, earned, owner };
-  }).filter(t=>t.wins>0||t.draws>0).sort((a,b)=>b.earned-a.earned);
+  }).filter(t=>t.wins>0||t.draws>0).sort((a,b)=>b.earned-a.earned).slice(0,10);
 
   return (
     <div>
