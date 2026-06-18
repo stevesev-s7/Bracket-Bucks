@@ -443,7 +443,15 @@ function ScheduleTab({ owners }) {
             }
           } catch {}
         }));
-        all.sort((a,b)=>new Date(a.date)-new Date(b.date));
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        all.sort((a,b)=>{
+          const da = new Date(a.date), db = new Date(b.date);
+          const aPast = da < todayStart, bPast = db < todayStart;
+          if (aPast !== bPast) return aPast ? 1 : -1; // past games sort after current/upcoming
+          if (aPast) return db - da; // within past: most recent first (closest to today first)
+          return da - db; // within current/upcoming: soonest first
+        });
         setGames(all);
       } catch(e) { console.error(e); }
       setLoading(false);
