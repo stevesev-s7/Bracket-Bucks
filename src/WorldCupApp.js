@@ -2143,14 +2143,9 @@ export default function WorldCupApp() {
                       <tr style={{ background:"#141d38" }}>
                         <th style={TH}>Seed</th>
                         {rounds.map(r=>{
-                          const n = owners.length > 1 ? owners.length - 1 : 0;
-                          const perWin = r.dmg * n;
                           return (
                             <th key={r.id} style={{ ...TH, textAlign:"center" }}>
                               <div>{r.short}</div>
-                              <div style={{ fontSize:10,color:"#f4c430",fontWeight:600,marginTop:2,textDecoration:"none" }}>
-                                <span>&#36;</span>{perWin.toFixed(2)} per win
-                              </div>
                             </th>
                           );
                         })}
