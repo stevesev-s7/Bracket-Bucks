@@ -345,11 +345,11 @@ function TopTeams({ owners, wins, draws }) {
     let earned = 0;
     wins.filter(w=>w.team_name===team.name).forEach(w=>{
       const r = ROUNDS.find(r=>r.id===w.round_id);
-      if(r) earned += r.dmg;
+      if(r) earned += r.dmg * (team.seed || 1);
     });
     draws.filter(d=>d.team_name===team.name).forEach(d=>{
       const r = ROUNDS.find(r=>r.id===d.round_id);
-      if(r) earned += r.dmg/2;
+      if(r) earned += (r.dmg/2) * (team.seed || 1);
     });
     return { ...team, wins:teamWins, draws:teamDraws, earned, owner };
   }).filter(t=>t.wins>0||t.draws>0).sort((a,b)=>b.earned-a.earned);
