@@ -1613,14 +1613,120 @@ export default function WorldCupApp() {
     } catch(e) { console.error("WC autoSyncESPN error:", e); }
   }
 
-  // Auto-sync interval — runs every 60s when enabled, and on first load
+  // Global sync — runs across ALL leagues so no league is missed regardless of who's viewing
+  async function globalSyncAllLeagues() {
+    try {
+      setSyncLog(prev => [{ time: new Date().toLocaleTimeString(), msg: "🌍 Global sync started for all leagues..." }, ...prev.slice(0,19)]);
+      const games = await fetchESPNGames();
+      const completedGames = games.filter(g => g.completed);
+      if (!completedGames.length) return;
+
+      // Fetch all leagues
+      const { data: leagues } = await supabase.from("leagues").select("code");
+      if (!leagues?.length) return;
+
+      let totalInserted = 0;
+
+      for (const league of leagues) {
+        const lc = league.code;
+        const [{ data: freshOwners }, { data: freshWins }, { data: freshDraws }] = await Promise.all([
+          supabase.from("owners").select("*").eq("league_code", lc).order("num"),
+          supabase.from("wins").select("*").eq("league_code", lc),
+          supabase.from("draws").select("*").eq("league_code", lc),
+        ]);
+        const syncOwners = freshOwners || [];
+        const syncWins   = freshWins   || [];
+        const syncDraws  = freshDraws  || [];
+        if (!syncOwners.length) continue;
+
+        for (const game of completedGames) {
+          const rl = game.roundName.toLowerCase();
+          let roundId = null;
+          for (const [key, val] of Object.entries(ESPN_WC_ROUND_MAP)) {
+            if (rl.includes(key.toLowerCase())) { roundId = val; break; }
+          }
+          if (!roundId) {
+            if (rl.includes("group") || rl.includes("pool") || /^group [a-l]$/i.test(game.roundName.trim())) roundId = "Pool Play";
+            else if (rl.includes("round of 32")) roundId = "Round of 32";
+            else if (rl.includes("round of 16")) roundId = "Round of 16";
+            else if (rl.includes("quarter")) roundId = "Round of 8";
+            else if (rl.includes("semi")) roundId = "Round of 4";
+            else if (rl.includes("final") && !rl.includes("semi") && !rl.includes("quarter") && !rl.includes("third")) roundId = "Championship";
+            else roundId = null;
+          }
+          if (!roundId) continue;
+
+          const winner = game.competitors.find(c => c.winner);
+          const isDraw = !winner && game.competitors.length === 2 &&
+            game.competitors[0]?.score === game.competitors[1]?.score;
+
+          for (const comp of game.competitors) {
+            if (!comp.winner && !isDraw) continue;
+            const espnName = normTeamName(comp.name);
+
+            for (const owner of syncOwners) {
+              for (const team of (owner.teams||[])) {
+                if (!team.name) continue;
+                const tn = normTeamName(team.name);
+                if (!tn) continue;
+                const matched = espnName === tn || espnName.includes(tn) || tn.includes(espnName);
+                if (!matched) continue;
+
+                if (isDraw && roundId === "Pool Play") {
+                  const exists = syncDraws.some(d =>
+                    d.owner_id === owner.id &&
+                    normTeamName(d.team_name) === tn &&
+                    d.espn_game_id === String(game.id)
+                  );
+                  if (exists) continue;
+                  const { error } = await supabase.from("draws").insert({
+                    league_code: lc, owner_id: owner.id,
+                    team_name: team.name, round_id: roundId,
+                    espn_game_id: String(game.id),
+                  });
+                  if (!error) {
+                    totalInserted++;
+                    syncDraws.push({ owner_id: owner.id, team_name: team.name, espn_game_id: String(game.id) });
+                    setSyncLog(prev => [{ time: new Date().toLocaleTimeString(), msg: `🤝 [${lc}] Draw: ${owner.name} — ${team.name} (${roundId})` }, ...prev.slice(0,19)]);
+                  }
+                } else if (!isDraw) {
+                  const exists = syncWins.some(w =>
+                    w.owner_id === owner.id &&
+                    normTeamName(w.team_name) === tn &&
+                    w.espn_game_id === String(game.id)
+                  );
+                  if (exists) continue;
+                  const { error } = await supabase.from("wins").insert({
+                    league_code: lc, owner_id: owner.id,
+                    team_name: team.name, round_id: roundId,
+                    espn_game_id: String(game.id),
+                  });
+                  if (!error) {
+                    totalInserted++;
+                    syncWins.push({ owner_id: owner.id, team_name: team.name, espn_game_id: String(game.id) });
+                    setSyncLog(prev => [{ time: new Date().toLocaleTimeString(), msg: `⚽ [${lc}] Win: ${owner.name} — ${team.name} (${roundId})` }, ...prev.slice(0,19)]);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      setLastSync(new Date());
+      setSyncLog(prev => [{ time: new Date().toLocaleTimeString(), msg: `✅ Global sync complete — ${totalInserted} new result(s) logged across all leagues` }, ...prev.slice(0,19)]);
+      if (totalInserted > 0) loadData();
+    } catch(e) { console.error("WC globalSyncAllLeagues error:", e); }
+  }
+
+
   useEffect(() => {
-    if (!autoSync || !leagueCode || !owners.length) return;
-    // Run immediately on load/enable
-    autoSyncESPN();
-    const interval = setInterval(autoSyncESPN, 60000);
+    if (!autoSync || !leagueCode) return;
+    // Run immediately on load/enable — global sync covers all leagues
+    globalSyncAllLeagues();
+    const interval = setInterval(globalSyncAllLeagues, 60000);
     return () => clearInterval(interval);
-  }, [autoSync, leagueCode, owners.length]);
+  }, [autoSync, leagueCode]);
 
   async function recordResult(ownerId, teamName, round, type) {
     const table = type==="draw" ? "draws" : "wins";
@@ -2011,7 +2117,7 @@ export default function WorldCupApp() {
                       ...S.btn(autoSync?"#0a2a14":"#1a2440",autoSync?"#2ecc71":"#6677aa"),
                       border:`1px solid ${autoSync?"#27ae60":"#2a3560"}`,fontSize:12,padding:"7px 14px"
                     }}>{autoSync?"🔄 Auto-Sync ON":"Auto-Sync OFF"}</button>
-                    <button onClick={autoSyncESPN} style={{...S.btn(),fontSize:12,padding:"7px 14px"}}>⚽ Sync Now</button>
+                    <button onClick={globalSyncAllLeagues} style={{...S.btn(),fontSize:12,padding:"7px 14px"}}>⚽ Sync Now</button>
                     <button onClick={()=>{ if(!adminUnlocked){setModal("pin");return;} setModal("addResult"); }} style={S.btn()}>+ Manual Result</button>
                   </div>
                 </div>
