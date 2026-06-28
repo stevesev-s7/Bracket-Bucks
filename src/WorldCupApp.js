@@ -337,7 +337,7 @@ function LiveScores({ owners, wins, onRecordWin, adminUnlocked, setModal }) {
 }
 
 // ─── TOP TEAMS ────────────────────────────────────────────────────────────────
-function TopTeams({ owners, wins, draws }) {
+function TopTeams({ owners, wins, draws, eliminatedTeams = new Set() }) {
   const teamStats = WC_TEAMS.map(team => {
     const teamWins  = wins.filter(w  => w.team_name===team.name).length;
     const teamDraws = draws.filter(d => d.team_name===team.name).length;
@@ -359,23 +359,27 @@ function TopTeams({ owners, wins, draws }) {
       <h2 style={{ margin:"0 0 20px",fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2 }}>🏆 Top Teams</h2>
       {teamStats.length===0?<Empty text="No wins or draws recorded yet." />:(
         <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
-          {teamStats.map((t,i)=>(
+          {teamStats.map((t,i)=>{
+            const isOut = eliminatedTeams.has(t.name);
+            return (
             <div key={t.name} style={{ ...S.card,display:"flex",alignItems:"center",gap:14,flexWrap:"wrap",
-              borderLeft:`3px solid ${GROUP_COLORS[t.group]||"#555"}` }}>
+              borderLeft:`3px solid ${isOut?"#333":GROUP_COLORS[t.group]||"#555"}`,
+              opacity:isOut?0.5:1 }}>
               <div style={{ fontSize:22,fontWeight:800,color:"#f4c430",minWidth:32 }}>{i+1}</div>
               <SeedBadge seed={t.seed} />
               <div style={{ flex:1,minWidth:120 }}>
-                <div style={{ fontWeight:700,fontSize:15 }}>{t.name}</div>
-                <div style={{ fontSize:11,color:GROUP_COLORS[t.group]||"#6677aa" }}>{t.group}</div>
+                <div style={{ fontWeight:700,fontSize:15,textDecoration:isOut?"line-through":"none",color:isOut?"#555":"#dce4f5" }}>{t.name}</div>
+                <div style={{ fontSize:11,color:isOut?"#333":GROUP_COLORS[t.group]||"#6677aa" }}>{t.group}{isOut?<span style={{color:"#e74c3c",marginLeft:6}}>Eliminated</span>:""}</div>
               </div>
-              {t.owner&&<span style={{ fontSize:11,color:t.owner.color,background:"#1a2440",borderRadius:4,padding:"2px 8px",fontWeight:700 }}>{t.owner.name}</span>}
+              {t.owner&&<span style={{ fontSize:11,color:isOut?"#444":t.owner.color,background:"#1a2440",borderRadius:4,padding:"2px 8px",fontWeight:700 }}>{t.owner.name}</span>}
               <div style={{ display:"flex",gap:16 }}>
                 <Fin label="Wins" val={t.wins} color="#2ecc71" />
                 {t.draws>0&&<Fin label="Draws" val={t.draws} color="#f39c12" />}
                 <Fin label="Points" val={`+$${t.earned.toFixed(2)}`} color="#f4c430" large />
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -1311,6 +1315,7 @@ export default function WorldCupApp() {
   const [draws, setDraws] = useState([]);
   const [league, setLeague] = useState(null);
   const [teamsPerOwner, setTeamsPerOwner] = useState(6);
+  const [eliminatedTeams, setEliminatedTeams] = useState(new Set()); // team names confirmed eliminated by ESPN
 
   const [rounds, setRounds] = useState(() => {
     // Try localStorage first as immediate fallback before Supabase loads
@@ -1378,7 +1383,41 @@ export default function WorldCupApp() {
       .then(({data}) => { if (data) setAllLeagues(data); });
   }, [adminUnlocked]);
 
-  function saveToMyLeagues(code, name) {
+  // Fetch eliminated teams from ESPN standings — refresh every 5 minutes
+  useEffect(() => {
+    async function fetchEliminated() {
+      try {
+        const res = await fetch("https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings?season=2026");
+        if (!res.ok) return;
+        const data = await res.json();
+        const eliminated = new Set();
+        for (const groupEntry of (data.children||[])) {
+          for (const entry of (groupEntry.standings?.entries||[])) {
+            const teamName = entry.team?.displayName || entry.team?.name || "";
+            if (!teamName) continue;
+            const stats = {};
+            (entry.stats||[]).forEach(s => { stats[s.abbreviation] = s.value; });
+            const advStat = stats["ADV"] ?? null;
+            const gp = stats["GP"] ?? 0;
+            const noteColor = entry.note?.color || "";
+            const noteDesc  = (entry.note?.description || "").toLowerCase();
+            const isEliminated = (advStat === 0 && gp >= 3) ||
+              (advStat === null && (noteColor === "FF7F84" || noteColor === "#FF7F84" || noteDesc.includes("eliminat")));
+            if (isEliminated) eliminated.add(teamName);
+            // Also add ESPN_NAME_MAP reverse — if ESPN name maps to internal name, add both
+            const mappedName = ESPN_NAME_MAP[teamName];
+            if (isEliminated && mappedName) eliminated.add(mappedName);
+          }
+        }
+        setEliminatedTeams(eliminated);
+      } catch(e) { /* silent fail */ }
+    }
+    fetchEliminated();
+    const interval = setInterval(fetchEliminated, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+
     setMyLeagues(prev => {
       const filtered = prev.filter(l => l.code !== code);
       const updated = [...filtered, { code, name }];
@@ -2328,14 +2367,15 @@ export default function WorldCupApp() {
                       const owner = owners.find(o=>o.id===r.owner_id);
                       const round = rounds.find(rd=>rd.id===r.round_id);
                       if (!owner||!round) return null;
+                      const isOut = eliminatedTeams.has(r.team_name);
                       return (
                         <div key={`${r.type}-${r.id}`} style={{ background:"#111827",border:"1px solid #1a2440",
                           borderRadius:10,padding:"11px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",
-                          borderLeft:`3px solid ${r.type==="win"?"#27ae60":"#f39c12"}` }}>
+                          borderLeft:`3px solid ${r.type==="win"?"#27ae60":"#f39c12"}`,opacity:isOut?0.6:1 }}>
                           <span style={{ fontWeight:700,fontSize:13,color:r.type==="win"?"#2ecc71":"#f39c12" }}>
                             {r.type==="win"?"⚽ WIN":"🤝 DRAW"}
                           </span>
-                          <span style={{ fontWeight:600,flex:1,minWidth:120 }}>{r.team_name}</span>
+                          <span style={{ fontWeight:600,flex:1,minWidth:120,textDecoration:isOut?"line-through":"none",color:isOut?"#555":"#dce4f5" }}>{r.team_name}</span>
                           <span style={{ fontSize:11,background:"#1a2440",color:"#8899cc",borderRadius:5,padding:"2px 8px" }}>{round.id}</span>
                           <span style={{ color:"#f4c430",fontWeight:700,fontFamily:"'DM Mono',monospace" }}>
                             +${((r.type==="draw"?round.dmg/2:round.dmg) * ((WC_TEAMS.find(t=>t.name===r.team_name)||{}).seed || 1)).toFixed(2)}/owner
@@ -2362,7 +2402,7 @@ export default function WorldCupApp() {
             )}
 
             {/* GROUPS */}
-            {tab==="groups"&&<GroupsTab owners={owners} />}
+            {tab==="groups"&&<GroupsTab owners={owners} eliminatedTeams={eliminatedTeams} />}
 
             {/* SCHEDULE */}
             {tab==="schedule"&&<ScheduleTab owners={owners} />}
@@ -2398,16 +2438,19 @@ export default function WorldCupApp() {
                             {(owner.teams||[]).map((team,i)=>{
                               const hasWin=wins.some(w=>w.owner_id===owner.id&&w.team_name===team.name);
                               const hasDraw=draws.some(d=>d.owner_id===owner.id&&d.team_name===team.name);
+                              const isOut=eliminatedTeams.has(team.name);
                               return (
                                 <div key={i} style={{ display:"flex",alignItems:"center",gap:8,
-                                  background:hasWin?"#1a2e1a":hasDraw?"#2a1e0a":"#0f1625",
-                                  border:`1px solid ${hasWin?"#27ae60":hasDraw?"#f39c12":"#1a2440"}`,
-                                  borderRadius:7,padding:"6px 10px" }}>
+                                  background:isOut?"#0a0a0a":hasWin?"#1a2e1a":hasDraw?"#2a1e0a":"#0f1625",
+                                  border:`1px solid ${isOut?"#222":hasWin?"#27ae60":hasDraw?"#f39c12":"#1a2440"}`,
+                                  borderRadius:7,padding:"6px 10px",opacity:isOut?0.5:1 }}>
                                   <SeedBadge seed={team.seed||i+1} />
-                                  <span style={{ fontSize:13,flex:1,color:GROUP_COLORS[team.group]||"#dce4f5" }}>{team.name||"TBD"}</span>
-                                  {team.group&&<span style={{ fontSize:9,color:GROUP_COLORS[team.group]||"#555",fontWeight:700 }}>{team.group.replace("Group ","Grp ")}</span>}
-                                  {hasWin&&<span style={{ fontSize:10,color:"#2ecc71" }}>⚽</span>}
-                                  {hasDraw&&!hasWin&&<span style={{ fontSize:10,color:"#f39c12" }}>🤝</span>}
+                                  <span style={{ fontSize:13,flex:1,color:isOut?"#444":GROUP_COLORS[team.group]||"#dce4f5",
+                                    textDecoration:isOut?"line-through":"none" }}>{team.name||"TBD"}</span>
+                                  {team.group&&<span style={{ fontSize:9,color:isOut?"#333":GROUP_COLORS[team.group]||"#555",fontWeight:700 }}>{team.group.replace("Group ","Grp ")}</span>}
+                                  {isOut&&<span style={{ fontSize:10,color:"#e74c3c" }}>✗</span>}
+                                  {!isOut&&hasWin&&<span style={{ fontSize:10,color:"#2ecc71" }}>⚽</span>}
+                                  {!isOut&&hasDraw&&!hasWin&&<span style={{ fontSize:10,color:"#f39c12" }}>🤝</span>}
                                 </div>
                               );
                             })}
@@ -2424,7 +2467,7 @@ export default function WorldCupApp() {
             )}
 
             {/* TOP TEAMS */}
-            {tab==="topteams"&&<TopTeams owners={owners} wins={wins} draws={draws} />}
+            {tab==="topteams"&&<TopTeams owners={owners} wins={wins} draws={draws} eliminatedTeams={eliminatedTeams} />}
 
             {/* PAYOUTS */}
             {tab==="payouts"&&(
