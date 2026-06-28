@@ -599,11 +599,10 @@ function ScheduleTab({ owners }) {
 
 // ─── GROUPS TAB ───────────────────────────────────────────────────────────────
 function GroupsTab({ owners }) {
-  const [standings, setStandings] = useState({}); // { "Group A": [{name,W,D,L,GF,GA,GD,Pts,advanced,eliminated}] }
+  const [standings, setStandings] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Build owner lookup by team name
   const ownerOf = useMemo(() => {
     const map = {};
     (owners||[]).forEach(o => {
@@ -617,9 +616,7 @@ function GroupsTab({ owners }) {
   function findOwner(teamName) {
     if (!teamName) return null;
     const key = (ESPN_NAME_MAP[teamName]||teamName).toLowerCase().replace(/[^a-z0-9]/g,"");
-    // Try exact
     if (ownerOf[key]) return ownerOf[key];
-    // Try partial
     return Object.entries(ownerOf).find(([k])=>k.includes(key)||key.includes(k))?.[1]||null;
   }
 
@@ -627,7 +624,6 @@ function GroupsTab({ owners }) {
     async function load() {
       try {
         setLoading(true);
-        // Fetch group standings from ESPN
         const res = await fetch("https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings?season=2026");
         if (!res.ok) throw new Error("ESPN standings unavailable");
         const data = await res.json();
@@ -639,48 +635,45 @@ function GroupsTab({ owners }) {
           const label = groupName.replace(/^.*?(Group [A-L]).*$/i,"$1");
           const rows = [];
           for (const entry of (groupEntry.standings?.entries||[])) {
-            const teamName = entry.team?.displayName || entry.team?.name || "";
+            const teamName  = entry.team?.displayName || entry.team?.name || "";
+            const logo      = entry.team?.logos?.[0]?.href || null;
+            const abbr      = entry.team?.abbreviation || "";
+            // ESPN uses abbreviations: P=points, F=goalsFor, A=goalsAgainst, GD=goalDiff, W=wins, D=draws, L=losses, GP=gamesPlayed, ADV=advanced
             const stats = {};
-            (entry.stats||[]).forEach(s => { stats[s.abbreviation||s.name] = s.value; });
-            const pts  = stats["PTS"]  ?? stats["points"]  ?? 0;
-            const w    = stats["W"]    ?? stats["wins"]     ?? 0;
-            const d    = stats["D"]    ?? stats["draws"]    ?? 0;
-            const l    = stats["L"]    ?? stats["losses"]   ?? 0;
-            const gf   = stats["GF"]   ?? stats["pointsFor"] ?? 0;
-            const ga   = stats["GA"]   ?? stats["pointsAgainst"] ?? 0;
-            const gd   = stats["GD"]   ?? stats["pointDifferential"] ?? (gf - ga);
-            const gp   = stats["GP"]   ?? stats["gamesPlayed"] ?? (w+d+l);
-            // Advancement: top 2 from each group + 8 best 3rd place teams advance
-            const rank = entry.note?.rank ?? entry.rank ?? null;
-            const noteText = (entry.note?.description||"").toLowerCase();
-            const advanced    = noteText.includes("advance") || rank === 1 || rank === 2;
-            const eliminated  = noteText.includes("eliminat");
+            (entry.stats||[]).forEach(s => {
+              stats[s.abbreviation] = { value: s.value, display: s.displayValue };
+            });
+            const pts  = stats["P"]?.value   ?? 0;
+            const w    = stats["W"]?.value   ?? 0;
+            const d    = stats["D"]?.value   ?? 0;
+            const l    = stats["L"]?.value   ?? 0;
+            const gf   = stats["F"]?.value   ?? 0;
+            const ga   = stats["A"]?.value   ?? 0;
+            const gd   = stats["GD"]?.value  ?? (gf - ga);
+            const gp   = stats["GP"]?.value  ?? (w+d+l);
+            const record = stats["0"]?.display || `${w}-${d}-${l}`;
+            // ESPN note color: #81D6AC = advanced, #FF7F84 = eliminated, yellow = 3rd place possible
+            const noteColor = entry.note?.color || "";
+            const noteDesc  = entry.note?.description || "";
+            const advanced    = noteColor === "81D6AC" || noteColor === "#81D6AC" || noteDesc.toLowerCase().includes("advance");
+            const eliminated  = noteColor === "FF7F84" || noteColor === "#FF7F84" || noteDesc.toLowerCase().includes("eliminat");
+            const thirdChance = noteColor === "E8E077" || noteColor === "#E8E077" || noteDesc.toLowerCase().includes("third");
             const inProgress  = gp > 0 && gp < 3;
-            rows.push({ teamName, pts, w, d, l, gf, ga, gd, gp, advanced, eliminated, inProgress, rank });
+            rows.push({ teamName, abbr, logo, pts, w, d, l, gf, ga, gd, gp, record, advanced, eliminated, thirdChance, inProgress, noteDesc });
           }
-          // Sort by pts desc, then GD desc, then GF desc
           rows.sort((a,b) => b.pts-a.pts || b.gd-a.gd || b.gf-a.gf);
           if (rows.length) groups[label] = rows;
         }
 
-        // Fallback: if ESPN standings empty, build from WC_TEAMS with zeroes
-        if (!Object.keys(groups).length) {
-          ["A","B","C","D","E","F","G","H","I","J","K","L"].forEach(g => {
-            groups[`Group ${g}`] = WC_TEAMS
-              .filter(t=>t.group===`Group ${g}`)
-              .map(t=>({teamName:t.name,pts:0,w:0,d:0,l:0,gf:0,ga:0,gd:0,gp:0,advanced:false,eliminated:false,inProgress:false}));
-          });
-        }
-
+        if (!Object.keys(groups).length) throw new Error("No group data returned");
         setStandings(groups);
       } catch(e) {
         setError(e.message);
-        // Fallback to static WC_TEAMS
         const groups = {};
         ["A","B","C","D","E","F","G","H","I","J","K","L"].forEach(g => {
           groups[`Group ${g}`] = WC_TEAMS
             .filter(t=>t.group===`Group ${g}`)
-            .map(t=>({teamName:t.name,pts:0,w:0,d:0,l:0,gf:0,ga:0,gd:0,gp:0,advanced:false,eliminated:false,inProgress:false}));
+            .map(t=>({teamName:t.name,abbr:"",logo:null,pts:0,w:0,d:0,l:0,gf:0,ga:0,gd:0,gp:0,record:"0-0-0",advanced:false,eliminated:false,thirdChance:false,inProgress:false,noteDesc:""}));
         });
         setStandings(groups);
       } finally {
@@ -690,8 +683,8 @@ function GroupsTab({ owners }) {
     load();
   }, []);
 
-  const TH = { padding:"7px 10px",textAlign:"center",fontSize:10,color:"#6677aa",fontWeight:700,textTransform:"uppercase",letterSpacing:1,borderBottom:"1px solid #1a2440",whiteSpace:"nowrap" };
-  const TD = { padding:"8px 10px",textAlign:"center",fontSize:13,borderBottom:"1px solid #0f1625" };
+  const TH = { padding:"6px 8px",textAlign:"center",fontSize:10,color:"#6677aa",fontWeight:700,textTransform:"uppercase",letterSpacing:1,borderBottom:"1px solid #1a2440",whiteSpace:"nowrap" };
+  const TD = { padding:"7px 8px",textAlign:"center",fontSize:12,borderBottom:"1px solid #0a0f1a" };
 
   if (loading) return <div style={{textAlign:"center",padding:"40px",color:"#6677aa"}}>Loading group standings from ESPN...</div>;
 
@@ -699,21 +692,25 @@ function GroupsTab({ owners }) {
     <div style={{display:"flex",flexDirection:"column",gap:20}}>
       <div>
         <h2 style={{margin:"0 0 4px",fontFamily:"'Bebas Neue',sans-serif",fontSize:26,letterSpacing:2}}>🌍 Group Standings</h2>
-        <p style={{color:"#6677aa",fontSize:12,margin:0}}>Live standings from ESPN. 🟢 Advanced · 🔴 Eliminated · owner dot shows who drafted each team.</p>
-        {error&&<p style={{color:"#e74c3c",fontSize:11,marginTop:4}}>⚠ {error} — showing estimated standings.</p>}
+        <p style={{color:"#6677aa",fontSize:12,margin:0}}>
+          Live from ESPN · <span style={{color:"#2ecc71"}}>■</span> Advanced &nbsp;
+          <span style={{color:"#f39c12"}}>■</span> 3rd Place Contender &nbsp;
+          <span style={{color:"#e74c3c"}}>■</span> Eliminated &nbsp;
+          Owner dot = drafted by
+        </p>
+        {error&&<p style={{color:"#e74c3c",fontSize:11,marginTop:4}}>⚠ {error} — showing static team list.</p>}
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(340px,1fr))",gap:16}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(360px,1fr))",gap:16}}>
         {Object.entries(standings).sort(([a],[b])=>a.localeCompare(b)).map(([groupName,rows])=>(
           <div key={groupName} style={{background:"#0f1625",border:"1px solid #1a2440",borderRadius:12,overflow:"hidden"}}>
-            {/* Group header */}
-            <div style={{background:"#141d38",padding:"10px 14px",display:"flex",alignItems:"center",gap:8}}>
-              <div style={{width:10,height:10,borderRadius:2,background:GROUP_COLORS[groupName]||"#6677aa"}}/>
-              <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:1.5,color:"#dce4f5"}}>{groupName}</span>
+            <div style={{background:"#141d38",padding:"9px 14px",display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:10,height:10,borderRadius:2,background:GROUP_COLORS[groupName]||"#6677aa",flexShrink:0}}/>
+              <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:1.5,color:"#dce4f5"}}>{groupName}</span>
             </div>
             <table style={{width:"100%",borderCollapse:"collapse"}}>
               <thead>
                 <tr style={{background:"#0a0f1a"}}>
-                  <th style={{...TH,textAlign:"left",paddingLeft:14,width:"35%"}}>Team</th>
+                  <th style={{...TH,textAlign:"left",paddingLeft:10,width:"40%"}}>Team</th>
                   <th style={TH}>GP</th>
                   <th style={TH}>W</th>
                   <th style={TH}>D</th>
@@ -728,42 +725,48 @@ function GroupsTab({ owners }) {
               <tbody>
                 {rows.map((row,i)=>{
                   const wcTeam = WC_TEAMS.find(t=>t.name===row.teamName||(ESPN_NAME_MAP[row.teamName]===t.name));
-                  const owner = findOwner(row.teamName);
-                  const statusColor = row.advanced?"#27ae60":row.eliminated?"#e74c3c":row.inProgress?"#f39c12":"#6677aa";
-                  const statusDot = row.advanced?"🟢":row.eliminated?"🔴":row.inProgress?"🟡":"⚪";
+                  const owner  = findOwner(row.teamName);
+                  const statusColor = row.advanced?"#27ae60":row.eliminated?"#e74c3c":row.thirdChance?"#f39c12":"transparent";
                   return (
                     <tr key={row.teamName} style={{
                       background:i%2===0?"#0f1625":"#0a0f1a",
-                      opacity:row.eliminated?0.6:1,
+                      opacity:row.eliminated?0.55:1,
+                      borderLeft:`3px solid ${statusColor}`,
                     }}>
-                      <td style={{...TD,textAlign:"left",paddingLeft:14}}>
+                      <td style={{...TD,textAlign:"left",paddingLeft:10}}>
                         <div style={{display:"flex",alignItems:"center",gap:6}}>
-                          <span style={{fontSize:11}}>{statusDot}</span>
+                          {row.logo
+                            ? <img src={row.logo} alt="" style={{width:18,height:18,objectFit:"contain",flexShrink:0}}/>
+                            : <div style={{width:18,height:18,borderRadius:2,background:"#1a2440",flexShrink:0}}/>
+                          }
                           <div>
-                            <div style={{fontWeight:600,fontSize:12,color:row.advanced?"#2ecc71":row.eliminated?"#888":"#dce4f5"}}>
+                            <div style={{fontWeight:600,fontSize:11,color:row.advanced?"#2ecc71":row.eliminated?"#666":"#dce4f5",lineHeight:1.2}}>
                               {row.teamName}
                             </div>
-                            {wcTeam&&<div style={{fontSize:10,color:"#445"}}>Seed #{wcTeam.seed}</div>}
+                            <div style={{fontSize:9,color:"#445",lineHeight:1}}>
+                              {wcTeam?`Seed #${wcTeam.seed}`:""}
+                              {row.noteDesc&&!row.advanced&&!row.eliminated?<span style={{color:"#f39c12",marginLeft:4}}>{row.noteDesc}</span>:""}
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td style={{...TD,color:"#8899cc"}}>{row.gp}</td>
+                      <td style={{...TD,color:"#6677aa"}}>{row.gp}</td>
                       <td style={{...TD,color:"#2ecc71",fontWeight:row.w>0?700:400}}>{row.w}</td>
                       <td style={{...TD,color:"#f39c12"}}>{row.d}</td>
                       <td style={{...TD,color:"#e74c3c"}}>{row.l}</td>
                       <td style={TD}>{row.gf}</td>
                       <td style={TD}>{row.ga}</td>
-                      <td style={{...TD,color:row.gd>0?"#2ecc71":row.gd<0?"#e74c3c":"#8899cc",fontWeight:700}}>
+                      <td style={{...TD,color:row.gd>0?"#2ecc71":row.gd<0?"#e74c3c":"#8899cc",fontWeight:600}}>
                         {row.gd>0?`+${row.gd}`:row.gd}
                       </td>
-                      <td style={{...TD,color:"#f4c430",fontWeight:700,fontSize:15}}>{row.pts}</td>
+                      <td style={{...TD,color:"#f4c430",fontWeight:700,fontSize:14}}>{row.pts}</td>
                       <td style={TD}>
                         {owner
-                          ? <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                          ? <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
                               <div style={{width:7,height:7,borderRadius:"50%",background:owner.color,flexShrink:0}}/>
-                              <span style={{fontSize:10,color:"#8899cc",whiteSpace:"nowrap"}}>{owner.name.split(" ")[0]}</span>
+                              <span style={{fontSize:9,color:"#8899cc",whiteSpace:"nowrap"}}>{owner.name.split(" ")[0]}</span>
                             </div>
-                          : <span style={{color:"#2a3560",fontSize:11}}>—</span>
+                          : <span style={{color:"#2a3560",fontSize:10}}>—</span>
                         }
                       </td>
                     </tr>
