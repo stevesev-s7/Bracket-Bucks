@@ -653,11 +653,15 @@ function GroupsTab({ owners }) {
             const gp   = stats["GP"]?.value  ?? (w+d+l);
             const record = stats["0"]?.display || `${w}-${d}-${l}`;
             // ESPN note color: #81D6AC = advanced, #FF7F84 = eliminated, yellow = 3rd place possible
+            // BUT note.color is unreliable (can be stale) — prefer ADV stat value
             const noteColor = entry.note?.color || "";
             const noteDesc  = entry.note?.description || "";
-            const advanced    = noteColor === "81D6AC" || noteColor === "#81D6AC" || noteDesc.toLowerCase().includes("advance");
-            const eliminated  = noteColor === "FF7F84" || noteColor === "#FF7F84" || noteDesc.toLowerCase().includes("eliminat");
-            const thirdChance = noteColor === "E8E077" || noteColor === "#E8E077" || noteDesc.toLowerCase().includes("third");
+            const advStat   = stats["ADV"]?.value ?? null;
+            // ADV=1 means confirmed advanced, ADV=0 with gp=3 means eliminated
+            // Fall back to note color only if ADV stat is missing
+            const advanced    = advStat === 1 || (advStat === null && (noteColor === "81D6AC" || noteColor === "#81D6AC" || noteDesc.toLowerCase().includes("advance to round")));
+            const eliminated  = (advStat === 0 && gp >= 3) || (advStat === null && (noteColor === "FF7F84" || noteColor === "#FF7F84" || noteDesc.toLowerCase().includes("eliminat")));
+            const thirdChance = !advanced && !eliminated && (noteColor === "E8E077" || noteColor === "#E8E077" || noteDesc.toLowerCase().includes("third"));
             const inProgress  = gp > 0 && gp < 3;
             rows.push({ teamName, abbr, logo, pts, w, d, l, gf, ga, gd, gp, record, advanced, eliminated, thirdChance, inProgress, noteDesc });
           }
