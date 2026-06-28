@@ -2310,7 +2310,7 @@ export default function WorldCupApp() {
                     <button onClick={()=>{ if(!adminUnlocked){setModal("pin");return;} setModal("addResult"); }} style={S.btn()}>+ Manual Result</button>
                   </div>
                 </div>
-                {syncLog.length>0&&(
+                {adminUnlocked&&syncLog.length>0&&(
                   <div style={{background:"#080e1a",border:"1px solid #1e2d4a",borderRadius:10,padding:"10px 14px",marginBottom:14}}>
                     <div style={{fontSize:10,color:"#6677aa",textTransform:"uppercase",letterSpacing:1.5,fontWeight:700,marginBottom:8}}>Auto-Sync Log</div>
                     {syncLog.slice(0,5).map((l,i)=>(
