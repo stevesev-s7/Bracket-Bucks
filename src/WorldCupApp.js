@@ -2133,7 +2133,9 @@ export default function WorldCupApp() {
                 )}
                 {wins.length===0&&draws.length===0?<Empty text="No results recorded yet." />:(
                   <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
-                    {[...wins.map(w=>({...w,type:"win"})),...draws.map(d=>({...d,type:"draw"}))].map(r=>{
+                    {[...wins.map(w=>({...w,type:"win"})),...draws.map(d=>({...d,type:"draw"}))]
+                      .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))
+                      .map(r=>{
                       const owner = owners.find(o=>o.id===r.owner_id);
                       const round = rounds.find(rd=>rd.id===r.round_id);
                       if (!owner||!round) return null;
