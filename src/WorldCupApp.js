@@ -1461,15 +1461,22 @@ export default function WorldCupApp() {
           const gameDate = ev.date ? ev.date.substring(0,10) : "";
           let detectedRound = comp?.notes?.[0]?.headline || "";
           if (!detectedRound) {
-            // Determine round by date range
-            if (gameDate >= "2026-06-11" && gameDate <= "2026-07-02") detectedRound = "Pool Play";
-            else if (gameDate >= "2026-07-04" && gameDate <= "2026-07-09") detectedRound = "Round of 32";
-            else if (gameDate >= "2026-07-11" && gameDate <= "2026-07-14") detectedRound = "Round of 16";
-            else if (gameDate >= "2026-07-16" && gameDate <= "2026-07-17") detectedRound = "Round of 8";
-            else if (gameDate >= "2026-07-18" && gameDate <= "2026-07-18") detectedRound = "Round of 4";
+            // Determine round by date range (actual 2026 WC schedule)
+            if      (gameDate >= "2026-06-11" && gameDate <= "2026-06-27") detectedRound = "Pool Play";
+            else if (gameDate >= "2026-06-28" && gameDate <= "2026-07-03") detectedRound = "Round of 32";
+            else if (gameDate >= "2026-07-04" && gameDate <= "2026-07-07") detectedRound = "Round of 16";
+            else if (gameDate >= "2026-07-08" && gameDate <= "2026-07-11") detectedRound = "Round of 8";
+            else if (gameDate >= "2026-07-14" && gameDate <= "2026-07-15") detectedRound = "Round of 4";
             else if (gameDate >= "2026-07-19") detectedRound = "Championship";
             else detectedRound = "Pool Play";
           }
+          // If ESPN headline mentions a specific round, trust it over date-based guess
+          if (detectedRound && /round of 32/i.test(detectedRound))  detectedRound = "Round of 32";
+          else if (detectedRound && /round of 16/i.test(detectedRound))  detectedRound = "Round of 16";
+          else if (detectedRound && /quarter/i.test(detectedRound))      detectedRound = "Round of 8";
+          else if (detectedRound && /semi/i.test(detectedRound))         detectedRound = "Round of 4";
+          else if (detectedRound && /final/i.test(detectedRound) && !/semi|quarter|third/i.test(detectedRound)) detectedRound = "Championship";
+          else if (detectedRound && /group|pool/i.test(detectedRound))   detectedRound = "Pool Play";
           allGames.push({
             id: ev.id,
             completed: comp?.status?.type?.completed,
@@ -1525,7 +1532,7 @@ export default function WorldCupApp() {
           else if (rl.includes("quarter")) roundId = "Round of 8";
           else if (rl.includes("semi")) roundId = "Round of 4";
           else if (rl.includes("final") && !rl.includes("semi") && !rl.includes("quarter") && !rl.includes("third")) roundId = "Championship";
-          else roundId = "Pool Play"; // Default to Pool Play during group stage
+          else roundId = null; // Unknown round — skip rather than misclassify as Pool Play
         }
         if (!roundId) continue;
 
