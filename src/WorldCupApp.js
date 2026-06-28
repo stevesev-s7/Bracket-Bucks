@@ -602,7 +602,7 @@ function ScheduleTab({ owners }) {
 }
 
 // ─── GROUPS TAB ───────────────────────────────────────────────────────────────
-function GroupsTab({ owners }) {
+function GroupsTab({ owners, eliminatedTeams = new Set() }) {
   const [standings, setStandings] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -734,11 +734,12 @@ function GroupsTab({ owners }) {
                 {rows.map((row,i)=>{
                   const wcTeam = WC_TEAMS.find(t=>t.name===row.teamName||(ESPN_NAME_MAP[row.teamName]===t.name));
                   const owner  = findOwner(row.teamName);
-                  const statusColor = row.advanced?"#27ae60":row.eliminated?"#e74c3c":row.thirdChance?"#f39c12":"transparent";
+                  const isOut  = row.eliminated || eliminatedTeams.has(row.teamName) || (wcTeam && eliminatedTeams.has(wcTeam.name));
+                  const statusColor = row.advanced?"#27ae60":isOut?"#e74c3c":row.thirdChance?"#f39c12":"transparent";
                   return (
                     <tr key={row.teamName} style={{
                       background:i%2===0?"#0f1625":"#0a0f1a",
-                      opacity:row.eliminated?0.55:1,
+                      opacity:isOut?0.55:1,
                       borderLeft:`3px solid ${statusColor}`,
                     }}>
                       <td style={{...TD,textAlign:"left",paddingLeft:10}}>
@@ -748,12 +749,14 @@ function GroupsTab({ owners }) {
                             : <div style={{width:18,height:18,borderRadius:2,background:"#1a2440",flexShrink:0}}/>
                           }
                           <div>
-                            <div style={{fontWeight:600,fontSize:11,color:row.advanced?"#2ecc71":row.eliminated?"#666":"#dce4f5",lineHeight:1.2}}>
+                            <div style={{fontWeight:600,fontSize:11,color:row.advanced?"#2ecc71":isOut?"#666":"#dce4f5",lineHeight:1.2,
+                              textDecoration:isOut?"line-through":"none"}}>
                               {row.teamName}
                             </div>
                             <div style={{fontSize:9,color:"#445",lineHeight:1}}>
                               {wcTeam?`Seed #${wcTeam.seed}`:""}
-                              {row.noteDesc&&!row.advanced&&!row.eliminated?<span style={{color:"#f39c12",marginLeft:4}}>{row.noteDesc}</span>:""}
+                              {row.noteDesc&&!row.advanced&&!isOut?<span style={{color:"#f39c12",marginLeft:4}}>{row.noteDesc}</span>:""}
+                              {isOut?<span style={{color:"#e74c3c",marginLeft:4}}>Eliminated</span>:""}
                             </div>
                           </div>
                         </div>
