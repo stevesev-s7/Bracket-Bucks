@@ -1396,24 +1396,34 @@ export default function WorldCupApp() {
         const eliminated = new Set();
         for (const groupEntry of (data.children||[])) {
           for (const entry of (groupEntry.standings?.entries||[])) {
-            const teamName = entry.team?.displayName || entry.team?.name || "";
-            if (!teamName) continue;
+            const espnName = entry.team?.displayName || entry.team?.name || "";
+            const shortName = entry.team?.shortDisplayName || entry.team?.name || "";
+            if (!espnName) continue;
             const stats = {};
             (entry.stats||[]).forEach(s => { stats[s.abbreviation] = s.value; });
-            const advStat = stats["ADV"] ?? null;
-            const gp = stats["GP"] ?? 0;
-            const noteColor = entry.note?.color || "";
+            const advStat = stats["ADV"];
+            const gp = Number(stats["GP"] ?? 0);
+            const noteColor = (entry.note?.color || "").replace("#","");
             const noteDesc  = (entry.note?.description || "").toLowerCase();
-            const isEliminated = (advStat === 0 && gp >= 3) ||
-              (advStat === null && (noteColor === "FF7F84" || noteColor === "#FF7F84" || noteDesc.includes("eliminat")));
-            if (isEliminated) eliminated.add(teamName);
-            // Also add ESPN_NAME_MAP reverse — if ESPN name maps to internal name, add both
-            const mappedName = ESPN_NAME_MAP[teamName];
-            if (isEliminated && mappedName) eliminated.add(mappedName);
+            const isEliminated = (advStat !== undefined && Number(advStat) === 0 && gp >= 3) ||
+              (advStat === undefined && (noteColor === "FF7F84" || noteDesc.includes("eliminat")));
+            if (!isEliminated) continue;
+            // Add ESPN name, short name, and any mapped internal name
+            [espnName, shortName].forEach(n => { if (n) eliminated.add(n); });
+            const mapped = ESPN_NAME_MAP[espnName] || ESPN_NAME_MAP[shortName];
+            if (mapped) eliminated.add(mapped);
+            // Also match against WC_TEAMS by normalizing
+            const norm = n => n.toLowerCase().replace(/[^a-z0-9]/g,"");
+            const espnNorm = norm(espnName);
+            WC_TEAMS.forEach(t => {
+              if (norm(t.name) === espnNorm || espnNorm.includes(norm(t.name)) || norm(t.name).includes(espnNorm)) {
+                eliminated.add(t.name);
+              }
+            });
           }
         }
         setEliminatedTeams(eliminated);
-      } catch(e) { /* silent fail */ }
+      } catch(e) { console.error("fetchEliminated error:", e); }
     }
     fetchEliminated();
     const interval = setInterval(fetchEliminated, 5 * 60 * 1000);
