@@ -1386,56 +1386,77 @@ export default function WorldCupApp() {
       .then(({data}) => { if (data) setAllLeagues(data); });
   }, [adminUnlocked]);
 
-  // Fetch eliminated teams from ESPN standings — refresh every 5 minutes
+  // Fetch eliminated teams from ESPN standings + knockout round losers — refresh every 5 minutes
   useEffect(() => {
-    // ESPN name → internal WC_TEAMS name overrides for special characters / different names
     const ESPN_ELIM_MAP = {
-      "Türkiye": "Turkey",
-      "Curaçao": "Curacao",
-      "IR Iran": "Iran",
-      "Korea Republic": "South Korea",
-      "Republic of Korea": "South Korea",
-      "USA": "United States",
-      "Ivory Coast": "Côte d'Ivoire",
+      "Türkiye": "Türkiye", "Curaçao": "Curaçao",
+      "IR Iran": "Iran", "Korea Republic": "South Korea",
+      "Republic of Korea": "South Korea", "USA": "United States",
     };
+    const norm = n => n.toLowerCase().replace(/[^a-z0-9]/g,"");
+
+    function addTeam(eliminated, espnName) {
+      if (!espnName) return;
+      eliminated.add(espnName);
+      if (ESPN_ELIM_MAP[espnName]) eliminated.add(ESPN_ELIM_MAP[espnName]);
+      const mapped = ESPN_NAME_MAP[espnName];
+      if (mapped) eliminated.add(mapped);
+      const en = norm(espnName);
+      WC_TEAMS.forEach(t => {
+        const tn = norm(t.name);
+        if (tn === en || en.includes(tn) || tn.includes(en)) eliminated.add(t.name);
+      });
+    }
+
     async function fetchEliminated() {
       try {
-        const res = await fetch("https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings?season=2026");
-        if (!res.ok) return;
-        const data = await res.json();
         const eliminated = new Set();
-        const norm = n => n.toLowerCase().replace(/[^a-z0-9]/g,"");
-        for (const groupEntry of (data.children||[])) {
-          for (const entry of (groupEntry.standings?.entries||[])) {
-            const espnName = entry.team?.displayName || entry.team?.name || "";
-            if (!espnName) continue;
-            const stats = {};
-            (entry.stats||[]).forEach(s => { stats[s.abbreviation] = s.value; });
-            const advStat = stats["ADV"];
-            const gp = Number(stats["GP"] ?? 0);
-            const noteColor = (entry.note?.color || "").replace("#","");
-            const noteDesc  = (entry.note?.description || "").toLowerCase();
-            const isEliminated = (advStat !== undefined && Number(advStat) === 0 && gp >= 3) ||
-              (advStat === undefined && (noteColor === "FF7F84" || noteDesc.includes("eliminat")));
-            if (!isEliminated) continue;
-            // Add ESPN name directly
-            eliminated.add(espnName);
-            // Add override mapping
-            if (ESPN_ELIM_MAP[espnName]) eliminated.add(ESPN_ELIM_MAP[espnName]);
-            // Add ESPN_NAME_MAP mapped name
-            const mapped = ESPN_NAME_MAP[espnName];
-            if (mapped) eliminated.add(mapped);
-            // Fuzzy match against WC_TEAMS
-            const espnNorm = norm(espnName);
-            WC_TEAMS.forEach(t => {
-              const tNorm = norm(t.name);
-              if (tNorm === espnNorm || espnNorm.includes(tNorm) || tNorm.includes(espnNorm)) {
-                eliminated.add(t.name);
-              }
-            });
+
+        // 1. Group stage eliminations from standings (ADV=0, GP>=3)
+        const sRes = await fetch("https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings?season=2026");
+        if (sRes.ok) {
+          const sData = await sRes.json();
+          for (const groupEntry of (sData.children||[])) {
+            for (const entry of (groupEntry.standings?.entries||[])) {
+              const espnName = entry.team?.displayName || entry.team?.name || "";
+              if (!espnName) continue;
+              const stats = {};
+              (entry.stats||[]).forEach(s => { stats[s.abbreviation] = s.value; });
+              const advStat = stats["ADV"];
+              const gp = Number(stats["GP"] ?? 0);
+              const noteColor = (entry.note?.color || "").replace("#","");
+              const noteDesc  = (entry.note?.description || "").toLowerCase();
+              const isEliminated = (advStat !== undefined && Number(advStat) === 0 && gp >= 3) ||
+                (advStat === undefined && (noteColor === "FF7F84" || noteDesc.includes("eliminat")));
+              if (isEliminated) addTeam(eliminated, espnName);
+            }
           }
         }
-        setEliminatedTeams(eliminated);
+
+        // 2. Knockout round losers from scoreboard (R32 June 28–July 3, R16 July 4–7, QF July 8–11, SF July 14–15)
+        const knockoutDates = [];
+        for (let d = new Date("2026-06-28"); d <= new Date("2026-07-15"); d.setDate(d.getDate()+1)) {
+          knockoutDates.push(d.toISOString().slice(0,10).replace(/-/g,""));
+        }
+        await Promise.all(knockoutDates.map(async dateStr => {
+          try {
+            const r = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dateStr}`);
+            if (!r.ok) return;
+            const d = await r.json();
+            for (const ev of (d.events||[])) {
+              const comp = ev.competitions?.[0];
+              if (!comp?.status?.type?.completed) continue;
+              const competitors = comp.competitors || [];
+              const winner = competitors.find(c => c.winner);
+              // In knockout rounds, non-winner = eliminated (draws go to extra time/pens, winner flag set after)
+              if (!winner) return;
+              const loser = competitors.find(c => !c.winner);
+              if (loser) addTeam(eliminated, loser.team?.displayName || loser.team?.name);
+            }
+          } catch {}
+        }));
+
+        setEliminatedTeams(new Set(eliminated));
       } catch(e) { console.error("fetchEliminated error:", e); }
     }
     fetchEliminated();
