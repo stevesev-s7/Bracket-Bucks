@@ -715,7 +715,8 @@ function GroupsTab({ owners, eliminatedTeams = new Set() }) {
               <div style={{width:10,height:10,borderRadius:2,background:GROUP_COLORS[groupName]||"#6677aa",flexShrink:0}}/>
               <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:1.5,color:"#dce4f5"}}>{groupName}</span>
             </div>
-            <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",minWidth:520}}>
               <thead>
                 <tr style={{background:"#0a0f1a"}}>
                   <th style={{...TH,textAlign:"left",paddingLeft:10,width:"40%"}}>Team</th>
@@ -785,6 +786,7 @@ function GroupsTab({ owners, eliminatedTeams = new Set() }) {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         ))}
       </div>
@@ -1007,7 +1009,8 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
         {/* Draft Board */}
         <div style={{ overflowX:"auto" }}>
           <div style={{ fontSize:11,color:"#6677aa",textTransform:"uppercase",letterSpacing:1.5,fontWeight:700,marginBottom:10 }}>Draft Board</div>
-          <table style={{ width:"100%",borderCollapse:"collapse",background:"#0a0f1a",borderRadius:12,overflow:"hidden",minWidth:480 }}>
+          <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+          <table style={{ width:"100%",borderCollapse:"collapse",background:"#0a0f1a",borderRadius:12,overflow:"hidden",minWidth:600 }}>
             <thead>
               <tr style={{ background:"#141d38" }}>
                 <th style={{ padding:"10px 14px",textAlign:"left",fontSize:11,color:"#6677aa",
@@ -1082,6 +1085,7 @@ function DraftTab({ owners, setOwners, isAdmin, authUser, alert: showAlert, leag
               })}
             </tbody>
           </table>
+          </div>
 
           {/* Teams Drafted per Owner */}
           <div style={{ marginTop:14 }}>
@@ -2212,16 +2216,20 @@ export default function WorldCupApp() {
             <div style={{ background:"#f4c430",color:"#063d24",fontFamily:"'Bebas Neue',sans-serif",fontSize:"1rem",letterSpacing:2,padding:"4px 12px",borderRadius:6 }}>{leagueCode}</div>
           </div>
         </div>
-        <nav style={{ display:"flex",overflowX:"auto",gap:2,padding:"0 10px",scrollbarWidth:"none" }}>
-          {TABS.map(t=>(
-            <button key={t.id} onClick={()=>goTab(t.id)} style={{
-              background:"transparent",border:"none",color:tab===t.id?"#f4c430":"rgba(255,255,255,0.6)",
-              fontFamily:"inherit",fontWeight:700,fontSize:"0.75rem",padding:"10px 12px",cursor:"pointer",
-              borderBottom:tab===t.id?"3px solid #f4c430":"3px solid transparent",whiteSpace:"nowrap",
-              letterSpacing:0.5,transition:"color .15s"
-            }}>{t.label}</button>
-          ))}
-        </nav>
+        <div style={{ position:"relative" }}>
+          <nav style={{ display:"flex",overflowX:"auto",gap:2,padding:"0 10px",
+            scrollbarWidth:"thin",scrollbarColor:"#f4c430 #0a0f1a",
+            WebkitOverflowScrolling:"touch" }}>
+            {TABS.map(t=>(
+              <button key={t.id} onClick={()=>goTab(t.id)} style={{
+                background:"transparent",border:"none",color:tab===t.id?"#f4c430":"rgba(255,255,255,0.6)",
+                fontFamily:"inherit",fontWeight:700,fontSize:"0.75rem",padding:"10px 12px",cursor:"pointer",
+                borderBottom:tab===t.id?"3px solid #f4c430":"3px solid transparent",whiteSpace:"nowrap",
+                letterSpacing:0.5,transition:"color .15s", flexShrink:0
+              }}>{t.label}</button>
+            ))}
+          </nav>
+        </div>
       </div>
 
       {/* Modals */}
@@ -2299,7 +2307,7 @@ export default function WorldCupApp() {
       )}
 
       {/* Main Content */}
-      <div style={{ padding:"20px 16px 48px" }}>
+      <div style={{ padding:"20px 16px 48px", overflowX:"hidden" }}>
         {loading?<Spinner />:(
           <>
             {/* LEADERBOARD */}
