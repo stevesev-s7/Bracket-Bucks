@@ -1388,16 +1388,26 @@ export default function WorldCupApp() {
 
   // Fetch eliminated teams from ESPN standings — refresh every 5 minutes
   useEffect(() => {
+    // ESPN name → internal WC_TEAMS name overrides for special characters / different names
+    const ESPN_ELIM_MAP = {
+      "Türkiye": "Turkey",
+      "Curaçao": "Curacao",
+      "IR Iran": "Iran",
+      "Korea Republic": "South Korea",
+      "Republic of Korea": "South Korea",
+      "USA": "United States",
+      "Ivory Coast": "Côte d'Ivoire",
+    };
     async function fetchEliminated() {
       try {
         const res = await fetch("https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings?season=2026");
         if (!res.ok) return;
         const data = await res.json();
         const eliminated = new Set();
+        const norm = n => n.toLowerCase().replace(/[^a-z0-9]/g,"");
         for (const groupEntry of (data.children||[])) {
           for (const entry of (groupEntry.standings?.entries||[])) {
             const espnName = entry.team?.displayName || entry.team?.name || "";
-            const shortName = entry.team?.shortDisplayName || entry.team?.name || "";
             if (!espnName) continue;
             const stats = {};
             (entry.stats||[]).forEach(s => { stats[s.abbreviation] = s.value; });
@@ -1408,15 +1418,18 @@ export default function WorldCupApp() {
             const isEliminated = (advStat !== undefined && Number(advStat) === 0 && gp >= 3) ||
               (advStat === undefined && (noteColor === "FF7F84" || noteDesc.includes("eliminat")));
             if (!isEliminated) continue;
-            // Add ESPN name, short name, and any mapped internal name
-            [espnName, shortName].forEach(n => { if (n) eliminated.add(n); });
-            const mapped = ESPN_NAME_MAP[espnName] || ESPN_NAME_MAP[shortName];
+            // Add ESPN name directly
+            eliminated.add(espnName);
+            // Add override mapping
+            if (ESPN_ELIM_MAP[espnName]) eliminated.add(ESPN_ELIM_MAP[espnName]);
+            // Add ESPN_NAME_MAP mapped name
+            const mapped = ESPN_NAME_MAP[espnName];
             if (mapped) eliminated.add(mapped);
-            // Also match against WC_TEAMS by normalizing
-            const norm = n => n.toLowerCase().replace(/[^a-z0-9]/g,"");
+            // Fuzzy match against WC_TEAMS
             const espnNorm = norm(espnName);
             WC_TEAMS.forEach(t => {
-              if (norm(t.name) === espnNorm || espnNorm.includes(norm(t.name)) || norm(t.name).includes(espnNorm)) {
+              const tNorm = norm(t.name);
+              if (tNorm === espnNorm || espnNorm.includes(tNorm) || tNorm.includes(espnNorm)) {
                 eliminated.add(t.name);
               }
             });
