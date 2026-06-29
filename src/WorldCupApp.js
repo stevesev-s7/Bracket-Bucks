@@ -2187,7 +2187,7 @@ export default function WorldCupApp() {
 
   // ── MAIN APP ───────────────────────────────────────────────────────────────
   return (
-    <div style={{ maxWidth:960,margin:"0 auto",minHeight:"100vh",background:"#0d1f13",color:"#e8f0e9",fontFamily:"'DM Sans','Nunito',sans-serif" }}>
+    <div style={{ maxWidth:1280,margin:"0 auto",minHeight:"100vh",background:"#0d1f13",color:"#e8f0e9",fontFamily:"'DM Sans','Nunito',sans-serif" }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} * {box-sizing:border-box}`}</style>
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
       <Toast msg={toast?.msg} type={toast?.type} />
