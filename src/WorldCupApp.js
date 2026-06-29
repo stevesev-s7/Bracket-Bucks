@@ -691,8 +691,8 @@ function GroupsTab({ owners, eliminatedTeams = new Set() }) {
     load();
   }, []);
 
-  const TH = { padding:"6px 8px",textAlign:"center",fontSize:10,color:"#6677aa",fontWeight:700,textTransform:"uppercase",letterSpacing:1,borderBottom:"1px solid #1a2440",whiteSpace:"nowrap" };
-  const TD = { padding:"7px 8px",textAlign:"center",fontSize:12,borderBottom:"1px solid #0a0f1a" };
+  const TH = { padding:"5px 6px",textAlign:"center",fontSize:10,color:"#6677aa",fontWeight:700,textTransform:"uppercase",letterSpacing:1,borderBottom:"1px solid #1a2440",whiteSpace:"nowrap" };
+  const TD = { padding:"6px 6px",textAlign:"center",fontSize:12,borderBottom:"1px solid #0a0f1a" };
 
   if (loading) return <div style={{textAlign:"center",padding:"40px",color:"#6677aa"}}>Loading group standings from ESPN...</div>;
 
@@ -708,7 +708,7 @@ function GroupsTab({ owners, eliminatedTeams = new Set() }) {
         </p>
         {error&&<p style={{color:"#e74c3c",fontSize:11,marginTop:4}}>⚠ {error} — showing static team list.</p>}
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(360px,1fr))",gap:16}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
         {Object.entries(standings).sort(([a],[b])=>a.localeCompare(b)).map(([groupName,rows])=>(
           <div key={groupName} style={{background:"#0f1625",border:"1px solid #1a2440",borderRadius:12,overflow:"hidden"}}>
             <div style={{background:"#141d38",padding:"9px 14px",display:"flex",alignItems:"center",gap:8}}>
@@ -716,10 +716,10 @@ function GroupsTab({ owners, eliminatedTeams = new Set() }) {
               <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:1.5,color:"#dce4f5"}}>{groupName}</span>
             </div>
             <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
-            <table style={{width:"100%",borderCollapse:"collapse",minWidth:520}}>
+            <table style={{width:"100%",borderCollapse:"collapse",minWidth:380}}>
               <thead>
                 <tr style={{background:"#0a0f1a"}}>
-                  <th style={{...TH,textAlign:"left",paddingLeft:10,width:"40%"}}>Team</th>
+                  <th style={{...TH,textAlign:"left",paddingLeft:8,width:"32%"}}>Team</th>
                   <th style={TH}>GP</th>
                   <th style={TH}>W</th>
                   <th style={TH}>D</th>
@@ -743,21 +743,21 @@ function GroupsTab({ owners, eliminatedTeams = new Set() }) {
                       opacity:isOut?0.55:1,
                       borderLeft:`3px solid ${statusColor}`,
                     }}>
-                      <td style={{...TD,textAlign:"left",paddingLeft:10}}>
-                        <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <td style={{...TD,textAlign:"left",paddingLeft:8,maxWidth:130}}>
+                        <div style={{display:"flex",alignItems:"center",gap:5}}>
                           {row.logo
-                            ? <img src={row.logo} alt="" style={{width:18,height:18,objectFit:"contain",flexShrink:0}}/>
-                            : <div style={{width:18,height:18,borderRadius:2,background:"#1a2440",flexShrink:0}}/>
+                            ? <img src={row.logo} alt="" style={{width:16,height:16,objectFit:"contain",flexShrink:0}}/>
+                            : <div style={{width:16,height:16,borderRadius:2,background:"#1a2440",flexShrink:0}}/>
                           }
-                          <div>
+                          <div style={{minWidth:0}}>
                             <div style={{fontWeight:600,fontSize:11,color:row.advanced?"#2ecc71":isOut?"#666":"#dce4f5",lineHeight:1.2,
-                              textDecoration:isOut?"line-through":"none"}}>
+                              textDecoration:isOut?"line-through":"none",
+                              overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                               {row.teamName}
                             </div>
-                            <div style={{fontSize:9,color:"#445",lineHeight:1}}>
-                              {wcTeam?`Seed #${wcTeam.seed}`:""}
-                              {row.noteDesc&&!row.advanced&&!isOut?<span style={{color:"#f39c12",marginLeft:4}}>{row.noteDesc}</span>:""}
-                              {isOut?<span style={{color:"#e74c3c",marginLeft:4}}>Eliminated</span>:""}
+                            <div style={{fontSize:9,color:"#445",lineHeight:1,whiteSpace:"nowrap"}}>
+                              {wcTeam?`#${wcTeam.seed}`:""}
+                              {isOut?<span style={{color:"#e74c3c",marginLeft:3}}>Out</span>:""}
                             </div>
                           </div>
                         </div>
