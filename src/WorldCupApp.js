@@ -1736,26 +1736,27 @@ export default function WorldCupApp() {
           if (seen.has(ev.id)) continue;
           seen.add(ev.id);
           const comp = ev.competitions?.[0];
-          // Detect round from date since ESPN notes headline is often null
+          // Detect round — date-based is authoritative, ESPN headline only used if it names a round explicitly
           const gameDate = ev.date ? ev.date.substring(0,10) : "";
-          let detectedRound = comp?.notes?.[0]?.headline || "";
+          const headline = comp?.notes?.[0]?.headline || "";
+          let detectedRound = "";
+          // First try to extract round from ESPN headline
+          if (/round of 32/i.test(headline))       detectedRound = "Round of 32";
+          else if (/round of 16/i.test(headline))  detectedRound = "Round of 16";
+          else if (/quarter/i.test(headline))       detectedRound = "Round of 8";
+          else if (/semi/i.test(headline))          detectedRound = "Round of 4";
+          else if (/final/i.test(headline) && !/semi|quarter|third/i.test(headline)) detectedRound = "Championship";
+          else if (/group|pool/i.test(headline))    detectedRound = "Pool Play";
+          // If headline didn't give us a clean round, use date range (always correct for WC 2026)
           if (!detectedRound) {
-            // Determine round by date range (actual 2026 WC schedule)
             if      (gameDate >= "2026-06-11" && gameDate <= "2026-06-27") detectedRound = "Pool Play";
             else if (gameDate >= "2026-06-28" && gameDate <= "2026-07-03") detectedRound = "Round of 32";
             else if (gameDate >= "2026-07-04" && gameDate <= "2026-07-07") detectedRound = "Round of 16";
             else if (gameDate >= "2026-07-08" && gameDate <= "2026-07-11") detectedRound = "Round of 8";
             else if (gameDate >= "2026-07-14" && gameDate <= "2026-07-15") detectedRound = "Round of 4";
-            else if (gameDate >= "2026-07-19") detectedRound = "Championship";
+            else if (gameDate >= "2026-07-19")                             detectedRound = "Championship";
             else detectedRound = "Pool Play";
           }
-          // If ESPN headline mentions a specific round, trust it over date-based guess
-          if (detectedRound && /round of 32/i.test(detectedRound))  detectedRound = "Round of 32";
-          else if (detectedRound && /round of 16/i.test(detectedRound))  detectedRound = "Round of 16";
-          else if (detectedRound && /quarter/i.test(detectedRound))      detectedRound = "Round of 8";
-          else if (detectedRound && /semi/i.test(detectedRound))         detectedRound = "Round of 4";
-          else if (detectedRound && /final/i.test(detectedRound) && !/semi|quarter|third/i.test(detectedRound)) detectedRound = "Championship";
-          else if (detectedRound && /group|pool/i.test(detectedRound))   detectedRound = "Pool Play";
           allGames.push({
             id: ev.id,
             completed: comp?.status?.type?.completed,
