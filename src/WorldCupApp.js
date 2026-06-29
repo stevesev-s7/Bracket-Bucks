@@ -1444,6 +1444,7 @@ export default function WorldCupApp() {
   }, []);
 
 
+  function saveToMyLeagues(code, name) {
     setMyLeagues(prev => {
       const filtered = prev.filter(l => l.code !== code);
       const updated = [...filtered, { code, name }];
