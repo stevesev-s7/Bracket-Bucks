@@ -1727,7 +1727,12 @@ export default function WorldCupApp() {
 
     const base = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
     const seen = new Set(); const allGames = [];
-    await Promise.all(toFetch.map(async d => {
+
+    // Fetch in small batches to avoid ESPN rate limiting — 5 at a time
+    const batchSize = 5;
+    for (let i = 0; i < toFetch.length; i += batchSize) {
+      const batch = toFetch.slice(i, i + batchSize);
+      await Promise.all(batch.map(async d => {
       try {
         const res = await fetch(`${base}?dates=${d}`);
         if (!res.ok) return;
@@ -1771,7 +1776,8 @@ export default function WorldCupApp() {
           });
         }
       } catch {}
-    }));
+      }));
+    }
     return allGames;
   }
 
