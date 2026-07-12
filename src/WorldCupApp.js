@@ -1439,7 +1439,7 @@ export default function WorldCupApp() {
 
         // 2. Knockout round losers from scoreboard (R32 June 28–July 3, R16 July 4–7, QF July 8–11, SF July 14–15)
         const knockoutDates = [];
-        for (let d = new Date("2026-06-28"); d <= new Date("2026-07-15"); d.setDate(d.getDate()+1)) {
+        for (let d = new Date("2026-06-28"); d <= new Date("2026-07-19"); d.setDate(d.getDate()+1)) {
           knockoutDates.push(d.toISOString().slice(0,10).replace(/-/g,""));
         }
         await Promise.all(knockoutDates.map(async dateStr => {
@@ -1759,6 +1759,7 @@ export default function WorldCupApp() {
             else if (gameDate >= "2026-07-04" && gameDate <= "2026-07-07") detectedRound = "Round of 16";
             else if (gameDate >= "2026-07-08" && gameDate <= "2026-07-12") detectedRound = "Round of 8";
             else if (gameDate >= "2026-07-14" && gameDate <= "2026-07-15") detectedRound = "Round of 4";
+            else if (gameDate >= "2026-07-16" && gameDate <= "2026-07-18") detectedRound = null; // Third place match — not scored
             else if (gameDate >= "2026-07-19")                             detectedRound = "Championship";
             else detectedRound = "Pool Play";
           }
