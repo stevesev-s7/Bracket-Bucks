@@ -1757,7 +1757,7 @@ export default function WorldCupApp() {
             if      (gameDate >= "2026-06-11" && gameDate <= "2026-06-27") detectedRound = "Pool Play";
             else if (gameDate >= "2026-06-28" && gameDate <= "2026-07-03") detectedRound = "Round of 32";
             else if (gameDate >= "2026-07-04" && gameDate <= "2026-07-07") detectedRound = "Round of 16";
-            else if (gameDate >= "2026-07-08" && gameDate <= "2026-07-11") detectedRound = "Round of 8";
+            else if (gameDate >= "2026-07-08" && gameDate <= "2026-07-12") detectedRound = "Round of 8";
             else if (gameDate >= "2026-07-14" && gameDate <= "2026-07-15") detectedRound = "Round of 4";
             else if (gameDate >= "2026-07-19")                             detectedRound = "Championship";
             else detectedRound = "Pool Play";
