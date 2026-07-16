@@ -1805,22 +1805,8 @@ export default function WorldCupApp() {
       let inserted = 0;
 
       for (const game of completedGames) {
-        // Map round
-        const rl = game.roundName.toLowerCase();
-        let roundId = null;
-        for (const [key, val] of Object.entries(ESPN_WC_ROUND_MAP)) {
-          if (rl.includes(key.toLowerCase())) { roundId = val; break; }
-        }
-        if (!roundId) {
-          // Fallback: detect by round keywords
-          if (rl.includes("group") || rl.includes("pool") || /^group [a-l]$/i.test(game.roundName.trim())) roundId = "Pool Play";
-          else if (rl.includes("round of 32")) roundId = "Round of 32";
-          else if (rl.includes("round of 16")) roundId = "Round of 16";
-          else if (rl.includes("quarter")) roundId = "Round of 8";
-          else if (rl.includes("semi")) roundId = "Round of 4";
-          else if (rl.includes("final") && !rl.includes("semi") && !rl.includes("quarter") && !rl.includes("third")) roundId = "Championship";
-          else roundId = null; // Unknown round — skip rather than misclassify as Pool Play
-        }
+        // game.roundName is already our internal round ID from fetchESPNGames — use directly
+        const roundId = game.roundName || null;
         if (!roundId) continue;
 
         const winner = game.competitors.find(c => c.winner);
@@ -1927,20 +1913,10 @@ export default function WorldCupApp() {
         if (!syncOwners.length) continue;
 
         for (const game of completedGames) {
-          const rl = game.roundName.toLowerCase();
-          let roundId = null;
-          for (const [key, val] of Object.entries(ESPN_WC_ROUND_MAP)) {
-            if (rl.includes(key.toLowerCase())) { roundId = val; break; }
-          }
-          if (!roundId) {
-            if (rl.includes("group") || rl.includes("pool") || /^group [a-l]$/i.test(game.roundName.trim())) roundId = "Pool Play";
-            else if (rl.includes("round of 32")) roundId = "Round of 32";
-            else if (rl.includes("round of 16")) roundId = "Round of 16";
-            else if (rl.includes("quarter")) roundId = "Round of 8";
-            else if (rl.includes("semi")) roundId = "Round of 4";
-            else if (rl.includes("final") && !rl.includes("semi") && !rl.includes("quarter") && !rl.includes("third")) roundId = "Championship";
-            else roundId = null;
-          }
+          // game.roundName is already mapped to our internal round ID by fetchESPNGames
+          // (e.g. "Round of 4", "Round of 8", "Pool Play", "Championship")
+          // Use it directly — don't re-run through ESPN_WC_ROUND_MAP
+          const roundId = game.roundName || null;
           if (!roundId) continue;
 
           const winner = game.competitors.find(c => c.winner);
